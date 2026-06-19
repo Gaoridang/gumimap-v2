@@ -74,9 +74,9 @@ struct PlaceDetailSheet: View {
     }
 
     private var listTypeSection: some View {
-        HStack(spacing: 8) {
-            listTypeButton(.wishlist, title: "가고 싶은 곳")
-            listTypeButton(.visited, title: "가본 곳")
+        HStack(spacing: 20) {
+            listTypeButton(.wishlist, title: "가고싶음")
+            listTypeButton(.visited, title: "갔다옴")
         }
     }
 
@@ -99,15 +99,6 @@ struct PlaceDetailSheet: View {
                 Text(title)
                     .font(.subheadline)
                     .foregroundStyle(isSelected ? .primary : .secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? Color.black : Color.black.opacity(0.15),
-                        lineWidth: 1.5
-                    )
             }
             .animation(nil, value: selectedListType)
         }
