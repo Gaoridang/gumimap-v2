@@ -7,7 +7,7 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/place-detail-sheet` |
-| Working tree | Search result tap opens PlaceDetailSheet (large floating sheet) |
+| Working tree | Search results display-only; place detail sheet removed |
 | Last verified | xcodebuild + iOS 26.5 simulator launch |
 
 ## Merged / Shipped
@@ -31,14 +31,6 @@ Last updated: 2026-06-20
   - Build phase generates `gumimap-v2/Generated/Secrets.generated.swift` (gitignored)
   - `Secrets.swift` exposes `kakaoRestAPIKey`
 
-## Shipped on `feat/place-detail-sheet` (this branch)
-
-- **Place detail floating sheet** from search results
-  - Tap search result → `TabRouter.selectedPlace` → `.sheet(item:)` with `.large` detent
-  - `PlaceDetailSheet`: name, address, category, wishlist/visited picker
-  - `PlaceDetailActions`: 추가하기 (dismiss only, save TODO) + Kakao Map link
-  - Swipe-down dismiss; search query/results preserved
-
 ## What Is on the App Now
 
 - Entry: `RootView` (replaces `ContentView` at app launch)
@@ -48,19 +40,17 @@ Last updated: 2026-06-20
   - Custom back button + interactive swipe-back
   - Auto keyboard focus on enter; query reset on leave
   - Live Kakao keyword search with debounce (구미 지역 한정: center + 20km radius)
-  - Tap result → large floating `PlaceDetailSheet`
+  - Search results are display-only (no place detail yet)
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Next Task
 
-- Wire "추가하기" to persist place into wishlist/visited list (SwiftData or equivalent)
-- MapKit preview in place detail sheet
-- Open same sheet from Map/List tabs
+- Place detail via **NavigationStack push** (`AppRoute.placeDetail(Place)`) from search results
+- Merge `feat/kakao-search-api` → `main` when ready
 
 ## Other Backlog
 
-- Merge `feat/kakao-search-api` → `main` when ready
 - Wire MapKit into `MapTabView`
 - Wire list data into `ListTabView`
 - Fix `run-simulator.sh` to target iOS 26.5 simulator by default (avoid 26.2 UDID mismatch)
@@ -75,10 +65,8 @@ Last updated: 2026-06-20
 | `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
 | `gumimap-v2/Features/Search/Place.swift` | Search result model |
-| `gumimap-v2/Features/PlaceDetail/PlaceDetailSheet.swift` | Place detail sheet UI |
-| `gumimap-v2/Features/PlaceDetail/PlaceDetailActions.swift` | Sheet bottom action bar |
-| `gumimap-v2/App/RootView.swift` | `NavigationStack` root + toolbar + sheet |
-| `gumimap-v2/Navigation/TabRouter.swift` | Tab state + `path` + `selectedPlace` |
+| `gumimap-v2/App/RootView.swift` | `NavigationStack` root + toolbar |
+| `gumimap-v2/Navigation/TabRouter.swift` | Tab state + `path: [AppRoute]` |
 | `gumimap-v2/Navigation/AppRoute.swift` | `.search` destination |
 | `gumimap-v2/Navigation/InteractivePopEnabler.swift` | Swipe-back gesture fix |
 | `gumimap-v2/Navigation/FloatingToolbar.swift` | Pill toolbar; search → `openSearch()` |
