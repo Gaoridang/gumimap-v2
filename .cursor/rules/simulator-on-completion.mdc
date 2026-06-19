@@ -1,0 +1,26 @@
+---
+description: Run iOS Simulator after completing app changes in gumimap-v2
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Simulator on Completion
+
+Referenced from `AGENTS.md`. Run the simulator yourself after completing work — never ask the user to launch it.
+
+## When to run
+
+After completing a task that touches app code, UI, assets, or build settings:
+
+```bash
+chmod +x scripts/run-simulator.sh
+./scripts/run-simulator.sh
+```
+
+## Done when
+
+- Script exits 0
+- `com.ijaejun.gumimap-v2` launches in the simulator
+
+On failure, fix and retry before marking the task complete or updating HANDOFF.

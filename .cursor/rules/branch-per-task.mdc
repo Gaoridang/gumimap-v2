@@ -1,0 +1,44 @@
+---
+description: Start each new unit task on a fresh feature branch from main in gumimap-v2
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Branch per Task
+
+Referenced from `AGENTS.md`. Every new unit of coding work starts on a new branch — never commit feature work directly on `main`.
+
+## When to create a branch
+
+Create a branch **before the first code change** when:
+
+- The user gives a new implementation task (feature, fix, refactor, UI change).
+- The task is a distinct unit of work, even if it continues the same feature area.
+
+Skip branching when:
+
+- The session is read-only (questions, reviews, planning only).
+- You are already on a branch created for this same task in the current session.
+- The user explicitly says to stay on the current branch or work on `main`.
+
+## Branch workflow
+
+```bash
+git status
+git branch --show-current
+```
+
+If starting a new task and currently on `main` (or a branch for a different task):
+
+```bash
+git checkout main
+git checkout -b <type>/<short-description>
+```
+
+| Prefix | Use for |
+|--------|---------|
+| `feat/` | New feature or UI |
+| `fix/` | Bug fix |
+| `refactor/` | Structural change |
+| `chore/` | Tooling, docs, config |

@@ -1,0 +1,35 @@
+---
+description: Update docs/HANDOFF.md after each completed task in gumimap-v2
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Session Handoff
+
+Referenced from `AGENTS.md`.
+
+## New window / resumed chat
+
+At the start of a session that continues prior work:
+
+1. Read `docs/HANDOFF.md`
+2. Check out the **active branch** listed there
+3. Run `git status` and confirm the handoff matches reality
+4. Work only within `gumimap-v2/` per `scope-boundary.mdc`
+
+## When to update HANDOFF
+
+Update `docs/HANDOFF.md` after each **completed unit task** when verification passed.
+
+Also update before ending a session when the active branch, next tasks, or key paths change.
+
+Skip when the session was read-only, verification failed, or the user says not to update.
+
+## What to update
+
+- **Resume Here** — active branch, working tree note
+- **Merged / Shipped** — what landed
+- **What Is on the App Now** — current behavior if changed
+- **Next Tasks** — remove finished items, add next priority
+- **Key Paths** — new files or entry points

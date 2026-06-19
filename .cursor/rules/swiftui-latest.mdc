@@ -1,0 +1,18 @@
+---
+description: Use latest SwiftUI patterns and Swift 6 idioms in gumimap-v2
+globs:
+  - "**/*.swift"
+alwaysApply: true
+---
+
+# Latest SwiftUI Code
+
+Referenced from `AGENTS.md`.
+
+Write modern SwiftUI for iOS 18+:
+
+- `@Observable` over `ObservableObject` for new view models
+- `@Environment` and `@Bindable` where appropriate
+- Structured concurrency (`async`/`await`, `Task`, actors)
+- Swift 6 concurrency safety (`@MainActor`, `Sendable`)
+- Prefer native SwiftUI APIs over UIKit bridges unless required

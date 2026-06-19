@@ -1,0 +1,23 @@
+---
+description: Work only within gumimap-v2 — never reference parent or sibling project scope
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Scope Boundary
+
+Referenced from `AGENTS.md`.
+
+## Rule
+
+Work **only** inside `gumimap-v2/`. This is the project root.
+
+- Do not read, reference, or modify files in parent directories (`../`, `../../`, etc.)
+- Do not import patterns, scripts, configs, or code from sibling projects
+- Do not search outside `gumimap-v2/` unless the user explicitly expands scope
+- All git commands, scripts, and paths resolve from `gumimap-v2/`
+
+## When in doubt
+
+If a file path does not start with or live inside `gumimap-v2/`, do not use it.

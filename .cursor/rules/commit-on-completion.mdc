@@ -1,0 +1,34 @@
+---
+description: Commit completed work in gumimap-v2 when a task finishes
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Commit on Completion
+
+Referenced from `AGENTS.md`. When a coding task is finished, commit the changes yourself — do not wait for the user to ask.
+
+## When to commit
+
+Commit after a task is **done**:
+
+1. All requested changes are implemented.
+2. Simulator verification passed when the change touches app code, UI, assets, or build settings.
+3. `docs/HANDOFF.md` is updated per `session-handoff.mdc`.
+4. There are uncommitted changes.
+
+Skip when the user says not to commit, the session was read-only, or there are no changes.
+
+## How to commit
+
+```bash
+git branch --show-current
+git status
+git diff
+```
+
+1. Stage only files related to the completed task.
+2. Write a concise imperative commit message.
+3. Commit on the task branch, not `main`.
+4. Confirm with `git status`.

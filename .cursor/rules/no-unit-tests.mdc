@@ -1,0 +1,14 @@
+---
+description: Do not write or run unit tests in gumimap-v2
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# No Unit Tests
+
+Referenced from `AGENTS.md`.
+
+- Do **not** write or modify files in `gumimap-v2Tests/`
+- Do **not** run `xcodebuild test` or the unit test target
+- Verification is via build + simulator launch only (`simulator-on-completion.mdc`)
