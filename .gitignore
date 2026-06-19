@@ -27,3 +27,6 @@ Pods/
 
 # Carthage
 Carthage/Build/
+
+# Local secrets (never commit)
+Config/secrets.local.env
