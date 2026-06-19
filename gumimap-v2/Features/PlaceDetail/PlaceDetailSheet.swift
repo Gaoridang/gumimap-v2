@@ -115,6 +115,9 @@ struct PlaceDetailSheet: View {
 
     private let bottomButtonCornerRadius: CGFloat = 10
     private let bottomButtonHeight: CGFloat = 48
+    private let primaryButtonFill = Color(.label)
+    private let primaryButtonForeground = Color(.systemGroupedBackground)
+    private let secondaryButtonFill = Color(.secondarySystemGroupedBackground)
 
     private var bottomActionBar: some View {
         HStack(spacing: 10) {
@@ -129,10 +132,10 @@ struct PlaceDetailSheet: View {
                     Text("추가하기")
                         .font(.body.weight(.medium))
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(primaryButtonForeground)
                 .frame(maxWidth: .infinity)
                 .frame(height: bottomButtonHeight)
-                .background(bottomButtonBackground(fill: .black))
+                .background(bottomButtonBackground(fill: primaryButtonFill))
             }
             .buttonStyle(.plain)
 
@@ -140,9 +143,9 @@ struct PlaceDetailSheet: View {
                 Link(destination: kakaoMapURL) {
                     Image(systemName: "paperplane")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                         .frame(width: bottomButtonHeight, height: bottomButtonHeight)
-                        .background(bottomButtonBackground(fill: .white))
+                        .background(bottomButtonBackground(fill: secondaryButtonFill))
                 }
             }
         }
@@ -155,7 +158,7 @@ struct PlaceDetailSheet: View {
     private func bottomButtonBackground(fill: Color) -> some View {
         RoundedRectangle(cornerRadius: bottomButtonCornerRadius, style: .continuous)
             .fill(fill)
-            .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
+            .shadow(color: Color.primary.opacity(0.08), radius: 8, y: 3)
     }
 }
 
