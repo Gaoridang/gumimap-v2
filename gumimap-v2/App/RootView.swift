@@ -19,7 +19,8 @@ struct RootView: View {
                 FloatingToolbar(router: router)
                     .padding(.bottom, 12)
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .search:

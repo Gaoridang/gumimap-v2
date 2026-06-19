@@ -16,7 +16,10 @@ struct SearchTabView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .enableInteractivePopGesture()
         .onAppear {
             Task { @MainActor in
                 isFieldFocused = true
