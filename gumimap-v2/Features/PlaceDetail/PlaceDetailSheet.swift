@@ -10,11 +10,19 @@ struct PlaceDetailSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 0) {
                     nameSection
+                        .padding(.bottom, 4)
+
                     addressSection
+                        .padding(.bottom, 4)
+
                     phoneSection
+                        .padding(.bottom, 20)
+
                     mapPlaceholder
+                        .padding(.bottom, 24)
+
                     listTypeSection
                 }
                 .padding(.horizontal, 20)
@@ -43,7 +51,7 @@ struct PlaceDetailSheet: View {
 
     private var addressSection: some View {
         Text(place.address)
-            .font(.body)
+            .font(.subheadline)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -55,12 +63,12 @@ struct PlaceDetailSheet: View {
             Link(destination: phoneURL) {
                 Text(phone)
                     .font(.body)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.black)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
             Text("정보 없음")
-                .font(.body)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -100,7 +108,7 @@ struct PlaceDetailSheet: View {
             selectedListType = listType
         } label: {
             HStack(spacing: 8) {
-                ToolbarIcon(asset: asset, isSelected: isSelected, size: 18)
+                ToolbarIcon(asset: asset, isSelected: true, size: 18)
                 Text(title)
                     .font(.subheadline)
                     .foregroundStyle(.primary)
@@ -109,7 +117,10 @@ struct PlaceDetailSheet: View {
             .padding(.vertical, 12)
             .background {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? Color.black.opacity(0.08) : Color(.secondarySystemGroupedBackground))
+                    .strokeBorder(
+                        isSelected ? Color.black : Color.clear,
+                        lineWidth: 1.5
+                    )
             }
         }
         .buttonStyle(.plain)
