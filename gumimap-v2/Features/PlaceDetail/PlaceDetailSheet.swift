@@ -138,7 +138,7 @@ struct PlaceDetailSheet: View {
 
             if let kakaoMapURL = place.kakaoMapURL {
                 Link(destination: kakaoMapURL) {
-                    Image(systemName: "paperplane.fill")
+                    Image(systemName: "paperplane")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(.black)
                         .frame(width: bottomButtonHeight, height: bottomButtonHeight)
