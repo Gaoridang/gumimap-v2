@@ -26,6 +26,11 @@ struct PlaceDetailSheet: View {
 
                     listTypeSection
 
+                    if viewModel.isLoadingEnrichment || !viewModel.enrichmentActivities.isEmpty {
+                        enrichmentActivitySection
+                            .padding(.top, 16)
+                    }
+
                     enrichmentSection
                         .padding(.top, 16)
                 }
@@ -152,6 +157,72 @@ struct PlaceDetailSheet: View {
         .background {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
+        }
+    }
+
+    private var enrichmentActivitySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Grok 작업")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(viewModel.enrichmentActivities) { activity in
+                    enrichmentActivityRow(activity)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(enrichmentBackground)
+        .animation(nil, value: viewModel.enrichmentActivities.count)
+    }
+
+    private func enrichmentActivityRow(_ activity: GrokEnrichmentActivity) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: activity.symbolName)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(activity.isInProgress ? .primary : .secondary)
+                .frame(width: 18, alignment: .center)
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(activity.title)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if activity.isInProgress {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                }
+
+                if let detail = activity.detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if !activity.sources.isEmpty {
+                    FlowLayout(spacing: 6) {
+                        ForEach(activity.sources, id: \.self) { source in
+                            Text(source)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(Color(.tertiarySystemFill))
+                                )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -304,6 +375,48 @@ struct PlaceDetailSheet: View {
         RoundedRectangle(cornerRadius: bottomButtonCornerRadius, style: .continuous)
             .fill(fill)
             .shadow(color: Color.primary.opacity(0.08), radius: 8, y: 3)
+    }
+}
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > maxWidth {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            rowHeight = max(rowHeight, size.height)
+            x += size.width + spacing
+        }
+
+        return CGSize(width: maxWidth, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
     }
 }
 

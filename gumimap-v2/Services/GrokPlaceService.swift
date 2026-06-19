@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 
 enum GrokPlaceError: LocalizedError {
@@ -37,7 +38,10 @@ struct GrokPlaceService: Sendable {
         self.apiKey = apiKey
     }
 
-    func enrich(place: Place) async throws -> PlaceEnrichment {
+    func enrich(
+        place: Place,
+        onActivity: (@MainActor (GrokEnrichmentActivity) -> Void)? = nil
+    ) async throws -> PlaceEnrichment {
         guard !apiKey.isEmpty else {
             throw GrokPlaceError.missingAPIKey
         }
@@ -46,12 +50,19 @@ struct GrokPlaceService: Sendable {
         let requestBody = GrokResponsesRequest(
             model: model,
             store: false,
+            stream: true,
+            temperature: 0.2,
             input: [
                 .init(
                     role: "system",
                     content: """
                     You enrich Korean local place info for a Gumi (구미), Gyeongsangbuk-do map app.
-                    Use web search to find up-to-date facts about the exact place.
+                    Use web search aggressively to verify facts about the exact place.
+                    Prioritize Korean local sources in this order:
+                    1) place.map.kakao.com / map.kakao.com
+                    2) map.naver.com / m.place.naver.com / naver.me
+                    3) Korean blogs/reviews only when map pages are unavailable
+                    Open map pages when found. Do not guess hours or features.
                     Reply only with JSON matching the schema. All user-facing strings must be Korean.
                     If search results are insufficient, keep claims conservative and set hour fields to null.
                     """
@@ -62,18 +73,7 @@ struct GrokPlaceService: Sendable {
                 ),
             ],
             tools: [
-                .init(
-                    type: "web_search",
-                    filters: .init(
-                        allowedDomains: [
-                            "place.map.kakao.com",
-                            "map.kakao.com",
-                            "map.naver.com",
-                            "naver.me",
-                            "m.place.naver.com",
-                        ]
-                    )
-                ),
+                .init(type: "web_search"),
             ],
             text: .init(
                 format: .init(
@@ -89,38 +89,75 @@ struct GrokPlaceService: Sendable {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
-        let (data, response) = try await session.data(for: request)
+        let tracker = StreamActivityTracker(onActivity: onActivity)
+        await tracker.emitStarted()
+
+        let (bytes, response) = try await session.bytes(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw GrokPlaceError.invalidResponse
         }
 
-        guard (200...299).contains(httpResponse.statusCode) else {
-            let detail = Self.errorDetail(from: data)
+        var errorBody = Data()
+        if !(200...299).contains(httpResponse.statusCode) {
+            for try await byte in bytes {
+                errorBody.append(byte)
+            }
+            let detail = Self.errorDetail(from: errorBody)
             throw GrokPlaceError.httpStatus(httpResponse.statusCode, detail)
         }
 
-        let decoded = try JSONDecoder().decode(GrokResponsesResponse.self, from: data)
+        var outputText = ""
+        var eventDataLines: [String] = []
 
-        if let status = decoded.status, status != "completed" {
-            throw GrokPlaceError.incompleteResponse
+        for try await line in bytes.lines {
+            try Task.checkCancellation()
+
+            if line.isEmpty {
+                if let event = Self.parseStreamEvent(from: eventDataLines) {
+                    try await Self.handleStreamEvent(
+                        event,
+                        tracker: tracker,
+                        outputText: &outputText
+                    )
+                }
+                eventDataLines.removeAll(keepingCapacity: true)
+                continue
+            }
+
+            if line.hasPrefix("data:") {
+                let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                if payload != "[DONE]" {
+                    eventDataLines.append(String(payload))
+                }
+            }
         }
 
-        guard let content = Self.extractOutputText(from: decoded),
-              !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        if let event = Self.parseStreamEvent(from: eventDataLines) {
+            try await Self.handleStreamEvent(
+                event,
+                tracker: tracker,
+                outputText: &outputText
+            )
+        }
+
+        guard !outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw GrokPlaceError.emptyContent
         }
 
-        let json = Self.extractJSON(from: content)
+        await tracker.emitComposing(isInProgress: false)
+
+        let json = Self.extractJSON(from: outputText)
         return try JSONDecoder().decode(PlaceEnrichment.self, from: Data(json.utf8))
     }
 
     private static func makeSession() -> URLSession {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 120
-        configuration.timeoutIntervalForResource = 180
+        configuration.timeoutIntervalForRequest = 180
+        configuration.timeoutIntervalForResource = 240
         return URLSession(configuration: configuration)
     }
 
@@ -130,6 +167,8 @@ struct GrokPlaceService: Sendable {
             "place_name: \(place.name)",
             "address: \(place.address)",
             "category: \(place.category)",
+            "latitude: \(place.coordinate.latitude)",
+            "longitude: \(place.coordinate.longitude)",
         ]
 
         if let phone = place.phone, !phone.isEmpty {
@@ -140,18 +179,83 @@ struct GrokPlaceService: Sendable {
             lines.append("kakao_map_url: \(kakaoMapURL)")
         }
 
-        lines.append("task: Search the web for this exact place in Gumi, Korea and return enrichment JSON.")
+        lines.append(
+            """
+            search_instructions:
+            - Confirm this exact place is in Gumi, Gyeongsangbuk-do using address and coordinates.
+            - If kakao_map_url is present, search and open that Kakao place page first.
+            - Run Korean queries like "{place_name} \(place.address) 영업시간" and "site:place.map.kakao.com {place.name}".
+            - Prefer verified map-page facts for hours, menu, and highlights.
+            - Return enrichment JSON after searching.
+            """
+        )
+
         return lines.joined(separator: "\n")
     }
 
-    private static func extractOutputText(from response: GrokResponsesResponse) -> String? {
-        response.output
-            .reversed()
-            .first(where: { $0.type == "message" })?
-            .content?
-            .reversed()
-            .first(where: { $0.type == "output_text" })?
-            .text
+    private static func parseStreamEvent(from dataLines: [String]) -> [String: Any]? {
+        guard let jsonLine = dataLines.last,
+              let data = jsonLine.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return object
+    }
+
+    private static func handleStreamEvent(
+        _ event: [String: Any],
+        tracker: StreamActivityTracker,
+        outputText: inout String
+    ) async throws {
+        guard let type = event["type"] as? String else { return }
+
+        switch type {
+        case "response.reasoning_summary_text.delta":
+            if let delta = event["delta"] as? String {
+                await tracker.appendReasoning(delta)
+            }
+
+        case "response.web_search_call.searching":
+            if let itemID = event["item_id"] as? String {
+                await tracker.emitSearching(itemID: itemID)
+            }
+
+        case "response.output_item.done":
+            if let item = event["item"] as? [String: Any] {
+                await tracker.handleOutputItemDone(item)
+            }
+
+        case "response.output_text.delta":
+            if let delta = event["delta"] as? String {
+                outputText += delta
+                await tracker.emitComposing(isInProgress: true)
+            }
+
+        case "response.completed":
+            if outputText.isEmpty,
+               let response = event["response"] as? [String: Any],
+               let text = extractOutputText(from: response) {
+                outputText = text
+            }
+
+        default:
+            break
+        }
+    }
+
+    private static func extractOutputText(from responseObject: [String: Any]) -> String? {
+        guard let output = responseObject["output"] as? [[String: Any]] else { return nil }
+
+        for message in output.reversed() where (message["type"] as? String) == "message" {
+            guard let content = message["content"] as? [[String: Any]] else { continue }
+            for part in content.reversed() where (part["type"] as? String) == "output_text" {
+                if let text = part["text"] as? String {
+                    return text
+                }
+            }
+        }
+
+        return nil
     }
 
     private static func extractJSON(from content: String) -> String {
@@ -188,9 +292,158 @@ struct GrokPlaceService: Sendable {
     }
 }
 
+@MainActor
+private final class StreamActivityTracker {
+    private let onActivity: ((GrokEnrichmentActivity) -> Void)?
+    private var reasoningText = ""
+    private var activeSearchIDs: Set<String> = []
+
+    init(onActivity: ((GrokEnrichmentActivity) -> Void)?) {
+        self.onActivity = onActivity
+    }
+
+    func emitStarted() {
+        emit(
+            GrokEnrichmentActivity(
+                id: "started",
+                title: "장소 정보 검색 시작",
+                isInProgress: true,
+                symbolName: "sparkle"
+            )
+        )
+    }
+
+    func appendReasoning(_ delta: String) {
+        reasoningText += delta
+        emit(
+            GrokEnrichmentActivity(
+                id: "reasoning",
+                title: "질문 분석 중",
+                detail: Self.truncated(reasoningText, limit: 220),
+                isInProgress: true,
+                symbolName: "brain.head.profile"
+            )
+        )
+    }
+
+    func emitSearching(itemID: String) {
+        activeSearchIDs.insert(itemID)
+        emit(
+            GrokEnrichmentActivity(
+                id: "search-\(itemID)",
+                title: "웹에서 검색 중",
+                isInProgress: true,
+                symbolName: "globe"
+            )
+        )
+    }
+
+    func handleOutputItemDone(_ item: [String: Any]) {
+        guard let itemType = item["type"] as? String else { return }
+
+        if itemType == "reasoning" {
+            emit(
+                GrokEnrichmentActivity(
+                    id: "started",
+                    title: "장소 정보 검색 시작",
+                    symbolName: "sparkle"
+                )
+            )
+            if let summary = (item["summary"] as? [[String: Any]])?.first?["text"] as? String,
+               !summary.isEmpty {
+                reasoningText = summary
+                emit(
+                    GrokEnrichmentActivity(
+                        id: "reasoning",
+                        title: "질문 분석 완료",
+                        detail: Self.truncated(summary, limit: 220),
+                        symbolName: "brain.head.profile"
+                    )
+                )
+            }
+            return
+        }
+
+        guard itemType == "web_search_call",
+              let action = item["action"] as? [String: Any],
+              let itemID = item["id"] as? String else {
+            return
+        }
+
+        let actionType = action["type"] as? String ?? "search"
+        let sources = Self.sourceLabels(from: action["sources"] as? [[String: Any]] ?? [])
+
+        switch actionType {
+        case "open_page":
+            if let url = action["url"] as? String {
+                emit(
+                    GrokEnrichmentActivity(
+                        id: "browse-\(itemID)",
+                        title: "페이지 확인",
+                        detail: Self.displayHost(url),
+                        sources: sources,
+                        symbolName: "doc.text.magnifyingglass"
+                    )
+                )
+            }
+
+        default:
+            let query = (action["query"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            emit(
+                GrokEnrichmentActivity(
+                    id: "search-\(itemID)",
+                    title: query?.isEmpty == false ? "검색: \(query!)" : "웹 검색 완료",
+                    detail: sources.isEmpty ? nil : "\(sources.count)개 출처 확인",
+                    sources: Array(sources.prefix(4)),
+                    symbolName: "magnifyingglass"
+                )
+            )
+        }
+
+        activeSearchIDs.remove(itemID)
+    }
+
+    func emitComposing(isInProgress: Bool) {
+        emit(
+            GrokEnrichmentActivity(
+                id: "composing",
+                title: isInProgress ? "검색 결과 정리 중" : "검색 결과 정리 완료",
+                isInProgress: isInProgress,
+                symbolName: "text.alignleft"
+            )
+        )
+    }
+
+    private func emit(_ activity: GrokEnrichmentActivity) {
+        onActivity?(activity)
+    }
+
+    private static func truncated(_ text: String, limit: Int) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > limit else { return trimmed }
+        return String(trimmed.prefix(limit)) + "…"
+    }
+
+    private static func sourceLabels(from sources: [[String: Any]]) -> [String] {
+        sources.compactMap { source in
+            guard let url = source["url"] as? String else { return nil }
+            return displayHost(url)
+        }
+    }
+
+    private static func displayHost(_ urlString: String) -> String {
+        guard let host = URL(string: urlString)?.host?.replacingOccurrences(of: "www.", with: "") else {
+            return urlString
+        }
+        return host
+    }
+}
+
 private struct GrokResponsesRequest: Encodable {
     let model: String
     let store: Bool
+    let stream: Bool
+    let temperature: Double
     let input: [GrokInputMessage]
     let tools: [GrokWebSearchTool]
     let text: GrokTextConfig
@@ -203,20 +456,6 @@ private struct GrokInputMessage: Encodable {
 
 private struct GrokWebSearchTool: Encodable {
     let type: String
-    let filters: GrokWebSearchFilters?
-
-    init(type: String, filters: GrokWebSearchFilters? = nil) {
-        self.type = type
-        self.filters = filters
-    }
-}
-
-private struct GrokWebSearchFilters: Encodable {
-    let allowedDomains: [String]
-
-    enum CodingKeys: String, CodingKey {
-        case allowedDomains = "allowed_domains"
-    }
 }
 
 private struct GrokTextConfig: Encodable {
@@ -307,19 +546,4 @@ private extension GrokJSONSchema {
         ],
         additionalProperties: false
     )
-}
-
-private struct GrokResponsesResponse: Decodable {
-    let status: String?
-    let output: [GrokOutputItem]
-}
-
-private struct GrokOutputItem: Decodable {
-    let type: String
-    let content: [GrokOutputContent]?
-}
-
-private struct GrokOutputContent: Decodable {
-    let type: String
-    let text: String?
 }

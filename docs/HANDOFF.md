@@ -7,7 +7,7 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/grok-place-enrichment` |
-| Working tree | Grok place enrichment uses Responses API + web search (grok-4.3) |
+| Working tree | Grok enrichment streams live activity steps (search/query/sources) in place detail |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (UDID `33061315-12AA-4456-B68A-29E603FCF1FC`) |
 
 ## Merged / Shipped
@@ -46,7 +46,7 @@ Last updated: 2026-06-20
 ## Demo — Place Detail Sheet + Grok (`feat/grok-place-enrichment`)
 
 - Search result tap → `fullScreenCover` → `PlaceDetailSheet`
-- Grok (`GrokPlaceService`) enriches place on appear via xAI Responses API (`grok-4.3` + `web_search`, Kakao/Naver domains)
+- Grok (`GrokPlaceService`) streams xAI Responses API (`grok-4.3` + `web_search`) and shows live activity feed in sheet
 - `XAI_API_KEY` wired via `scripts/generate-secrets.sh` → `Secrets.xaiAPIKey`
 - Bottom actions: 추가하기 (+ icon) + paperplane Kakao map link
 - Layout stability: open-status row always reserved; enrichment skeleton matches final structure (no jump when Grok returns)
