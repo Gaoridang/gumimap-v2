@@ -113,21 +113,38 @@ struct PlaceDetailSheet: View {
         .buttonStyle(.plain)
     }
 
+    private let bottomButtonCornerRadius: CGFloat = 10
+    private let bottomButtonHeight: CGFloat = 48
+
     private var bottomActionBar: some View {
         HStack(spacing: 10) {
-            if let kakaoMapURL = place.kakaoMapURL {
-                Link(destination: kakaoMapURL) {
-                    bottomActionButtonLabel("지도보기", isPrimary: false)
-                }
-            }
-
             Button {
                 // TODO: Save place to selected list
                 onDismiss()
             } label: {
-                bottomActionButtonLabel("추가하기", isPrimary: true)
+                HStack(spacing: 8) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .semibold))
+
+                    Text("추가하기")
+                        .font(.body.weight(.medium))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: bottomButtonHeight)
+                .background(bottomButtonBackground(fill: .black))
             }
             .buttonStyle(.plain)
+
+            if let kakaoMapURL = place.kakaoMapURL {
+                Link(destination: kakaoMapURL) {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(.black)
+                        .frame(width: bottomButtonHeight, height: bottomButtonHeight)
+                        .background(bottomButtonBackground(fill: .white))
+                }
+            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -135,17 +152,10 @@ struct PlaceDetailSheet: View {
         .background(Color(.systemGroupedBackground))
     }
 
-    private func bottomActionButtonLabel(_ title: String, isPrimary: Bool) -> some View {
-        Text(title)
-            .font(.body.weight(.medium))
-            .foregroundStyle(isPrimary ? .white : .black)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background {
-                Capsule()
-                    .fill(isPrimary ? Color.black : Color.white)
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
-            }
+    private func bottomButtonBackground(fill: Color) -> some View {
+        RoundedRectangle(cornerRadius: bottomButtonCornerRadius, style: .continuous)
+            .fill(fill)
+            .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
     }
 }
 
