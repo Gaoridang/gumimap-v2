@@ -6,9 +6,9 @@ Last updated: 2026-06-19
 
 | Field | Value |
 |-------|-------|
-| Active branch | `chore/agent-workflow-rules` |
-| Working tree | Clean after initial workflow rules commit |
-| Last verified | Not yet run (docs-only change) |
+| Active branch | `feature/floating-toolbar` |
+| Working tree | Floating pill toolbar implemented; build verified |
+| Last verified | xcodebuild succeeded; simulator install blocked (sim iOS 26.2 vs target 26.5) |
 
 ## Merged / Shipped
 
@@ -16,11 +16,17 @@ Last updated: 2026-06-19
 
 ## What Is on the App Now
 
-Default Xcode SwiftUI template (`ContentView`, `Item` model). No custom features yet.
+- `RootView` with custom floating pill toolbar (`[mappin][list.bullet] | [search]`)
+- Placeholder `MapTabView` / `ListTabView` (gray background + label)
+- Search button is UI-only placeholder
+- Original `ContentView` + `Item` SwiftData template unchanged (not wired in)
 
 ## Next Tasks
 
-- (Add next priority tasks here as work begins)
+- Wire MapKit into `MapTabView`
+- Wire list data into `ListTabView` (or reuse `ContentView`)
+- Implement search action
+- Simulator: update runtime to iOS 26.5 or lower deployment target if needed
 
 ## Key Paths
 
