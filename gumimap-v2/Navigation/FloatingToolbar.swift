@@ -5,7 +5,7 @@ struct FloatingToolbar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            HStack(spacing: 10) {
+            HStack(spacing: 0) {
                 tabButton(asset: .pin, tab: .map)
                 tabButton(asset: .list, tab: .list)
             }
@@ -42,11 +42,16 @@ struct FloatingToolbar: View {
             ToolbarIcon(asset: asset, isSelected: router.selectedTab == tab)
         }
         .buttonStyle(.plain)
-        .toolbarTapTarget()
+        .toolbarTabTapTarget()
     }
 }
 
 private extension View {
+    func toolbarTabTapTarget() -> some View {
+        frame(width: 24, height: 32)
+            .contentShape(Rectangle())
+    }
+
     func toolbarTapTarget() -> some View {
         frame(width: 32, height: 32)
             .contentShape(Rectangle())
