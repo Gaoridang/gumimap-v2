@@ -114,35 +114,20 @@ struct PlaceDetailSheet: View {
     }
 
     private var bottomActionBar: some View {
-        HStack {
-            Spacer(minLength: 0)
-
-            HStack(spacing: 10) {
-                if let kakaoMapURL = place.kakaoMapURL {
-                    Link(destination: kakaoMapURL) {
-                        bottomActionLabel("지도보기", isEmphasized: false)
-                    }
-
-                    bottomActionDivider
+        HStack(spacing: 10) {
+            if let kakaoMapURL = place.kakaoMapURL {
+                Link(destination: kakaoMapURL) {
+                    bottomActionButtonLabel("지도보기", isPrimary: false)
                 }
-
-                Button {
-                    // TODO: Save place to selected list
-                    onDismiss()
-                } label: {
-                    bottomActionLabel("추가하기", isEmphasized: true)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background {
-                Capsule()
-                    .fill(.white)
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
             }
 
-            Spacer(minLength: 0)
+            Button {
+                // TODO: Save place to selected list
+                onDismiss()
+            } label: {
+                bottomActionButtonLabel("추가하기", isPrimary: true)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -150,23 +135,16 @@ struct PlaceDetailSheet: View {
         .background(Color(.systemGroupedBackground))
     }
 
-    private var bottomActionDivider: some View {
-        Rectangle()
-            .fill(Color.black.opacity(0.15))
-            .frame(width: 1, height: 16)
-    }
-
-    private func bottomActionLabel(_ title: String, isEmphasized: Bool) -> some View {
+    private func bottomActionButtonLabel(_ title: String, isPrimary: Bool) -> some View {
         Text(title)
-            .font(.subheadline.weight(isEmphasized ? .semibold : .regular))
-            .foregroundStyle(.black)
-            .padding(.horizontal, isEmphasized ? 10 : 4)
-            .padding(.vertical, 6)
+            .font(.body.weight(.medium))
+            .foregroundStyle(isPrimary ? .white : .black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
             .background {
-                if isEmphasized {
-                    Capsule()
-                        .fill(Color.black.opacity(0.08))
-                }
+                Capsule()
+                    .fill(isPrimary ? Color.black : Color.white)
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
             }
     }
 }
