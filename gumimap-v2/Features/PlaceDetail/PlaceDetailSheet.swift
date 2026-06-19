@@ -67,40 +67,58 @@ struct PlaceDetailSheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder
     private var openStatusSection: some View {
-        if let enrichment = viewModel.enrichment {
-            let status = enrichment.openStatus()
-            if status != .unknown {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(status.isPositive ? Color.green : Color.primary.opacity(0.25))
-                        .frame(width: 6, height: 6)
+        HStack(spacing: 6) {
+            Circle()
+                .fill(openStatusDotColor)
+                .frame(width: 6, height: 6)
 
-                    Text(status.label)
-                        .font(.subheadline)
-                        .foregroundStyle(status.isPositive ? .primary : .secondary)
+            Text(openStatusLabel)
+                .font(.subheadline)
+                .foregroundStyle(openStatusLabelColor)
 
-                    if let detail = status.detail {
-                        Text(detail)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        } else if viewModel.isLoadingEnrichment {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(Color.primary.opacity(0.15))
-                    .frame(width: 6, height: 6)
-
-                Text("영업시간 확인 중")
+            if let detail = openStatusDetail {
+                Text(detail)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
+        .redacted(reason: viewModel.isLoadingEnrichment ? .placeholder : [])
+        .animation(nil, value: viewModel.isLoadingEnrichment)
+        .animation(nil, value: viewModel.enrichment?.isClosedToday)
+    }
+
+    private var openStatusDotColor: Color {
+        if viewModel.isLoadingEnrichment {
+            return Color.primary.opacity(0.15)
+        }
+        guard let status = viewModel.enrichment?.openStatus() else {
+            return Color.primary.opacity(0.15)
+        }
+        return status.isPositive ? Color.green : Color.primary.opacity(0.25)
+    }
+
+    private var openStatusLabel: String {
+        if viewModel.isLoadingEnrichment {
+            return "영업시간 확인 중"
+        }
+        return viewModel.enrichment?.openStatus().label ?? "영업시간 정보 없음"
+    }
+
+    private var openStatusLabelColor: Color {
+        if viewModel.isLoadingEnrichment {
+            return .secondary
+        }
+        guard let status = viewModel.enrichment?.openStatus() else {
+            return .secondary
+        }
+        return status.isPositive ? .primary : .secondary
+    }
+
+    private var openStatusDetail: String? {
+        guard !viewModel.isLoadingEnrichment else { return nil }
+        return viewModel.enrichment?.openStatus().detail
     }
 
     private var mapPlaceholder: some View {
@@ -139,49 +157,75 @@ struct PlaceDetailSheet: View {
 
     @ViewBuilder
     private var enrichmentSection: some View {
-        if viewModel.isLoadingEnrichment {
-            HStack(spacing: 8) {
-                ProgressView()
-                Text("장소 정보 불러오는 중")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(enrichmentBackground)
-        } else if let enrichment = viewModel.enrichment {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(enrichment.summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if !enrichment.highlights.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(enrichment.highlights, id: \.self) { highlight in
-                            Text("• \(highlight)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                Text(enrichment.visitTip)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(enrichmentBackground)
-        } else if let errorMessage = viewModel.enrichmentErrorMessage {
+        if let errorMessage = viewModel.enrichmentErrorMessage, !viewModel.isLoadingEnrichment {
             Text(errorMessage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
                 .background(enrichmentBackground)
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(enrichmentSummaryText)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(enrichmentHighlightLines, id: \.self) { highlight in
+                        Text(highlight)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .frame(minHeight: enrichmentHighlightsMinHeight, alignment: .top)
+
+                Text(enrichmentVisitTipText)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(enrichmentBackground)
+            .redacted(reason: viewModel.isLoadingEnrichment ? .placeholder : [])
+            .animation(nil, value: viewModel.isLoadingEnrichment)
+            .animation(nil, value: viewModel.enrichment?.summary)
         }
+    }
+
+    private var enrichmentSummaryText: String {
+        if viewModel.isLoadingEnrichment {
+            return "이곳은 구미에서 인기 있는 장소로, 방문객들이 자주 찾는 대표적인 특징을 간단히 소개합니다."
+        }
+        return viewModel.enrichment?.summary ?? ""
+    }
+
+    private var enrichmentHighlightLines: [String] {
+        if viewModel.isLoadingEnrichment {
+            return [
+                "• 대표 메뉴와 분위기를 확인할 수 있습니다",
+                "• 주변과 함께 둘러보기 좋은 포인트가 있습니다",
+            ]
+        }
+        return viewModel.enrichment?.highlights.map { "• \($0)" } ?? []
+    }
+
+    private var enrichmentHighlightsMinHeight: CGFloat {
+        let lineHeight: CGFloat = 20
+        let lineCount = max(viewModel.isLoadingEnrichment ? 2 : enrichmentHighlightLines.count, 1)
+        let spacing: CGFloat = 6
+        return lineHeight * CGFloat(lineCount) + spacing * CGFloat(max(lineCount - 1, 0))
+    }
+
+    private var enrichmentVisitTipText: String {
+        if viewModel.isLoadingEnrichment {
+            return "방문 전 영업시간과 혼잡도를 확인하면 더 편하게 이용할 수 있습니다."
+        }
+        return viewModel.enrichment?.visitTip ?? ""
     }
 
     private var enrichmentBackground: some View {
