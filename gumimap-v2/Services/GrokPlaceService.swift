@@ -40,7 +40,7 @@ struct GrokPlaceService: Sendable {
 
     func enrich(
         place: Place,
-        onActivity: (@MainActor (GrokSearchStep) -> Void)? = nil
+        onActivity: (@MainActor (GrokEnrichmentPhase) -> Void)? = nil
     ) async throws -> PlaceEnrichment {
         guard !apiKey.isEmpty else {
             throw GrokPlaceError.missingAPIKey
@@ -147,6 +147,8 @@ struct GrokPlaceService: Sendable {
             throw GrokPlaceError.emptyContent
         }
 
+        await tracker.markComposing(inProgress: false)
+
         let json = Self.extractJSON(from: outputText)
         return try JSONDecoder().decode(PlaceEnrichment.self, from: Data(json.utf8))
     }
@@ -207,14 +209,17 @@ struct GrokPlaceService: Sendable {
         guard let type = event["type"] as? String else { return }
 
         switch type {
+        case "response.created":
+            await tracker.markPreparingComplete()
+
         case "response.reasoning_summary_text.delta":
             if let delta = event["delta"] as? String {
                 await tracker.appendReasoning(delta)
             }
 
-        case "response.web_search_call.searching":
-            if let itemID = event["item_id"] as? String {
-                await tracker.emitSearching(itemID: itemID)
+        case "response.output_item.added":
+            if let item = event["item"] as? [String: Any] {
+                await tracker.handleOutputItemAdded(item)
             }
 
         case "response.output_item.done":
@@ -222,9 +227,15 @@ struct GrokPlaceService: Sendable {
                 await tracker.handleOutputItemDone(item)
             }
 
+        case "response.web_search_call.searching":
+            if let itemID = event["item_id"] as? String {
+                await tracker.markWebActivitySearching(itemID: itemID)
+            }
+
         case "response.output_text.delta":
             if let delta = event["delta"] as? String {
                 outputText += delta
+                await tracker.markComposing(inProgress: true)
             }
 
         case "response.completed":
@@ -291,33 +302,129 @@ struct GrokPlaceService: Sendable {
 @MainActor
 private final class StreamActivityTracker {
     private let placeName: String
-    private let onActivity: ((GrokSearchStep) -> Void)?
+    private let onActivity: ((GrokEnrichmentPhase) -> Void)?
+    private var reasoningText = ""
+    private var webActivityKinds: [String: GrokEnrichmentPhaseKind] = [:]
 
-    init(placeName: String, onActivity: ((GrokSearchStep) -> Void)?) {
+    init(placeName: String, onActivity: ((GrokEnrichmentPhase) -> Void)?) {
         self.placeName = placeName
         self.onActivity = onActivity
-    }
-
-    func appendReasoning(_ delta: String) {
-        _ = delta
-    }
-
-    func emitSearching(itemID: String) {
         emit(
-            GrokSearchStep(
-                id: "search-\(itemID)",
-                kind: .webSearch,
-                query: nil,
-                pageHost: nil,
+            GrokEnrichmentPhase(
+                id: "preparing",
+                kind: .preparing,
+                status: .inProgress,
+                detail: nil,
                 resultCount: 0,
-                sourceHosts: [],
-                isInProgress: true
+                sourceHosts: []
             )
         )
     }
 
+    func markPreparingComplete() {
+        emit(
+            GrokEnrichmentPhase(
+                id: "preparing",
+                kind: .preparing,
+                status: .completed,
+                detail: nil,
+                resultCount: 0,
+                sourceHosts: []
+            )
+        )
+        emit(
+            GrokEnrichmentPhase(
+                id: "analyzing",
+                kind: .analyzing,
+                status: .inProgress,
+                detail: placeName,
+                resultCount: 0,
+                sourceHosts: []
+            )
+        )
+    }
+
+    func appendReasoning(_ delta: String) {
+        reasoningText += delta
+        emit(
+            GrokEnrichmentPhase(
+                id: "analyzing",
+                kind: .analyzing,
+                status: .inProgress,
+                detail: Self.truncated(reasoningText, limit: 120),
+                resultCount: 0,
+                sourceHosts: []
+            )
+        )
+    }
+
+    func handleOutputItemAdded(_ item: [String: Any]) {
+        let itemType = item["type"] as? String
+
+        if itemType == "reasoning" {
+            emit(
+                GrokEnrichmentPhase(
+                    id: "analyzing",
+                    kind: .analyzing,
+                    status: .inProgress,
+                    detail: placeName,
+                    resultCount: 0,
+                    sourceHosts: []
+                )
+            )
+            return
+        }
+
+        guard itemType == "web_search_call",
+              let itemID = item["id"] as? String else {
+            return
+        }
+
+        let actionType = (item["action"] as? [String: Any])?["type"] as? String ?? "search"
+        let kind: GrokEnrichmentPhaseKind = actionType == "open_page" ? .pageReview : .webSearch
+        webActivityKinds[itemID] = kind
+
+        let detail: String? = {
+            if kind == .pageReview,
+               let url = (item["action"] as? [String: Any])?["url"] as? String {
+                return Self.displayHost(url)
+            }
+            let query = ((item["action"] as? [String: Any])?["query"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let query, !query.isEmpty {
+                return "\"\(query)\""
+            }
+            return kind == .webSearch ? "\"\(placeName)\"" : nil
+        }()
+
+        emit(webPhase(id: itemID, kind: kind, status: .inProgress, detail: detail))
+    }
+
+    func markWebActivitySearching(itemID: String) {
+        let kind = webActivityKinds[itemID] ?? .webSearch
+        let existingDetail = kind == .webSearch ? "\"\(placeName)\"" : nil
+        emit(webPhase(id: itemID, kind: kind, status: .inProgress, detail: existingDetail))
+    }
+
     func handleOutputItemDone(_ item: [String: Any]) {
-        guard let itemType = item["type"] as? String else { return }
+        let itemType = item["type"] as? String
+
+        if itemType == "reasoning" {
+            let summary = (item["summary"] as? [[String: Any]])?.first?["text"] as? String
+            let detail = summary.flatMap { Self.truncated($0, limit: 120) } ?? placeName
+            emit(
+                GrokEnrichmentPhase(
+                    id: "analyzing",
+                    kind: .analyzing,
+                    status: .completed,
+                    detail: detail,
+                    resultCount: 0,
+                    sourceHosts: []
+                )
+            )
+            return
+        }
+
         guard itemType == "web_search_call",
               let action = item["action"] as? [String: Any],
               let itemID = item["id"] as? String else {
@@ -329,39 +436,75 @@ private final class StreamActivityTracker {
 
         switch actionType {
         case "open_page":
+            webActivityKinds[itemID] = .pageReview
             if let url = action["url"] as? String {
+                let host = Self.displayHost(url)
                 emit(
-                    GrokSearchStep(
-                        id: "browse-\(itemID)",
-                        kind: .openPage,
-                        query: nil,
-                        pageHost: Self.displayHost(url),
+                    GrokEnrichmentPhase(
+                        id: itemID,
+                        kind: .pageReview,
+                        status: .completed,
+                        detail: host,
                         resultCount: 0,
-                        sourceHosts: [Self.displayHost(url)],
-                        isInProgress: false
+                        sourceHosts: [host]
                     )
                 )
             }
 
         default:
+            webActivityKinds[itemID] = .webSearch
             let query = (action["query"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let resolvedQuery = (query?.isEmpty == false) ? query : placeName
+            let resolvedQuery = (query?.isEmpty == false) ? query! : placeName
             emit(
-                GrokSearchStep(
-                    id: "search-\(itemID)",
+                GrokEnrichmentPhase(
+                    id: itemID,
                     kind: .webSearch,
-                    query: resolvedQuery,
-                    pageHost: nil,
+                    status: .completed,
+                    detail: "\"\(resolvedQuery)\"",
                     resultCount: sourceHosts.count,
-                    sourceHosts: Array(sourceHosts.prefix(3)),
-                    isInProgress: false
+                    sourceHosts: Array(sourceHosts.prefix(3))
                 )
             )
         }
     }
 
-    private func emit(_ step: GrokSearchStep) {
-        onActivity?(step)
+    func markComposing(inProgress: Bool) {
+        emit(
+            GrokEnrichmentPhase(
+                id: "composing",
+                kind: .composing,
+                status: inProgress ? .inProgress : .completed,
+                detail: inProgress ? "검색한 내용을 바탕으로 장소 소개를 작성하고 있어요" : nil,
+                resultCount: 0,
+                sourceHosts: []
+            )
+        )
+    }
+
+    private func webPhase(
+        id: String,
+        kind: GrokEnrichmentPhaseKind,
+        status: GrokEnrichmentPhaseStatus,
+        detail: String? = nil
+    ) -> GrokEnrichmentPhase {
+        GrokEnrichmentPhase(
+            id: id,
+            kind: kind,
+            status: status,
+            detail: detail,
+            resultCount: 0,
+            sourceHosts: []
+        )
+    }
+
+    private func emit(_ phase: GrokEnrichmentPhase) {
+        onActivity?(phase)
+    }
+
+    private static func truncated(_ text: String, limit: Int) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > limit else { return trimmed }
+        return String(trimmed.prefix(limit)) + "…"
     }
 
     private static func sourceHosts(from sources: [[String: Any]]) -> [String] {

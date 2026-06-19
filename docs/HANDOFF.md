@@ -7,7 +7,7 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/grok-place-enrichment` |
-| Working tree | Grok live activity UI matches web search feed; hides on completion |
+| Working tree | Unified PlaceEnrichmentCard with granular phase timeline → result |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (UDID `33061315-12AA-4456-B68A-29E603FCF1FC`) |
 
 ## Merged / Shipped

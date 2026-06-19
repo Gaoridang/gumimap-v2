@@ -26,18 +26,15 @@ struct PlaceDetailSheet: View {
 
                     listTypeSection
 
-                    if viewModel.isLoadingEnrichment,
-                       let startedAt = viewModel.enrichmentSearchStartedAt {
-                        GrokLiveActivityView(
-                            placeName: place.name,
-                            startedAt: startedAt,
-                            steps: viewModel.enrichmentSearchSteps
-                        )
-                        .padding(.top, 16)
-                    }
-
-                    enrichmentSection
-                        .padding(.top, 16)
+                    PlaceEnrichmentCard(
+                        placeName: place.name,
+                        startedAt: viewModel.enrichmentSearchStartedAt,
+                        isLoading: viewModel.isLoadingEnrichment,
+                        phases: viewModel.enrichmentPhases,
+                        enrichment: viewModel.enrichment,
+                        errorMessage: viewModel.enrichmentErrorMessage
+                    )
+                    .padding(.top, 16)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -163,84 +160,6 @@ struct PlaceDetailSheet: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         }
-    }
-
-    @ViewBuilder
-    private var enrichmentSection: some View {
-        if let errorMessage = viewModel.enrichmentErrorMessage, !viewModel.isLoadingEnrichment {
-            Text(errorMessage)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .background(enrichmentBackground)
-        } else {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(enrichmentSummaryText)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(enrichmentHighlightLines, id: \.self) { highlight in
-                        Text(highlight)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .frame(minHeight: enrichmentHighlightsMinHeight, alignment: .top)
-
-                Text(enrichmentVisitTipText)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(enrichmentBackground)
-            .redacted(reason: viewModel.isLoadingEnrichment ? .placeholder : [])
-            .animation(nil, value: viewModel.isLoadingEnrichment)
-            .animation(nil, value: viewModel.enrichment?.summary)
-        }
-    }
-
-    private var enrichmentSummaryText: String {
-        if viewModel.isLoadingEnrichment {
-            return "가나다라마바사아자차카타파하가나다라마바사아자차카타파하"
-        }
-        return viewModel.enrichment?.summary ?? ""
-    }
-
-    private var enrichmentHighlightLines: [String] {
-        if viewModel.isLoadingEnrichment {
-            return [
-                "• 가나다라마바사아자차카타파하",
-                "• 가나다라마바사아자차카타파하",
-            ]
-        }
-        return viewModel.enrichment?.highlights.map { "• \($0)" } ?? []
-    }
-
-    private var enrichmentHighlightsMinHeight: CGFloat {
-        let lineHeight: CGFloat = 20
-        let lineCount = max(viewModel.isLoadingEnrichment ? 2 : enrichmentHighlightLines.count, 1)
-        let spacing: CGFloat = 6
-        return lineHeight * CGFloat(lineCount) + spacing * CGFloat(max(lineCount - 1, 0))
-    }
-
-    private var enrichmentVisitTipText: String {
-        if viewModel.isLoadingEnrichment {
-            return "가나다라마바사아자차카타파하가나다라마바사"
-        }
-        return viewModel.enrichment?.visitTip ?? ""
-    }
-
-    private var enrichmentBackground: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(Color(.secondarySystemGroupedBackground))
     }
 
     private func listTypeButton(_ listType: ListSubTab, title: String) -> some View {

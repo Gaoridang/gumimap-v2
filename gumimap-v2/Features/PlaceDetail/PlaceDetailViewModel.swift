@@ -6,7 +6,7 @@ final class PlaceDetailViewModel {
     private(set) var enrichment: PlaceEnrichment?
     private(set) var isLoadingEnrichment = false
     private(set) var enrichmentErrorMessage: String?
-    private(set) var enrichmentSearchSteps: [GrokSearchStep] = []
+    private(set) var enrichmentPhases: [GrokEnrichmentPhase] = []
     private(set) var enrichmentSearchStartedAt: Date?
 
     private let grokService: GrokPlaceService
@@ -24,20 +24,20 @@ final class PlaceDetailViewModel {
         loadedPlaceID = place.id
         enrichment = nil
         enrichmentErrorMessage = nil
-        enrichmentSearchSteps = []
+        enrichmentPhases = []
         enrichmentSearchStartedAt = .now
+        isLoadingEnrichment = true
 
         loadTask = Task {
-            isLoadingEnrichment = true
             defer {
                 isLoadingEnrichment = false
-                enrichmentSearchSteps = []
+                enrichmentPhases = []
                 enrichmentSearchStartedAt = nil
             }
 
             do {
-                let result = try await grokService.enrich(place: place) { [weak self] step in
-                    self?.handleSearchStep(step)
+                let result = try await grokService.enrich(place: place) { [weak self] phase in
+                    self?.handlePhase(phase)
                 }
                 guard !Task.isCancelled, loadedPlaceID == place.id else { return }
                 enrichment = result
@@ -55,16 +55,16 @@ final class PlaceDetailViewModel {
         loadedPlaceID = nil
         enrichment = nil
         enrichmentErrorMessage = nil
-        enrichmentSearchSteps = []
+        enrichmentPhases = []
         enrichmentSearchStartedAt = nil
         isLoadingEnrichment = false
     }
 
-    private func handleSearchStep(_ step: GrokSearchStep) {
-        if let index = enrichmentSearchSteps.firstIndex(where: { $0.id == step.id }) {
-            enrichmentSearchSteps[index] = step
+    private func handlePhase(_ phase: GrokEnrichmentPhase) {
+        if let index = enrichmentPhases.firstIndex(where: { $0.id == phase.id }) {
+            enrichmentPhases[index] = phase
         } else {
-            enrichmentSearchSteps.append(step)
+            enrichmentPhases.append(phase)
         }
     }
 }
