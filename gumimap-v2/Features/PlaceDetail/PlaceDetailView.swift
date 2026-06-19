@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PlaceDetailView: View {
     @State private var viewModel: PlaceDetailViewModel
+    @State private var isJSONExpanded = false
     @Environment(\.dismiss) private var dismiss
 
     init(place: Place) {
@@ -13,20 +14,14 @@ struct PlaceDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 headerSection
+                kakaoBaselineSection
 
                 if viewModel.showProgress {
                     progressSection
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                if let errorMessage = viewModel.errorMessage {
-                    errorSection(errorMessage)
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                }
-
-                if let detail = viewModel.detail, viewModel.revealStep >= 1 {
-                    resultSection(detail)
-                }
+                enrichmentSection
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -72,7 +67,42 @@ struct PlaceDetailView: View {
         }
     }
 
-    // MARK: - Progress
+    // MARK: - Kakao Baseline
+
+    private var kakaoBaselineSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            detailCard(title: "주소", value: viewModel.place.address)
+
+            HStack(spacing: 10) {
+                if !viewModel.place.category.isEmpty {
+                    detailChip(title: "카테고리", value: viewModel.place.category)
+                }
+
+                if let phone = viewModel.place.phone, !phone.isEmpty {
+                    detailChip(title: "전화", value: phone)
+                }
+            }
+
+            if let mapURL = viewModel.place.kakaoMapURL {
+                Link(destination: mapURL) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "map")
+                            .font(.subheadline.weight(.medium))
+                        Text("카카오맵에서 보기")
+                            .font(.subheadline.weight(.medium))
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(.tint)
+                    .padding(16)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                }
+            }
+        }
+    }
+
+    // MARK: - SSE Progress
 
     private var progressSection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -140,51 +170,85 @@ struct PlaceDetailView: View {
         ))
     }
 
-    // MARK: - Error
+    // MARK: - Grok Enrichment
 
-    private func errorSection(_ message: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("오류", systemImage: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.orange)
+    @ViewBuilder
+    private var enrichmentSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("추가 정보")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .textCase(.uppercase)
+
+            switch viewModel.enrichmentState {
+            case .idle, .loading:
+                enrichmentSkeleton
+            case .loaded:
+                if let detail = viewModel.detail {
+                    enrichmentResult(detail)
+                }
+            case .failed(let message):
+                enrichmentFailure(message)
+            }
+        }
+    }
+
+    private var enrichmentSkeleton: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            skeletonChip(title: "영업 상태")
+            skeletonCard(title: "영업시간", lines: 2)
+        }
+    }
+
+    private func enrichmentResult(_ detail: GrokPlaceDetail) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if viewModel.revealStep >= 1 {
+                detailChip(
+                    title: "영업 상태",
+                    value: detail.isOpenNow ? "영업 중" : "영업 종료",
+                    tint: detail.isOpenNow ? .green : .orange
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(resultTransition)
+            }
+
+            if viewModel.revealStep >= 2, detail.hasBusinessHours {
+                detailCard(title: "영업시간", value: detail.businessHours)
+                    .transition(resultTransition)
+            }
+
+            if viewModel.revealStep >= 3 {
+                jsonDisclosure(detail.formattedJSON)
+                    .transition(resultTransition)
+            }
+        }
+    }
+
+    private func enrichmentFailure(_ message: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.circle")
+                    .foregroundStyle(.orange)
+                Text("추가 정보를 불러오지 못했어요")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+            }
 
             Text(message)
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundStyle(.secondary)
+
+            Button("다시 시도") {
+                viewModel.retryEnrichment()
+            }
+            .font(.subheadline.weight(.medium))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    // MARK: - Result
-
-    private func resultSection(_ detail: GrokPlaceDetail) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if viewModel.revealStep >= 1 {
-                detailCard(title: "이름", value: detail.name)
-            }
-            if viewModel.revealStep >= 2 {
-                detailCard(title: "주소", value: detail.address)
-            }
-            if viewModel.revealStep >= 3 {
-                HStack(spacing: 10) {
-                    detailChip(title: "카테고리", value: detail.category)
-                    detailChip(
-                        title: "영업 상태",
-                        value: detail.isOpenNow ? "영업 중" : "영업 종료",
-                        tint: detail.isOpenNow ? .green : .orange
-                    )
-                }
-            }
-            if viewModel.revealStep >= 4, detail.hasBusinessHours {
-                detailCard(title: "영업시간", value: detail.businessHours)
-            }
-            if viewModel.revealStep >= 5 {
-                jsonCard(detail.formattedJSON)
-            }
-        }
-    }
+    // MARK: - Components
 
     private func detailCard(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -201,7 +265,6 @@ struct PlaceDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-        .transition(resultTransition)
     }
 
     private func detailChip(title: String, value: String, tint: Color = .secondary) -> some View {
@@ -217,25 +280,73 @@ struct PlaceDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
-        .transition(resultTransition)
     }
 
-    private func jsonCard(_ json: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("JSON")
+    private func skeletonChip(title: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.tertiary)
+
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.mini)
+                Text("불러오는 중")
+                    .font(.subheadline)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func skeletonCard(title: String, lines: Int) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
 
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(0 ..< lines, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.tertiarySystemFill))
+                        .frame(height: 14)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(alignment: .bottomTrailing) {
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.mini)
+                Text("Grok 확인 중")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+        }
+    }
+
+    private func jsonDisclosure(_ json: String) -> some View {
+        DisclosureGroup(isExpanded: $isJSONExpanded) {
             Text(json)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 8)
+        } label: {
+            Text("JSON")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .textCase(.uppercase)
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-        .transition(resultTransition)
     }
 
     private var resultTransition: AnyTransition {
@@ -254,8 +365,8 @@ struct PlaceDetailView: View {
                 name: "카페 드롭탑 구미인동점",
                 address: "경북 구미시 인동가산로 12",
                 category: "카페",
-                phone: nil,
-                kakaoMapURL: nil,
+                phone: "054-123-4567",
+                kakaoMapURL: URL(string: "https://place.map.kakao.com/123"),
                 coordinate: .init(latitude: 36.12, longitude: 128.34)
             )
         )

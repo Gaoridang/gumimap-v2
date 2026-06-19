@@ -36,8 +36,10 @@ Last updated: 2026-06-20
 - **Place detail via NavigationStack push** (`AppRoute.placeDetail(Place)`)
   - Search result tap → `PlaceDetailView`
   - Grok SSE enrichment via `GrokPlaceSearchService` (xAI Responses API stream)
-  - Live progress checklist (v1 pattern): web search → analyze → organize → complete
-  - Staggered reveal animation for structured fields + pretty-printed JSON
+  - Kakao baseline (address, category, phone, map link) shown immediately on open
+  - Live SSE progress checklist unchanged (v1 pattern)
+  - Grok-only fields (hours, open status) load async with skeleton → staggered reveal
+  - JSON in collapsed disclosure; Grok failure is field-scoped with retry
 - **xAI API key** added to secrets pipeline (`XAI_API_KEY` → `Secrets.xaiAPIKey`)
 
 ## What Is on the App Now

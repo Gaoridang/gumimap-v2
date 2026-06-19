@@ -1,15 +1,21 @@
 import SwiftUI
 
+enum EnrichmentState: Equatable {
+    case idle
+    case loading
+    case loaded
+    case failed(String)
+}
+
 @Observable
 @MainActor
 final class PlaceDetailViewModel {
     let place: Place
 
-    private(set) var isLoading = false
+    private(set) var enrichmentState: EnrichmentState = .idle
     private(set) var progressLog: [GrokSearchProgress] = []
     private(set) var currentProgress: GrokSearchProgress?
     private(set) var detail: GrokPlaceDetail?
-    private(set) var errorMessage: String?
     private(set) var revealStep = 0
 
     private var revealTask: Task<Void, Never>?
@@ -19,25 +25,53 @@ final class PlaceDetailViewModel {
         self.place = place
     }
 
+    var isLoading: Bool {
+        enrichmentState == .loading
+    }
+
+    var enrichmentError: String? {
+        if case let .failed(message) = enrichmentState { return message }
+        return nil
+    }
+
     var showProgress: Bool {
         isLoading || (revealStep == 0 && !progressLog.isEmpty)
     }
 
     var headerSubtitle: String {
-        if isLoading {
-            return "Grok이 장소 정보를 찾고 있어요."
+        switch enrichmentState {
+        case .loading:
+            return "Grok이 추가 정보를 찾고 있어요."
+        case .loaded:
+            return "추가 정보를 불러왔어요."
+        case .failed:
+            return place.address
+        case .idle:
+            return place.address
         }
-        if revealStep >= 1, detail != nil {
-            return "상세 정보를 불러왔어요."
-        }
-        if errorMessage != nil {
-            return "정보를 불러오지 못했어요."
-        }
-        return place.address
     }
 
     func loadIfNeeded() {
-        guard loadTask == nil, detail == nil, errorMessage == nil else { return }
+        guard loadTask == nil else { return }
+        switch enrichmentState {
+        case .loading, .loaded:
+            return
+        case .idle, .failed:
+            break
+        }
+        loadTask = Task { await load() }
+    }
+
+    func retryEnrichment() {
+        guard !isLoading else { return }
+        loadTask?.cancel()
+        loadTask = nil
+        cancelReveal()
+        enrichmentState = .idle
+        detail = nil
+        progressLog = []
+        currentProgress = nil
+        revealStep = 0
         loadTask = Task { await load() }
     }
 
@@ -49,19 +83,15 @@ final class PlaceDetailViewModel {
 
     private func load() async {
         cancelReveal()
-        errorMessage = nil
         detail = nil
         progressLog = []
         currentProgress = nil
         revealStep = 0
 
         withAnimation(.easeInOut(duration: 0.3)) {
-            isLoading = true
+            enrichmentState = .loading
         }
         defer {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                isLoading = false
-            }
             loadTask = nil
         }
 
@@ -75,13 +105,21 @@ final class PlaceDetailViewModel {
             guard !Task.isCancelled else { return }
             detail = result
             currentProgress = nil
+            withAnimation(.easeInOut(duration: 0.3)) {
+                enrichmentState = .loaded
+            }
             startReveal()
         } catch is CancellationError {
+            if enrichmentState == .loading {
+                enrichmentState = .idle
+            }
             return
         } catch {
             guard !Task.isCancelled else { return }
-            errorMessage = error.localizedDescription
             currentProgress = nil
+            withAnimation(.easeInOut(duration: 0.3)) {
+                enrichmentState = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -104,7 +142,7 @@ final class PlaceDetailViewModel {
                 revealStep = 1
             }
 
-            for step in 2 ... 5 {
+            for step in 2 ... 3 {
                 try? await Task.sleep(for: .milliseconds(180))
                 guard !Task.isCancelled else { return }
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.84)) {
