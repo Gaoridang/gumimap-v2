@@ -324,11 +324,15 @@ struct GrokPlaceSearchService: Sendable {
                     type: "object",
                     description: "Structured place traits with exactly 5 fields",
                     nestedSchema: placeFeaturesSchema
+                ),
+                "isOpenNow": JSONSchemaProperty(
+                    type: "boolean",
+                    description: "Whether the place is open right now in Korea Standard Time"
                 )
             ],
             required: [
                 "name", "address", "latitude", "longitude", "category",
-                "reviews", "features"
+                "reviews", "features", "isOpenNow"
             ],
             additionalProperties: false
         )
@@ -352,6 +356,7 @@ struct GrokPlaceSearchService: Sendable {
       • parking — 주차 정보
       • wait — 대기·혼잡·예약 정보
       • closedDay — 정기 휴무일
+    - isOpenNow: true/false based on official hours, break time, and closedDay vs current KST
 
     Each reviews item must be a single scannable line — no paragraphs, no numbering prefix.
     Do NOT invent reviews. Prefer recent blog and dining community sources.

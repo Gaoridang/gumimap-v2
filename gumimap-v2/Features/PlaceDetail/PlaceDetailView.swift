@@ -211,18 +211,18 @@ struct PlaceDetailView: View {
                     .transition(resultTransition)
             }
 
-            if viewModel.revealStep >= 1, detail.hasReviews {
+            if viewModel.revealStep >= 1 {
+                structuredFeaturesCard(detail.features)
+                    .transition(resultTransition)
+            }
+
+            if viewModel.revealStep >= 2, detail.hasReviews {
                 bulletCard(
                     title: "리뷰",
                     icon: "text.quote",
                     points: detail.reviewPoints
                 )
                 .transition(resultTransition)
-            }
-
-            if viewModel.revealStep >= 2 {
-                structuredFeaturesCard(detail.features)
-                    .transition(resultTransition)
             }
         }
     }
@@ -254,21 +254,29 @@ struct PlaceDetailView: View {
     // MARK: - Register
 
     private var registerButton: some View {
-        Button {
-            viewModel.register()
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus")
-                    .font(.body.weight(.semibold))
-                Text("등록하기")
-                    .font(.body.weight(.semibold))
+        HStack(spacing: 10) {
+            Button {
+                viewModel.register()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus")
+                        .font(.body.weight(.semibold))
+                    Text("등록하기")
+                        .font(.body.weight(.semibold))
+                }
+                .foregroundStyle(Color(.systemBackground))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.primary, in: RoundedRectangle(cornerRadius: 14))
             }
-            .foregroundStyle(Color(.systemBackground))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Color.primary, in: RoundedRectangle(cornerRadius: 14))
+            .buttonStyle(.plain)
+
+            if let isOpen = viewModel.isOpenNow, isOpen {
+                openStatusBadge
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
         }
-        .buttonStyle(.plain)
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: viewModel.isOpenNow)
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
@@ -277,6 +285,20 @@ struct PlaceDetailView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: .black.opacity(0.06), radius: 8, y: -4)
         }
+    }
+
+    private var openStatusBadge: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(Color.green)
+                .frame(width: 8, height: 8)
+            Text("영업중")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.green)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 16)
+        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
     }
 
     // MARK: - Components
