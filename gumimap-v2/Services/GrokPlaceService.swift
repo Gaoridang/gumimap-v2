@@ -40,7 +40,7 @@ struct GrokPlaceService: Sendable {
 
     func enrich(
         place: Place,
-        onActivity: (@MainActor (GrokEnrichmentActivity) -> Void)? = nil
+        onActivity: (@MainActor (GrokSearchStep) -> Void)? = nil
     ) async throws -> PlaceEnrichment {
         guard !apiKey.isEmpty else {
             throw GrokPlaceError.missingAPIKey
@@ -92,8 +92,7 @@ struct GrokPlaceService: Sendable {
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
-        let tracker = StreamActivityTracker(onActivity: onActivity)
-        await tracker.emitStarted()
+        let tracker = StreamActivityTracker(placeName: place.name, onActivity: onActivity)
 
         let (bytes, response) = try await session.bytes(for: request)
 
@@ -147,8 +146,6 @@ struct GrokPlaceService: Sendable {
         guard !outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw GrokPlaceError.emptyContent
         }
-
-        await tracker.emitComposing(isInProgress: false)
 
         let json = Self.extractJSON(from: outputText)
         return try JSONDecoder().decode(PlaceEnrichment.self, from: Data(json.utf8))
@@ -228,7 +225,6 @@ struct GrokPlaceService: Sendable {
         case "response.output_text.delta":
             if let delta = event["delta"] as? String {
                 outputText += delta
-                await tracker.emitComposing(isInProgress: true)
             }
 
         case "response.completed":
@@ -294,76 +290,34 @@ struct GrokPlaceService: Sendable {
 
 @MainActor
 private final class StreamActivityTracker {
-    private let onActivity: ((GrokEnrichmentActivity) -> Void)?
-    private var reasoningText = ""
-    private var activeSearchIDs: Set<String> = []
+    private let placeName: String
+    private let onActivity: ((GrokSearchStep) -> Void)?
 
-    init(onActivity: ((GrokEnrichmentActivity) -> Void)?) {
+    init(placeName: String, onActivity: ((GrokSearchStep) -> Void)?) {
+        self.placeName = placeName
         self.onActivity = onActivity
     }
 
-    func emitStarted() {
-        emit(
-            GrokEnrichmentActivity(
-                id: "started",
-                title: "장소 정보 검색 시작",
-                isInProgress: true,
-                symbolName: "sparkle"
-            )
-        )
-    }
-
     func appendReasoning(_ delta: String) {
-        reasoningText += delta
-        emit(
-            GrokEnrichmentActivity(
-                id: "reasoning",
-                title: "질문 분석 중",
-                detail: Self.truncated(reasoningText, limit: 220),
-                isInProgress: true,
-                symbolName: "brain.head.profile"
-            )
-        )
+        _ = delta
     }
 
     func emitSearching(itemID: String) {
-        activeSearchIDs.insert(itemID)
         emit(
-            GrokEnrichmentActivity(
+            GrokSearchStep(
                 id: "search-\(itemID)",
-                title: "웹에서 검색 중",
-                isInProgress: true,
-                symbolName: "globe"
+                kind: .webSearch,
+                query: nil,
+                pageHost: nil,
+                resultCount: 0,
+                sourceHosts: [],
+                isInProgress: true
             )
         )
     }
 
     func handleOutputItemDone(_ item: [String: Any]) {
         guard let itemType = item["type"] as? String else { return }
-
-        if itemType == "reasoning" {
-            emit(
-                GrokEnrichmentActivity(
-                    id: "started",
-                    title: "장소 정보 검색 시작",
-                    symbolName: "sparkle"
-                )
-            )
-            if let summary = (item["summary"] as? [[String: Any]])?.first?["text"] as? String,
-               !summary.isEmpty {
-                reasoningText = summary
-                emit(
-                    GrokEnrichmentActivity(
-                        id: "reasoning",
-                        title: "질문 분석 완료",
-                        detail: Self.truncated(summary, limit: 220),
-                        symbolName: "brain.head.profile"
-                    )
-                )
-            }
-            return
-        }
-
         guard itemType == "web_search_call",
               let action = item["action"] as? [String: Any],
               let itemID = item["id"] as? String else {
@@ -371,60 +325,46 @@ private final class StreamActivityTracker {
         }
 
         let actionType = action["type"] as? String ?? "search"
-        let sources = Self.sourceLabels(from: action["sources"] as? [[String: Any]] ?? [])
+        let sourceHosts = Self.sourceHosts(from: action["sources"] as? [[String: Any]] ?? [])
 
         switch actionType {
         case "open_page":
             if let url = action["url"] as? String {
                 emit(
-                    GrokEnrichmentActivity(
+                    GrokSearchStep(
                         id: "browse-\(itemID)",
-                        title: "페이지 확인",
-                        detail: Self.displayHost(url),
-                        sources: sources,
-                        symbolName: "doc.text.magnifyingglass"
+                        kind: .openPage,
+                        query: nil,
+                        pageHost: Self.displayHost(url),
+                        resultCount: 0,
+                        sourceHosts: [Self.displayHost(url)],
+                        isInProgress: false
                     )
                 )
             }
 
         default:
             let query = (action["query"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let resolvedQuery = (query?.isEmpty == false) ? query : placeName
             emit(
-                GrokEnrichmentActivity(
+                GrokSearchStep(
                     id: "search-\(itemID)",
-                    title: query?.isEmpty == false ? "검색: \(query!)" : "웹 검색 완료",
-                    detail: sources.isEmpty ? nil : "\(sources.count)개 출처 확인",
-                    sources: Array(sources.prefix(4)),
-                    symbolName: "magnifyingglass"
+                    kind: .webSearch,
+                    query: resolvedQuery,
+                    pageHost: nil,
+                    resultCount: sourceHosts.count,
+                    sourceHosts: Array(sourceHosts.prefix(3)),
+                    isInProgress: false
                 )
             )
         }
-
-        activeSearchIDs.remove(itemID)
     }
 
-    func emitComposing(isInProgress: Bool) {
-        emit(
-            GrokEnrichmentActivity(
-                id: "composing",
-                title: isInProgress ? "검색 결과 정리 중" : "검색 결과 정리 완료",
-                isInProgress: isInProgress,
-                symbolName: "text.alignleft"
-            )
-        )
+    private func emit(_ step: GrokSearchStep) {
+        onActivity?(step)
     }
 
-    private func emit(_ activity: GrokEnrichmentActivity) {
-        onActivity?(activity)
-    }
-
-    private static func truncated(_ text: String, limit: Int) -> String {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count > limit else { return trimmed }
-        return String(trimmed.prefix(limit)) + "…"
-    }
-
-    private static func sourceLabels(from sources: [[String: Any]]) -> [String] {
+    private static func sourceHosts(from sources: [[String: Any]]) -> [String] {
         sources.compactMap { source in
             guard let url = source["url"] as? String else { return nil }
             return displayHost(url)
