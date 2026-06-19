@@ -84,16 +84,21 @@ struct PlaceDetailSheet: View {
         let isSelected = selectedListType == listType
 
         return Button {
-            selectedListType = listType
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                selectedListType = listType
+            }
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                     .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(isSelected ? .black : .black.opacity(0.35))
+                    .contentTransition(.identity)
 
                 Text(title)
                     .font(.subheadline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isSelected ? .primary : .secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
@@ -104,6 +109,7 @@ struct PlaceDetailSheet: View {
                         lineWidth: 1.5
                     )
             }
+            .animation(nil, value: selectedListType)
         }
         .buttonStyle(.plain)
     }
