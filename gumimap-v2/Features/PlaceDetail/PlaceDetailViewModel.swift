@@ -119,11 +119,7 @@ final class PlaceDetailViewModel {
         do {
             let service = try GrokPlaceSearchService.makeFromSecrets()
             let result = try await service.enrichPlace(
-                name: place.name,
-                address: place.address,
-                category: place.category,
-                phone: place.phone,
-                kakaoMapURL: place.kakaoMapURL,
+                place,
                 onProgress: handleProgress
             )
             guard !Task.isCancelled else { return }

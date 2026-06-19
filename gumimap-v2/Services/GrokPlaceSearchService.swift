@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 
 enum GrokPlaceSearchError: LocalizedError {
@@ -31,6 +32,17 @@ struct GrokPlaceSearchService: Sendable {
         return URLSession(configuration: configuration)
     }()
 
+    private static let mapSearchDomains = [
+        "map.naver.com",
+        "pcmap.place.naver.com",
+        "place.map.kakao.com"
+    ]
+
+    private static let reviewSearchDomains = [
+        "blog.naver.com",
+        "www.diningcode.com"
+    ]
+
     private let apiKey: String
     private let session: URLSession
     private let endpoint = URL(string: "https://api.x.ai/v1/responses")!
@@ -48,14 +60,10 @@ struct GrokPlaceSearchService: Sendable {
     }
 
     func enrichPlace(
-        name: String,
-        address: String? = nil,
-        category: String? = nil,
-        phone: String? = nil,
-        kakaoMapURL: URL? = nil,
+        _ place: Place,
         onProgress: (@Sendable (GrokSearchProgress) -> Void)? = nil
     ) async throws -> GrokPlaceDetail {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = place.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw GrokPlaceSearchError.emptyQuery }
 
         onProgress?(GrokSearchProgress(
@@ -63,62 +71,111 @@ struct GrokPlaceSearchService: Sendable {
             detail: trimmed
         ))
 
-        let userPrompt = buildUserPrompt(
-            name: trimmed,
-            address: address,
-            category: category,
-            phone: phone,
-            kakaoMapURL: kakaoMapURL
-        )
+        async let mapListing = fetchMapListing(place: place, onProgress: onProgress)
+        async let reviews = fetchCommunityReviews(place: place, onProgress: onProgress)
 
-        let response: GrokPlaceDetailResponse = try await executeSearch(
-            query: trimmed,
-            systemPrompt: Self.placeDetailSystemPrompt,
-            userPrompt: userPrompt,
-            onProgress: onProgress,
-            responseSchema: placeDetailJSONSchema,
-            schemaName: "gumi_place_detail"
-        )
+        let listing = try? await mapListing
+        let reviewPoints = (try? await reviews) ?? []
 
-        guard let place = response.places.first else {
+        guard listing != nil || !reviewPoints.isEmpty else {
             throw GrokPlaceSearchError.invalidResponse
         }
 
-        return place
+        return GrokPlaceDetail.from(
+            place: place,
+            mapListing: listing,
+            reviews: reviewPoints
+        )
     }
 
-    private func buildUserPrompt(
-        name: String,
-        address: String?,
-        category: String?,
-        phone: String?,
-        kakaoMapURL: URL?
-    ) -> String {
+    // MARK: - Focused searches
+
+    private func fetchMapListing(
+        place: Place,
+        onProgress: (@Sendable (GrokSearchProgress) -> Void)?
+    ) async throws -> GrokMapListing? {
+        onProgress?(GrokSearchProgress(
+            message: "네이버·카카오 지도에서 영업정보 확인 중",
+            detail: place.name
+        ))
+
+        let response: GrokMapListingResponse = try await executeSearch(
+            query: place.name,
+            systemPrompt: Self.mapListingSystemPrompt,
+            userPrompt: buildMapUserPrompt(place: place),
+            onProgress: onProgress,
+            responseSchema: mapListingJSONSchema,
+            schemaName: "gumi_map_listing",
+            allowedDomains: Self.mapSearchDomains,
+            reasoningEffort: "medium",
+            searchProgressMessage: "지도 페이지에서 영업정보 수집 중"
+        )
+
+        return response.listing
+    }
+
+    private func fetchCommunityReviews(
+        place: Place,
+        onProgress: (@Sendable (GrokSearchProgress) -> Void)?
+    ) async throws -> [String] {
+        onProgress?(GrokSearchProgress(
+            message: "블로그·다이닝코드에서 리뷰 수집 중",
+            detail: place.name
+        ))
+
+        let response: GrokReviewsResponse = try await executeSearch(
+            query: place.name,
+            systemPrompt: Self.reviewsSystemPrompt,
+            userPrompt: buildReviewsUserPrompt(place: place),
+            onProgress: onProgress,
+            responseSchema: reviewsJSONSchema,
+            schemaName: "gumi_place_reviews",
+            allowedDomains: Self.reviewSearchDomains,
+            reasoningEffort: "low",
+            searchProgressMessage: "커뮤니티 후기 검색 중"
+        )
+
+        return response.reviews.filter { PlaceFeatures.hasContent($0) }
+    }
+
+    private func buildMapUserPrompt(place: Place) -> String {
         var lines = [
-            "Find this exact place in Gumi (구미), Gyeongsangbuk-do, South Korea.",
-            "Place name: \(name)"
+            "Extract structured info for this exact store in Gumi (구미), Gyeongsangbuk-do.",
+            "Place name: \(place.name)",
+            "Address: \(place.address)",
+            "Coordinates: \(place.coordinate.latitude), \(place.coordinate.longitude)"
         ]
 
-        if let address, !address.isEmpty {
-            lines.append("Address: \(address)")
+        if !place.category.isEmpty {
+            lines.append("Category: \(place.category)")
         }
-        if let category, !category.isEmpty {
-            lines.append("Category: \(category)")
-        }
-        if let phone, !phone.isEmpty {
+        if let phone = place.phone, !phone.isEmpty {
             lines.append("Phone: \(phone)")
         }
-        if let kakaoMapURL {
-            lines.append("Kakao Map URL (open and read this listing first): \(kakaoMapURL.absoluteString)")
+        if let kakaoMapURL = place.kakaoMapURL {
+            lines.append("PRIMARY SOURCE — open this Kakao Map listing first: \(kakaoMapURL.absoluteString)")
+        } else {
+            lines.append("Search \"\(place.name) 구미\" on map.naver.com or place.map.kakao.com and open the exact detail page.")
         }
 
         lines.append("""
         
-        Search this exact store in Gumi. Use the Kakao URL when provided.
-        For reviews, search blog.naver.com and www.diningcode.com for "\(name) 구미 후기".
+        Read every tab on the map page: 홈, 정보, 메뉴, 영업정보, 편의시설.
+        Copy breakTime, parking, businessHours verbatim from the map listing only.
         """)
 
         return lines.joined(separator: "\n")
+    }
+
+    private func buildReviewsUserPrompt(place: Place) -> String {
+        """
+        Find community reviews for this exact store in Gumi:
+        Name: \(place.name)
+        Address: \(place.address)
+
+        Search blog.naver.com and www.diningcode.com for "\(place.name) 구미 후기".
+        Read 2-3 recent posts. Return only review bullet points — no hours, parking, or menu facts.
+        """
     }
 
     // MARK: - API execution
@@ -129,7 +186,10 @@ struct GrokPlaceSearchService: Sendable {
         userPrompt: String,
         onProgress: (@Sendable (GrokSearchProgress) -> Void)?,
         responseSchema: JSONSchema,
-        schemaName: String
+        schemaName: String,
+        allowedDomains: [String]?,
+        reasoningEffort: String,
+        searchProgressMessage: String
     ) async throws -> Response {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
@@ -141,7 +201,9 @@ struct GrokPlaceSearchService: Sendable {
                 systemPrompt: systemPrompt,
                 userPrompt: userPrompt,
                 responseSchema: responseSchema,
-                schemaName: schemaName
+                schemaName: schemaName,
+                allowedDomains: allowedDomains,
+                reasoningEffort: reasoningEffort
             )
         )
 
@@ -162,7 +224,8 @@ struct GrokPlaceSearchService: Sendable {
         let completedResponse = try await parseStream(
             bytes: bytes,
             query: query,
-            onProgress: onProgress
+            onProgress: onProgress,
+            searchProgressMessage: searchProgressMessage
         )
         return try decodeResponse(from: completedResponse)
     }
@@ -170,7 +233,8 @@ struct GrokPlaceSearchService: Sendable {
     private func parseStream(
         bytes: URLSession.AsyncBytes,
         query: String,
-        onProgress: (@Sendable (GrokSearchProgress) -> Void)?
+        onProgress: (@Sendable (GrokSearchProgress) -> Void)?,
+        searchProgressMessage: String
     ) async throws -> Data {
         var completedJSON: Data?
         var hasWebSearchStarted = false
@@ -196,8 +260,8 @@ struct GrokPlaceSearchService: Sendable {
                 if event.item?.type == "web_search_call", !hasWebSearchStarted {
                     hasWebSearchStarted = true
                     onProgress?(GrokSearchProgress(
-                        message: "지도·커뮤니티에서 검색 중",
-                        detail: "'\(query)' 관련 정보 수집"
+                        message: searchProgressMessage,
+                        detail: "'\(query)'"
                     ))
                 }
 
@@ -239,20 +303,22 @@ struct GrokPlaceSearchService: Sendable {
         systemPrompt: String,
         userPrompt: String,
         responseSchema: JSONSchema,
-        schemaName: String
+        schemaName: String,
+        allowedDomains: [String]?,
+        reasoningEffort: String
     ) -> ResponsesAPIRequest {
         ResponsesAPIRequest(
             model: "grok-4.3",
             store: false,
             stream: true,
             maxOutputTokens: 4096,
-            reasoning: ReasoningConfig(effort: "low"),
+            reasoning: ReasoningConfig(effort: reasoningEffort),
             input: [
                 InputMessage(role: "system", content: systemPrompt),
                 InputMessage(role: "user", content: userPrompt)
             ],
             tools: [
-                WebSearchTool(type: "web_search")
+                WebSearchTool(type: "web_search", allowedDomains: allowedDomains)
             ],
             text: TextConfig(
                 format: TextFormat(
@@ -289,21 +355,7 @@ struct GrokPlaceSearchService: Sendable {
         }
     }
 
-    private var placeDetailJSONSchema: JSONSchema {
-        JSONSchema(
-            type: "object",
-            properties: [
-                "places": JSONSchemaProperty(
-                    type: "array",
-                    items: placeItemJSONSchema,
-                    minItems: 1,
-                    maxItems: 1
-                )
-            ],
-            required: ["places"],
-            additionalProperties: false
-        )
-    }
+    // MARK: - JSON schemas
 
     private var stringItemSchema: JSONSchema {
         JSONSchema(
@@ -320,23 +372,23 @@ struct GrokPlaceSearchService: Sendable {
             properties: [
                 "popularMenu": JSONSchemaProperty(
                     type: "string",
-                    description: "인기 메뉴·시그니처 메뉴 (Korean, concise)"
+                    description: "Verbatim copy of 대표메뉴/시그니처 from map page menu or summary tab"
                 ),
                 "breakTime": JSONSchemaProperty(
                     type: "string",
-                    description: "브레이크 타임 시간대 (e.g. 15:00-17:00) or 정보 없음"
+                    description: "Verbatim copy of 브레이크타임/라스트오더 time range from map 영업정보; use 없음 only if map explicitly says none"
                 ),
                 "parking": JSONSchemaProperty(
                     type: "string",
-                    description: "주차 가능 여부·위치·요금 (Korean)"
+                    description: "Verbatim copy of 주차/주차가능/주차안내 from map 편의시설; never contradict the map page"
                 ),
                 "wait": JSONSchemaProperty(
                     type: "string",
-                    description: "평균 대기·혼잡 시간대·예약 필요 여부 (Korean)"
+                    description: "Waiting/혼잡/예약 from map page only, or 정보 없음"
                 ),
                 "closedDay": JSONSchemaProperty(
                     type: "string",
-                    description: "정기 휴무일 (e.g. 매주 월요일) or 정보 없음"
+                    description: "Verbatim copy of 정기 휴무일 from map hours or 휴무일 field"
                 )
             ],
             required: ["popularMenu", "breakTime", "parking", "wait", "closedDay"],
@@ -344,65 +396,84 @@ struct GrokPlaceSearchService: Sendable {
         )
     }
 
-    private var placeItemJSONSchema: JSONSchema {
+    private var mapListingJSONSchema: JSONSchema {
         JSONSchema(
             type: "object",
             properties: [
-                "name": JSONSchemaProperty(type: "string"),
-                "address": JSONSchemaProperty(type: "string"),
-                "latitude": JSONSchemaProperty(type: "number"),
-                "longitude": JSONSchemaProperty(type: "number"),
-                "category": JSONSchemaProperty(type: "string"),
+                "listing": JSONSchemaProperty(
+                    type: "object",
+                    nestedSchema: JSONSchema(
+                        type: "object",
+                        properties: [
+                            "features": JSONSchemaProperty(
+                                type: "object",
+                                nestedSchema: placeFeaturesSchema
+                            ),
+                            "businessHours": JSONSchemaProperty(
+                                type: "string",
+                                description: "All 7 weekdays verbatim from map 영업시간, e.g. 월 11:00-22:00, 화 휴무, ..."
+                            )
+                        ],
+                        required: ["features", "businessHours"],
+                        additionalProperties: false
+                    )
+                )
+            ],
+            required: ["listing"],
+            additionalProperties: false
+        )
+    }
+
+    private var reviewsJSONSchema: JSONSchema {
+        JSONSchema(
+            type: "object",
+            properties: [
                 "reviews": JSONSchemaProperty(
                     type: "array",
                     description: "2-4 specific Korean insights from real blog/diningcode posts; empty if none found",
                     items: stringItemSchema,
                     minItems: 0,
                     maxItems: 4
-                ),
-                "features": JSONSchemaProperty(
-                    type: "object",
-                    description: "Structured place traits with exactly 5 fields",
-                    nestedSchema: placeFeaturesSchema
-                ),
-                "businessHours": JSONSchemaProperty(
-                    type: "string",
-                    description: "All 7 weekdays from official listing, e.g. 월 11:00-22:00, 화 휴무, ..."
                 )
             ],
-            required: [
-                "name", "address", "latitude", "longitude", "category",
-                "reviews", "features", "businessHours"
-            ],
+            required: ["reviews"],
             additionalProperties: false
         )
     }
 
-    private static let placeDetailSystemPrompt = """
-    You research ONE real restaurant or cafe in Gumi (구미), Gyeongsangbuk-do, South Korea.
-    Focus on visitor-facing insights from community sources and official map listings.
+    private static let mapListingSystemPrompt = """
+    You extract structured facts from ONE Naver Place or Kakao Map listing in Gumi, South Korea.
 
-    Use at most 3 web_search calls:
-    1. map.naver.com, pcmap.place.naver.com, or place.map.kakao.com for "{name} 구미" — verify name, address, coordinates, hours, features
-    2. blog.naver.com or www.diningcode.com for "{name} 구미 후기" — read 2-3 recent posts for reviews
-    3. If traits still missing: search menu, parking, break time, or holiday info from blogs or map tabs
+    SOURCE OF TRUTH: only map.naver.com, pcmap.place.naver.com, or place.map.kakao.com detail pages.
+    NEVER use blogs, reviews, or inference for any field.
 
-    Return exactly 1 place with:
-    - name, address, latitude/longitude, category: from official map listing
-    - reviews: 2-4 bullet points from real community posts (Korean, max ~50 chars each)
-      • Each must mention a concrete detail: menu name, taste, price, seating, wait, service, vibe
-      • Never use vague lines like "맛있어요" or "분위기 좋아요" alone
-      • Return [] if no trustworthy community posts exist — do NOT invent reviews
-    - features: object with exactly these 5 fields (use "정보 없음" when unknown):
-      • popularMenu — 인기 메뉴 / 시그니처 메뉴
-      • breakTime — 브레이크 타임 (e.g. "15:00-17:00" or "없음")
-      • parking — 주차 정보
-      • wait — 대기·혼잡·예약 정보
-      • closedDay — 정기 휴무일
-    - businessHours: all 7 weekdays from Naver/Kakao listing, format "월 HH:MM-HH:MM, 화 ..., 수 ..., 목 ..., 금 ..., 토 ..., 일 ...", use "휴무" for closed days
+    Rules:
+    1. Open the provided Kakao Map URL first when given; otherwise find the exact store on Naver/Kakao map.
+    2. Read ALL tabs: 홈, 정보, 메뉴, 영업정보, 편의시설.
+    3. COPY text verbatim from the map page — do not paraphrase, guess, or invert facts.
+       • If the page says 주차가능 or 주차 있음 → never write 불가능 or 불가.
+       • breakTime: copy the exact time range shown (e.g. "15:00-17:00").
+       • parking: copy exactly as shown (e.g. "주차 가능 (매장 앞)", "건물 지하 주차장").
+    4. Use "정보 없음" ONLY when the map page truly does not show that field after checking all tabs.
+    5. Use "없음" for breakTime ONLY when the map page explicitly states no break time.
 
-    Each reviews item must be a single scannable line — no paragraphs, no numbering prefix.
-    Do NOT invent reviews. Prefer recent blog and dining community sources.
+    Return listing.features (5 fields) and listing.businessHours (all 7 weekdays).
+    Format hours: "월 HH:MM-HH:MM, 화 ..., 수 ..., 목 ..., 금 ..., 토 ..., 일 ...", use "휴무" for closed days.
+    Max 2 web_search calls.
+    """
+
+    private static let reviewsSystemPrompt = """
+    You collect community review insights for ONE restaurant or cafe in Gumi, South Korea.
+
+    Search ONLY blog.naver.com and www.diningcode.com for recent posts about this exact store.
+    Do NOT extract business hours, parking, break time, or menu facts — reviews only.
+
+    Return 2-4 bullet points (Korean, max ~50 chars each):
+    • Each must mention a concrete detail: menu name, taste, price, seating, wait, service, vibe
+    • Never use vague lines like "맛있어요" or "분위기 좋아요" alone
+    • Return [] if no trustworthy posts exist — do NOT invent reviews
+
+    Max 2 web_search calls.
     """
 }
 
@@ -441,6 +512,20 @@ private struct InputMessage: Encodable {
 
 private struct WebSearchTool: Encodable {
     let type: String
+    let filters: WebSearchFilters?
+
+    init(type: String, allowedDomains: [String]?) {
+        self.type = type
+        self.filters = allowedDomains.map { WebSearchFilters(allowedDomains: $0) }
+    }
+}
+
+private struct WebSearchFilters: Encodable {
+    let allowedDomains: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case allowedDomains = "allowed_domains"
+    }
 }
 
 private struct TextConfig: Encodable {

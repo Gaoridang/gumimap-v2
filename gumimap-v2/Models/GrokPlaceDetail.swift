@@ -1,7 +1,17 @@
+import CoreLocation
 import Foundation
 
-struct GrokPlaceDetailResponse: Codable, Sendable {
-    let places: [GrokPlaceDetail]
+struct GrokMapListingResponse: Codable, Sendable {
+    let listing: GrokMapListing
+}
+
+struct GrokMapListing: Codable, Sendable {
+    let features: PlaceFeatures
+    let businessHours: String
+}
+
+struct GrokReviewsResponse: Codable, Sendable {
+    let reviews: [String]
 }
 
 struct PlaceFeatures: Codable, Sendable, Equatable {
@@ -76,4 +86,34 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
     var hasAnyInsight: Bool {
         hasReviews || features.hasAnyContent
     }
+
+    static func from(
+        place: Place,
+        mapListing: GrokMapListing?,
+        reviews: [String]
+    ) -> GrokPlaceDetail {
+        let features = mapListing?.features ?? PlaceFeatures.empty
+        let hours = mapListing?.businessHours ?? ""
+
+        return GrokPlaceDetail(
+            name: place.name,
+            address: place.address,
+            latitude: place.coordinate.latitude,
+            longitude: place.coordinate.longitude,
+            category: place.category,
+            reviews: reviews,
+            features: features,
+            businessHours: hours
+        )
+    }
+}
+
+extension PlaceFeatures {
+    static let empty = PlaceFeatures(
+        popularMenu: "정보 없음",
+        breakTime: "정보 없음",
+        parking: "정보 없음",
+        wait: "정보 없음",
+        closedDay: "정보 없음"
+    )
 }
