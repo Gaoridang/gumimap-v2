@@ -6,14 +6,15 @@ Last updated: 2026-06-19
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
-| Working tree | Clean after floating toolbar merge |
+| Active branch | `feat/search-overlay` |
+| Working tree | Spotlight search overlay with mock results implemented |
 | Last verified | xcodebuild + iOS 26.5 simulator launch succeeded |
 
 ## Merged / Shipped
 
 - Agent workflow rules: `AGENTS.md`, `docs/agent-workflow.md`, `.cursor/rules/`, `scripts/run-simulator.sh`
 - Floating pill toolbar (Lucide icons, map/list modes, list sub-tabs)
+- Spotlight search overlay (mock place results, toolbar-matched design)
 
 ## What Is on the App Now
 
@@ -24,14 +25,17 @@ Last updated: 2026-06-19
   - Spring animation on mode switch; sub-tabs slide in from the right
 - **List sub-tabs:** 가본 곳 (visited) / 가고 싶은 곳 (wishlist)
 - Placeholder `MapTabView` / `ListTabView`
-- Search button is UI-only placeholder
+- Search opens centered Spotlight overlay with auto keyboard focus
+- Mock place search filters 10 Korean sample locations
+- Tap outside dimmed area dismisses search and clears query
 - Original `ContentView` + `Item` SwiftData template unchanged (not wired in)
 
 ## Next Tasks
 
 - Wire MapKit into `MapTabView`
 - Wire list data into `ListTabView` (or reuse `ContentView`)
-- Implement search action
+- Wire Kakao Local API into search (replace mock data)
+- Handle search result selection (map camera / save to list)
 - Fix `run-simulator.sh` to target iOS 26.5 simulator by default
 
 ## Key Paths
@@ -45,6 +49,9 @@ Last updated: 2026-06-19
 | `gumimap-v2/Navigation/ToolbarIcon.swift` | Lucide asset icon wrapper |
 | `gumimap-v2/Features/Map/MapTabView.swift` | Map placeholder |
 | `gumimap-v2/Features/List/ListTabView.swift` | List placeholder |
+| `gumimap-v2/Features/Search/SearchOverlayView.swift` | Spotlight search UI |
+| `gumimap-v2/Features/Search/SearchViewModel.swift` | Search state and filtering |
+| `gumimap-v2/Features/Search/MockPlace.swift` | Mock place samples |
 | `gumimap-v2/Assets.xcassets/toolbar-*.imageset/` | Lucide SVG toolbar icons |
 | `scripts/run-simulator.sh` | Build, install, launch (use iOS 26.5 sim) |
 | `AGENTS.md` | Agent index and hard rules |

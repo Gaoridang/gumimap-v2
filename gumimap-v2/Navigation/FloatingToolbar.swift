@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FloatingToolbar: View {
     @Bindable var router: TabRouter
+    @Bindable var search: SearchViewModel
 
     private let itemSpacing: CGFloat = 10
     private let tabGroupSpacing: CGFloat = 6
@@ -88,7 +89,7 @@ struct FloatingToolbar: View {
 
     private var searchButton: some View {
         Button {
-            // Search placeholder
+            search.present()
         } label: {
             ToolbarIcon(asset: .search, isSelected: false)
         }
@@ -138,8 +139,9 @@ private extension View {
 
 #Preview {
     @Previewable @State var router = TabRouter()
+    @Previewable @State var search = SearchViewModel()
 
-    FloatingToolbar(router: router)
+    FloatingToolbar(router: router, search: search)
         .padding()
         .background(Color.gray.opacity(0.2))
 }
