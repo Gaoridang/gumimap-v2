@@ -4,7 +4,6 @@ struct SearchOverlayView: View {
     @Bindable var search: SearchViewModel
     @FocusState private var isFieldFocused: Bool
     @State private var keyboardHeight: CGFloat = 0
-    @State private var backdropVisible = false
     @State private var searchBarVisible = false
     @State private var resultsVisible = false
     @State private var isDismissing = false
@@ -19,10 +18,10 @@ struct SearchOverlayView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.black.opacity(backdropVisible ? 0.35 : 0)
-                .ignoresSafeArea()
+            Color.clear
                 .contentShape(Rectangle())
                 .onTapGesture { dismiss() }
+                .ignoresSafeArea()
 
             VStack(alignment: .center, spacing: 10) {
                 searchBar
@@ -141,13 +140,9 @@ struct SearchOverlayView: View {
     }
 
     private func playEntrance() {
-        backdropVisible = false
         searchBarVisible = false
         resultsVisible = false
 
-        withAnimation(SearchMotion.backdropIn) {
-            backdropVisible = true
-        }
         withAnimation(SearchMotion.searchBarIn) {
             searchBarVisible = true
         }
@@ -168,9 +163,6 @@ struct SearchOverlayView: View {
         }
         withAnimation(SearchMotion.searchBarOut) {
             searchBarVisible = false
-        }
-        withAnimation(SearchMotion.backdropOut) {
-            backdropVisible = false
         }
 
         Task { @MainActor in
