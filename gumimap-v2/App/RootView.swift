@@ -24,8 +24,15 @@ struct RootView: View {
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .search:
-                    SearchTabView(search: search)
+                    SearchTabView(search: search, router: router)
                 }
+            }
+            .sheet(item: $router.selectedPlace) { place in
+                PlaceDetailSheet(place: place) {
+                    router.dismissPlace()
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
         }
     }

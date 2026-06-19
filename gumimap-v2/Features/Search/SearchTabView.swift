@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SearchTabView: View {
     @Bindable var search: SearchViewModel
+    @Bindable var router: TabRouter
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isFieldFocused: Bool
 
@@ -95,32 +96,39 @@ struct SearchTabView: View {
     }
 
     private func resultRow(_ place: Place) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(place.name)
-                .font(.body)
-                .foregroundStyle(.primary)
+        Button {
+            router.presentPlace(place)
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(place.name)
+                    .font(.body)
+                    .foregroundStyle(.primary)
 
-            Text(place.address)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+                Text(place.address)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-            if !place.category.isEmpty {
-                Text(place.category)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                if !place.category.isEmpty {
+                    Text(place.category)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .buttonStyle(.plain)
     }
 }
 
 #Preview {
     @Previewable @State var search = SearchViewModel()
+    @Previewable @State var router = TabRouter()
 
     NavigationStack {
-        SearchTabView(search: search)
+        SearchTabView(search: search, router: router)
     }
 }
