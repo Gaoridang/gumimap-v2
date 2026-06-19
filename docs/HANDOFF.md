@@ -7,7 +7,7 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/grok-place-enrichment` |
-| Working tree | Grok place detail demo removed; search-only flow restored |
+| Working tree | Search results show without loading spinner |
 | Last verified | xcodebuild + iOS 26.5 simulator launch |
 
 ## Merged / Shipped

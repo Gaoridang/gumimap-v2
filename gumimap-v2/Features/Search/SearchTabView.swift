@@ -59,26 +59,7 @@ struct SearchTabView: View {
     private var resultsContent: some View {
         if trimmedQuery.isEmpty {
             Spacer()
-        } else if search.isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        } else if let errorMessage = search.errorMessage {
-            Text(errorMessage)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
-                .padding(.top, 4)
-            Spacer()
-        } else if search.results.isEmpty {
-            Text("검색 결과가 없습니다")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
-                .padding(.top, 4)
-            Spacer()
-        } else {
+        } else if !search.results.isEmpty {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(search.results) { place in
@@ -92,6 +73,24 @@ struct SearchTabView: View {
                 }
                 .padding(.bottom, 24)
             }
+        } else if let errorMessage = search.errorMessage, !search.isLoading {
+            Text(errorMessage)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+            Spacer()
+        } else if !search.isLoading {
+            Text("검색 결과가 없습니다")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+            Spacer()
+        } else {
+            Spacer()
         }
     }
 
