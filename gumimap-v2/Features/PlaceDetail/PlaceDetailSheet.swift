@@ -199,7 +199,7 @@ struct PlaceDetailSheet: View {
 
     private var enrichmentSummaryText: String {
         if viewModel.isLoadingEnrichment {
-            return "이곳은 구미에서 인기 있는 장소로, 방문객들이 자주 찾는 대표적인 특징을 간단히 소개합니다."
+            return "가나다라마바사아자차카타파하가나다라마바사아자차카타파하"
         }
         return viewModel.enrichment?.summary ?? ""
     }
@@ -207,8 +207,8 @@ struct PlaceDetailSheet: View {
     private var enrichmentHighlightLines: [String] {
         if viewModel.isLoadingEnrichment {
             return [
-                "• 대표 메뉴와 분위기를 확인할 수 있습니다",
-                "• 주변과 함께 둘러보기 좋은 포인트가 있습니다",
+                "• 가나다라마바사아자차카타파하",
+                "• 가나다라마바사아자차카타파하",
             ]
         }
         return viewModel.enrichment?.highlights.map { "• \($0)" } ?? []
@@ -223,7 +223,7 @@ struct PlaceDetailSheet: View {
 
     private var enrichmentVisitTipText: String {
         if viewModel.isLoadingEnrichment {
-            return "방문 전 영업시간과 혼잡도를 확인하면 더 편하게 이용할 수 있습니다."
+            return "가나다라마바사아자차카타파하가나다라마바사"
         }
         return viewModel.enrichment?.visitTip ?? ""
     }
