@@ -42,64 +42,53 @@ struct PlaceDetailSheet: View {
     }
 
     private var addressSection: some View {
-        detailRow(title: "주소", value: place.address)
+        Text(place.address)
+            .font(.body)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
     private var phoneSection: some View {
         if let phone = place.phone, let phoneURL = place.phoneURL {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("전화번호")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Link(destination: phoneURL) {
-                    Text(phone)
-                        .font(.body)
-                        .foregroundStyle(.primary)
-                }
+            Link(destination: phoneURL) {
+                Text(phone)
+                    .font(.body)
+                    .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            detailRow(title: "전화번호", value: "정보 없음", valueColor: .secondary)
+            Text("정보 없음")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     private var mapPlaceholder: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("지도")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.tertiarySystemFill))
-                .frame(height: 180)
-                .overlay {
-                    VStack(spacing: 6) {
-                        Image(systemName: "map")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                        Text("지도 미리보기")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text(String(format: "%.5f, %.5f", place.coordinate.latitude, place.coordinate.longitude))
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(Color(.tertiarySystemFill))
+            .frame(height: 180)
+            .overlay {
+                VStack(spacing: 6) {
+                    Image(systemName: "map")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("지도 미리보기")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "%.5f, %.5f", place.coordinate.latitude, place.coordinate.longitude))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                 }
-        }
+            }
     }
 
     private var listTypeSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("목록")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 8) {
-                listTypeButton(.wishlist, title: "가고 싶은 곳")
-                listTypeButton(.visited, title: "가본 곳")
-            }
+        HStack(spacing: 8) {
+            listTypeButton(.wishlist, title: "가고 싶은 곳")
+            listTypeButton(.visited, title: "가본 곳")
         }
     }
 
@@ -108,14 +97,12 @@ struct PlaceDetailSheet: View {
         let asset: ToolbarIconAsset = listType == .wishlist ? .wishlist : .visited
 
         return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedListType = listType
-            }
+            selectedListType = listType
         } label: {
             HStack(spacing: 8) {
                 ToolbarIcon(asset: asset, isSelected: isSelected, size: 18)
                 Text(title)
-                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                    .font(.subheadline)
                     .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity)
@@ -149,20 +136,6 @@ struct PlaceDetailSheet: View {
         .padding(.top, 8)
         .padding(.bottom, 12)
         .background(Color(.systemGroupedBackground))
-    }
-
-    private func detailRow(title: String, value: String, valueColor: Color = .primary) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(value)
-                .font(.body)
-                .foregroundStyle(valueColor)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
