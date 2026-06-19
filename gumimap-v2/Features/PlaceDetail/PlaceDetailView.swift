@@ -338,7 +338,7 @@ struct PlaceDetailView: View {
     private func structuredFeaturesCard(_ features: PlaceFeatures) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("특징", systemImage: "sparkles")
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
 
@@ -361,12 +361,12 @@ struct PlaceDetailView: View {
     private func featureRow(label: String, value: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Text(label)
-                .font(.subheadline.weight(.medium))
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 88, alignment: .leading)
 
             Text(value)
-                .font(.body)
+                .font(.subheadline)
                 .foregroundStyle(value == "정보 없음" ? .tertiary : .primary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -377,7 +377,7 @@ struct PlaceDetailView: View {
     private func bulletCard(title: String, icon: String, points: [String]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: icon)
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
 
@@ -385,12 +385,12 @@ struct PlaceDetailView: View {
                 ForEach(Array(points.enumerated()), id: \.offset) { _, point in
                     HStack(alignment: .top, spacing: 8) {
                         Text("•")
-                            .font(.body.weight(.semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.tertiary)
                             .padding(.top, 1)
 
                         Text(point)
-                            .font(.body)
+                            .font(.subheadline)
                             .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)

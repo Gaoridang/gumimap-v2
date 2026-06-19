@@ -36,7 +36,7 @@ final class PlaceDetailViewModel {
 
     var isOpenNow: Bool? {
         guard case .loaded = enrichmentState, let detail else { return nil }
-        return detail.isOpenNow
+        return detail.isCurrentlyOpen
     }
 
     var showProgress: Bool {
@@ -57,8 +57,8 @@ final class PlaceDetailViewModel {
         case .loading:
             return "Grok이 추가 정보를 찾고 있어요."
         case .loaded:
-            if let detail {
-                return detail.isOpenNow ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
+            if let detail, let isOpen = detail.isCurrentlyOpen {
+                return isOpen ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
             }
             return "추가 정보를 불러왔어요."
         case .failed:

@@ -43,7 +43,14 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
     let category: String
     let reviews: [String]
     let features: PlaceFeatures
-    let isOpenNow: Bool
+    let businessHours: String
+
+    var isCurrentlyOpen: Bool? {
+        BusinessHoursParser.isOpenNow(
+            businessHours: businessHours,
+            breakTime: features.breakTime
+        )
+    }
 
     private static func hasContent(_ value: String) -> Bool {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)

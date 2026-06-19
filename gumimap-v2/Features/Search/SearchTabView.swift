@@ -65,8 +65,10 @@ struct SearchTabView: View {
                     ForEach(search.results) { place in
                         NavigationLink(value: AppRoute.placeDetail(place)) {
                             resultRow(place)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                         if place.id != search.results.last?.id {
                             Divider()
