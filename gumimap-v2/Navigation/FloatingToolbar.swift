@@ -6,8 +6,8 @@ struct FloatingToolbar: View {
     var body: some View {
         HStack(spacing: 8) {
             HStack(spacing: 10) {
-                tabButton(glyph: .pin, tab: .map)
-                tabButton(glyph: .list, tab: .list)
+                tabButton(asset: .pin, tab: .map)
+                tabButton(asset: .list, tab: .list)
             }
 
             toolbarDivider
@@ -15,7 +15,7 @@ struct FloatingToolbar: View {
             Button {
                 // Search placeholder
             } label: {
-                ToolbarGlyphView(glyph: .search, isSelected: false)
+                ToolbarIcon(asset: .search, isSelected: false)
             }
             .buttonStyle(.plain)
             .toolbarTapTarget()
@@ -35,11 +35,11 @@ struct FloatingToolbar: View {
             .frame(width: 1, height: 16)
     }
 
-    private func tabButton(glyph: ToolbarGlyph, tab: AppTab) -> some View {
+    private func tabButton(asset: ToolbarIconAsset, tab: AppTab) -> some View {
         Button {
             router.selectedTab = tab
         } label: {
-            ToolbarGlyphView(glyph: glyph, isSelected: router.selectedTab == tab)
+            ToolbarIcon(asset: asset, isSelected: router.selectedTab == tab)
         }
         .buttonStyle(.plain)
         .toolbarTapTarget()
