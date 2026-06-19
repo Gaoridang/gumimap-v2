@@ -77,6 +77,14 @@ struct PlaceDetailSheet: View {
         HStack(spacing: 20) {
             listTypeButton(.wishlist, title: "가고싶음")
             listTypeButton(.visited, title: "갔다옴")
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
         }
     }
 
