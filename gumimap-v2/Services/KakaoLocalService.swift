@@ -27,7 +27,13 @@ struct KakaoLocalService: Sendable {
         self.apiKey = apiKey
     }
 
-    func search(keyword: String, page: Int = 1, size: Int = 15) async throws -> [Place] {
+    func search(
+        keyword: String,
+        center: CLLocationCoordinate2D = SearchRegion.gumiCenter,
+        radiusMeters: Int = SearchRegion.gumiRadiusMeters,
+        page: Int = 1,
+        size: Int = 15
+    ) async throws -> [Place] {
         guard !apiKey.isEmpty else {
             throw KakaoLocalError.missingAPIKey
         }
@@ -35,6 +41,9 @@ struct KakaoLocalService: Sendable {
         var components = URLComponents(string: "https://dapi.kakao.com/v2/local/search/keyword.json")
         components?.queryItems = [
             URLQueryItem(name: "query", value: keyword),
+            URLQueryItem(name: "x", value: String(center.longitude)),
+            URLQueryItem(name: "y", value: String(center.latitude)),
+            URLQueryItem(name: "radius", value: String(radiusMeters)),
             URLQueryItem(name: "page", value: String(page)),
             URLQueryItem(name: "size", value: String(size)),
         ]
@@ -58,7 +67,9 @@ struct KakaoLocalService: Sendable {
         }
 
         let decoded = try JSONDecoder().decode(KakaoKeywordSearchResponse.self, from: data)
-        return decoded.documents.map(\.place)
+        return decoded.documents
+            .map(\.place)
+            .filter { SearchRegion.isInGumi(address: $0.address) }
     }
 }
 
