@@ -15,7 +15,7 @@ struct RootView: View {
             }
 
             FloatingToolbar(router: router)
-                .padding(.bottom, 24)
+                .padding(.bottom, 12)
         }
     }
 }

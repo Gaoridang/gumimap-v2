@@ -4,10 +4,10 @@ struct FloatingToolbar: View {
     @Bindable var router: TabRouter
 
     var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 16) {
-                tabButton(systemName: "mappin", tab: .map)
-                tabButton(systemName: "list.bullet", tab: .list)
+        HStack(spacing: 8) {
+            HStack(spacing: 10) {
+                tabButton(glyph: .pin, tab: .map)
+                tabButton(glyph: .list, tab: .list)
             }
 
             toolbarDivider
@@ -15,45 +15,41 @@ struct FloatingToolbar: View {
             Button {
                 // Search placeholder
             } label: {
-                Image(systemName: "magnifyingglass")
-                    .toolbarIconStyle(isSelected: false)
+                ToolbarGlyphView(glyph: .search, isSelected: false)
             }
             .buttonStyle(.plain)
-            .frame(minWidth: 44, minHeight: 44)
+            .toolbarTapTarget()
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
         .background {
             Capsule()
                 .fill(.white)
-                .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
+                .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
         }
     }
 
     private var toolbarDivider: some View {
         Rectangle()
             .fill(Color.black.opacity(0.15))
-            .frame(width: 1, height: 20)
+            .frame(width: 1, height: 16)
     }
 
-    private func tabButton(systemName: String, tab: AppTab) -> some View {
+    private func tabButton(glyph: ToolbarGlyph, tab: AppTab) -> some View {
         Button {
             router.selectedTab = tab
         } label: {
-            Image(systemName: systemName)
-                .toolbarIconStyle(isSelected: router.selectedTab == tab)
+            ToolbarGlyphView(glyph: glyph, isSelected: router.selectedTab == tab)
         }
         .buttonStyle(.plain)
-        .frame(minWidth: 44, minHeight: 44)
+        .toolbarTapTarget()
     }
 }
 
-private extension Image {
-    func toolbarIconStyle(isSelected: Bool) -> some View {
-        self
-            .font(.system(size: 20, weight: .medium))
-            .foregroundStyle(.black)
-            .opacity(isSelected ? 1 : 0.4)
+private extension View {
+    func toolbarTapTarget() -> some View {
+        frame(width: 32, height: 32)
+            .contentShape(Rectangle())
     }
 }
 
