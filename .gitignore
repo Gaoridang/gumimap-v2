@@ -30,3 +30,4 @@ Carthage/Build/
 
 # Local secrets (never commit)
 Config/secrets.local.env
+gumimap-v2/Generated/Secrets.generated.swift

@@ -6,9 +6,9 @@ Last updated: 2026-06-19
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
-| Working tree | Search feature merged; mock data ready for Kakao API swap |
-| Last verified | xcodebuild + iOS 26.5 simulator launch; swipe-back confirmed |
+| Active branch | `feat/kakao-search-api` |
+| Working tree | Kakao Local API keyword search wired; build + iOS 26.5 simulator launch verified |
+| Last verified | xcodebuild + iOS 26.5 simulator launch (UDID `33061315-12AA-4456-B68A-29E603FCF1FC`) |
 
 ## Merged / Shipped
 
@@ -18,7 +18,18 @@ Last updated: 2026-06-19
   - `NavigationStack` push to `SearchTabView`
   - Edge swipe-back via `InteractivePopEnabler`
   - Flat `systemGroupedBackground` UI (no overlay, no white cards)
-  - Mock place search (10 Korean samples)
+
+## Shipped on `feat/kakao-search-api` (pending merge)
+
+- **Kakao Local API keyword search** replaces mock data
+  - `KakaoLocalService` → `GET /v2/local/search/keyword.json`
+  - `Place` model (name, address, category, lat/lng)
+  - `SearchViewModel`: 350ms debounce, loading/error states
+  - `SearchTabView`: progress spinner, error message, category label
+- **Secrets pipeline**
+  - `scripts/generate-secrets.sh` reads `Config/secrets.local.env`
+  - Build phase generates `gumimap-v2/Generated/Secrets.generated.swift` (gitignored)
+  - `Secrets.swift` exposes `kakaoRestAPIKey`
 
 ## What Is on the App Now
 
@@ -28,26 +39,14 @@ Last updated: 2026-06-19
 - **Search:** toolbar search button → `AppRoute.search` push → `SearchTabView`
   - Custom back button + interactive swipe-back
   - Auto keyboard focus on enter; query reset on leave
-  - `SearchViewModel` filters `MockPlace.samples` locally
+  - Live Kakao keyword search with debounce
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
-## Next Task — Kakao Local API
+## Next Task
 
-Replace mock search with [Kakao Local API keyword search](https://developers.kakao.com/docs/latest/en/local/dev-guide#search-by-keyword).
-
-| Step | Action |
-|------|--------|
-| 1 | Create branch `feat/kakao-search-api` |
-| 2 | Add `KakaoLocalService` (or similar) under `gumimap-v2/Services/` or `Features/Search/` |
-| 3 | Read `KAKAO_REST_API_KEY` from `Config/secrets.local.env` at build/runtime (xcconfig or `Secrets` loader) |
-| 4 | Call `GET https://dapi.kakao.com/v2/local/search/keyword.json` with `Authorization: KakaoAK {REST_API_KEY}` |
-| 5 | Map response → replace `MockPlace` with real model (`Place` with name, address, lat/lng, category) |
-| 6 | Update `SearchViewModel`: debounce query, loading/error states, async fetch |
-| 7 | Wire result tap → map camera move (after MapKit is in place) or stub for now |
-| 8 | Simulator verify + HANDOFF update + commit |
-
-**Keys on disk (local only):** `KAKAO_NATIVE_APP_KEY`, `KAKAO_REST_API_KEY` — search needs REST key only for now.
+- Wire result tap → map camera move (after MapKit is in place)
+- Merge `feat/kakao-search-api` → `main` when ready
 
 ## Other Backlog
 
@@ -61,14 +60,17 @@ Replace mock search with [Kakao Local API keyword search](https://developers.kak
 |------|---------|
 | `Config/secrets.local.env` | Local API keys (gitignored) |
 | `Config/secrets.example.env` | Key name template |
+| `scripts/generate-secrets.sh` | Build-time secrets → `Generated/Secrets.generated.swift` |
+| `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
+| `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
+| `gumimap-v2/Features/Search/Place.swift` | Search result model |
 | `gumimap-v2/App/RootView.swift` | `NavigationStack` root + toolbar |
 | `gumimap-v2/Navigation/TabRouter.swift` | Tab state + `path: [AppRoute]` |
 | `gumimap-v2/Navigation/AppRoute.swift` | `.search` destination |
 | `gumimap-v2/Navigation/InteractivePopEnabler.swift` | Swipe-back gesture fix |
 | `gumimap-v2/Navigation/FloatingToolbar.swift` | Pill toolbar; search → `openSearch()` |
 | `gumimap-v2/Features/Search/SearchTabView.swift` | Search screen UI |
-| `gumimap-v2/Features/Search/SearchViewModel.swift` | Query + results (mock today) |
-| `gumimap-v2/Features/Search/MockPlace.swift` | Replace with Kakao response model |
+| `gumimap-v2/Features/Search/SearchViewModel.swift` | Query + Kakao API results |
 | `scripts/run-simulator.sh` | Build, install, launch (prefer iOS 26.5 UDID) |
 | `AGENTS.md` | Agent index and hard rules |
 | `docs/HANDOFF.md` | This file |

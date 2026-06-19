@@ -99,6 +99,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = D00475702FE575D6004CC39A /* Build configuration list for PBXNativeTarget "gumimap-v2" */;
 			buildPhases = (
+				D00A00012FE58000004CC39A /* Generate Secrets */,
 				D00475492FE575D5004CC39A /* Sources */,
 				D004754A2FE575D5004CC39A /* Frameworks */,
 				D004754B2FE575D5004CC39A /* Resources */,
@@ -230,6 +231,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D00A00012FE58000004CC39A /* Generate Secrets */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Config/secrets.local.env",
+				"$(SRCROOT)/scripts/generate-secrets.sh",
+			);
+			name = "Generate Secrets";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/gumimap-v2/Generated/Secrets.generated.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/scripts/generate-secrets.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D00475492FE575D5004CC39A /* Sources */ = {

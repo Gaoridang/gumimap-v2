@@ -59,6 +59,17 @@ struct SearchTabView: View {
     private var resultsContent: some View {
         if trimmedQuery.isEmpty {
             Spacer()
+        } else if search.isLoading {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        } else if let errorMessage = search.errorMessage {
+            Text(errorMessage)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+            Spacer()
         } else if search.results.isEmpty {
             Text("검색 결과가 없습니다")
                 .font(.subheadline)
@@ -84,7 +95,7 @@ struct SearchTabView: View {
         }
     }
 
-    private func resultRow(_ place: MockPlace) -> some View {
+    private func resultRow(_ place: Place) -> some View {
         Button {
             search.select(place)
         } label: {
@@ -97,6 +108,12 @@ struct SearchTabView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+
+                if !place.category.isEmpty {
+                    Text(place.category)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
