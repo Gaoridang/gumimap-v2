@@ -39,7 +39,7 @@ Last updated: 2026-06-19
 - **Search:** toolbar search button → `AppRoute.search` push → `SearchTabView`
   - Custom back button + interactive swipe-back
   - Auto keyboard focus on enter; query reset on leave
-  - Live Kakao keyword search with debounce (구미 지역 한정: center + 15km radius)
+  - Live Kakao keyword search with debounce (구미 지역 한정: center + 20km radius)
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
