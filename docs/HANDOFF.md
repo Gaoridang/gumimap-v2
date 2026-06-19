@@ -7,8 +7,8 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/place-detail-sheet` |
-| Working tree | Search → place detail with Grok SSE enrichment |
-| Last verified | xcodebuild + iOS 26.5 simulator launch |
+| Working tree | Grok enrichment: single-call, community review focus |
+| Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Merged / Shipped
 
@@ -41,6 +41,11 @@ Last updated: 2026-06-20
   - Additional info (리뷰, 특징, 대기) appears only after Grok search completes
   - Staggered reveal for insight cards; no business hours or JSON shown to users
   - Fixed bottom "+ 등록하기" button (persistence TODO)
+- **Grok search quality fix** (reverted slow map-retry pass)
+  - Single API call again (removed 2nd map-only retry that doubled latency)
+  - Removed domain filters so blog/diningcode sources are reachable
+  - `reasoning: low` for faster responses
+  - Reviews: require concrete details from real posts; empty array if none found
 - **xAI API key** added to secrets pipeline (`XAI_API_KEY` → `Secrets.xaiAPIKey`)
 
 ## What Is on the App Now

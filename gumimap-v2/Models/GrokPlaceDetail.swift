@@ -4,15 +4,6 @@ struct GrokPlaceDetailResponse: Codable, Sendable {
     let places: [GrokPlaceDetail]
 }
 
-struct GrokMapListingPatchResponse: Codable, Sendable {
-    let places: [GrokMapListingPatch]
-}
-
-struct GrokMapListingPatch: Codable, Sendable {
-    let features: PlaceFeatures
-    let businessHours: String
-}
-
 struct PlaceFeatures: Codable, Sendable, Equatable {
     let popularMenu: String
     let breakTime: String
@@ -84,26 +75,5 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
 
     var hasAnyInsight: Bool {
         hasReviews || features.hasAnyContent
-    }
-
-    var needsMapRetry: Bool {
-        features.missingFieldCount >= 2 || !PlaceFeatures.hasContent(businessHours)
-    }
-
-    func mergingMapListing(features: PlaceFeatures, businessHours: String) -> GrokPlaceDetail {
-        let mergedHours = PlaceFeatures.pick(
-            current: self.businessHours,
-            fallback: businessHours
-        )
-        return GrokPlaceDetail(
-            name: name,
-            address: address,
-            latitude: latitude,
-            longitude: longitude,
-            category: category,
-            reviews: reviews,
-            features: self.features.merging(with: features),
-            businessHours: mergedHours
-        )
     }
 }
