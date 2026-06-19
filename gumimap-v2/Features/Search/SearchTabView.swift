@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SearchTabView: View {
     @Bindable var search: SearchViewModel
+    @Bindable var router: TabRouter
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isFieldFocused: Bool
 
@@ -97,7 +98,7 @@ struct SearchTabView: View {
 
     private func resultRow(_ place: Place) -> some View {
         Button {
-            search.select(place)
+            router.presentPlaceDetail(place)
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text(place.name)
@@ -126,8 +127,9 @@ struct SearchTabView: View {
 
 #Preview {
     @Previewable @State var search = SearchViewModel()
+    @Previewable @State var router = TabRouter()
 
     NavigationStack {
-        SearchTabView(search: search)
+        SearchTabView(search: search, router: router)
     }
 }

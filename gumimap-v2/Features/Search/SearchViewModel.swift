@@ -1,4 +1,3 @@
-import CoreLocation
 import SwiftUI
 
 @Observable
@@ -26,11 +25,6 @@ final class SearchViewModel {
         results = []
         isLoading = false
         errorMessage = nil
-    }
-
-    func select(_ place: Place) {
-        // TODO: Navigate map camera / save to list
-        print("Selected place: \(place.name) (\(place.coordinate.latitude), \(place.coordinate.longitude))")
     }
 
     private func scheduleSearch() {

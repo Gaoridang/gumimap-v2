@@ -83,6 +83,8 @@ private struct KakaoPlaceDocument: Decodable {
     let addressName: String
     let roadAddressName: String
     let categoryGroupName: String
+    let phone: String
+    let placeURL: String
     let x: String
     let y: String
 
@@ -92,6 +94,8 @@ private struct KakaoPlaceDocument: Decodable {
         case addressName = "address_name"
         case roadAddressName = "road_address_name"
         case categoryGroupName = "category_group_name"
+        case phone
+        case placeURL = "place_url"
         case x, y
     }
 
@@ -99,12 +103,15 @@ private struct KakaoPlaceDocument: Decodable {
         let address = roadAddressName.isEmpty ? addressName : roadAddressName
         let longitude = Double(x) ?? 0
         let latitude = Double(y) ?? 0
+        let trimmedPhone = phone.trimmingCharacters(in: .whitespacesAndNewlines)
 
         return Place(
             id: id,
             name: placeName,
             address: address,
             category: categoryGroupName,
+            phone: trimmedPhone.isEmpty ? nil : trimmedPhone,
+            kakaoMapURL: URL(string: placeURL),
             coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         )
     }

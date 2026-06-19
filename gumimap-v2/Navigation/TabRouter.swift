@@ -6,6 +6,7 @@ final class TabRouter {
     var selectedTab: AppTab = .map
     var listSubTab: ListSubTab = .visited
     var path: [AppRoute] = []
+    var presentedPlace: Place?
 
     var isListMode: Bool { selectedTab == .list }
 
@@ -27,6 +28,14 @@ final class TabRouter {
 
     func openSearch() {
         path.append(.search)
+    }
+
+    func presentPlaceDetail(_ place: Place) {
+        presentedPlace = place
+    }
+
+    func dismissPlaceDetail() {
+        presentedPlace = nil
     }
 
     func selectListSubTab(_ subTab: ListSubTab) {

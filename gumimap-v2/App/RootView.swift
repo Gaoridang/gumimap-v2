@@ -24,7 +24,12 @@ struct RootView: View {
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .search:
-                    SearchTabView(search: search)
+                    SearchTabView(search: search, router: router)
+                }
+            }
+            .fullScreenCover(item: $router.presentedPlace) { place in
+                PlaceDetailSheet(place: place) {
+                    router.dismissPlaceDetail()
                 }
             }
         }

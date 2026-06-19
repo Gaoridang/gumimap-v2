@@ -6,8 +6,8 @@ Last updated: 2026-06-19
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/kakao-search-api` |
-| Working tree | Kakao Local API keyword search wired; build + iOS 26.5 simulator launch verified |
+| Active branch | `feat/place-detail-sheet-demo` |
+| Working tree | Search result tap → PlaceDetailSheet demo (phone + Kakao map link); pending user review |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (UDID `33061315-12AA-4456-B68A-29E603FCF1FC`) |
 
 ## Merged / Shipped
@@ -43,9 +43,16 @@ Last updated: 2026-06-19
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
+## Demo — Place Detail Sheet (`feat/place-detail-sheet-demo`)
+
+- Search result tap → `fullScreenCover` → `PlaceDetailSheet`
+- Shows: name, category, address, phone, Kakao map link, map placeholder
+- `Place` extended with `phone`, `kakaoMapURL` from Kakao API
+
 ## Next Task
 
-- Wire result tap → map camera move (after MapKit is in place)
+- User review of place detail demo → polish UI / merge
+- MapKit mini-map in sheet + "지도에서 보기"
 - Merge `feat/kakao-search-api` → `main` when ready
 
 ## Other Backlog
