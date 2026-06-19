@@ -265,6 +265,15 @@ struct GrokPlaceSearchService: Sendable {
         )
     }
 
+    private var stringItemSchema: JSONSchema {
+        JSONSchema(
+            type: "string",
+            properties: [:],
+            required: [],
+            additionalProperties: false
+        )
+    }
+
     private var placeItemJSONSchema: JSONSchema {
         JSONSchema(
             type: "object",
@@ -274,22 +283,31 @@ struct GrokPlaceSearchService: Sendable {
                 "latitude": JSONSchemaProperty(type: "number"),
                 "longitude": JSONSchemaProperty(type: "number"),
                 "category": JSONSchemaProperty(type: "string"),
-                "reviewSummary": JSONSchemaProperty(
-                    type: "string",
-                    description: "2-3 sentence Korean summary of community reviews and reputation"
+                "reviews": JSONSchemaProperty(
+                    type: "array",
+                    description: "2-4 short Korean bullet points about community reviews",
+                    items: stringItemSchema,
+                    minItems: 1,
+                    maxItems: 4
                 ),
                 "features": JSONSchemaProperty(
-                    type: "string",
-                    description: "Signature menu, atmosphere, and standout traits in Korean"
+                    type: "array",
+                    description: "2-4 short Korean bullet points: signature menu, vibe, parking, etc.",
+                    items: stringItemSchema,
+                    minItems: 1,
+                    maxItems: 4
                 ),
                 "waitInfo": JSONSchemaProperty(
-                    type: "string",
-                    description: "Typical wait time, peak hours, or reservation tips in Korean"
+                    type: "array",
+                    description: "1-3 short Korean bullet points about wait times and peak hours",
+                    items: stringItemSchema,
+                    minItems: 1,
+                    maxItems: 3
                 )
             ],
             required: [
                 "name", "address", "latitude", "longitude", "category",
-                "reviewSummary", "features", "waitInfo"
+                "reviews", "features", "waitInfo"
             ],
             additionalProperties: false
         )
@@ -306,10 +324,11 @@ struct GrokPlaceSearchService: Sendable {
 
     Return exactly 1 place with:
     - name, address, latitude/longitude, category: from official map listing
-    - reviewSummary: 2-3 sentences summarizing what people praise or criticize (Korean)
-    - features: signature menu, vibe, parking, best for groups/couples, etc. (Korean, concise)
-    - waitInfo: typical wait, busy times, reservation needed? (Korean; use "정보 없음" if unknown)
+    - reviews: 2-4 bullet points (one insight per item, Korean, max ~40 chars each)
+    - features: 2-4 bullet points (signature menu, vibe, parking, etc., Korean)
+    - waitInfo: 1-3 bullet points (wait time, busy hours, reservation; use ["정보 없음"] if unknown)
 
+    Each array item must be a single scannable line — no paragraphs, no numbering prefix.
     Do NOT invent reviews. Prefer recent blog and dining community sources.
     """
 }

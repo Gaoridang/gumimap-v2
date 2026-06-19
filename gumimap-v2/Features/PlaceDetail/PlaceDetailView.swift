@@ -211,29 +211,29 @@ struct PlaceDetailView: View {
                     .transition(resultTransition)
             }
 
-            if viewModel.revealStep >= 1, detail.hasReviewSummary {
-                insightCard(
+            if viewModel.revealStep >= 1, detail.hasReviews {
+                bulletCard(
                     title: "리뷰",
                     icon: "text.quote",
-                    value: detail.reviewSummary
+                    points: detail.reviewPoints
                 )
                 .transition(resultTransition)
             }
 
             if viewModel.revealStep >= 2, detail.hasFeatures {
-                insightCard(
+                bulletCard(
                     title: "특징",
                     icon: "sparkles",
-                    value: detail.features
+                    points: detail.featurePoints
                 )
                 .transition(resultTransition)
             }
 
             if viewModel.revealStep >= 3, detail.hasWaitInfo {
-                insightCard(
+                bulletCard(
                     title: "대기",
                     icon: "clock",
-                    value: detail.waitInfo
+                    points: detail.waitPoints
                 )
                 .transition(resultTransition)
             }
@@ -326,17 +326,29 @@ struct PlaceDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func insightCard(title: String, icon: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private func bulletCard(title: String, icon: String, points: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: icon)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
 
-            Text(value)
-                .font(.body)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("•")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                            .padding(.top, 1)
+
+                        Text(point)
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
