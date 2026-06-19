@@ -7,7 +7,7 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/place-detail-sheet` |
-| Working tree | Search results display-only; place detail sheet removed |
+| Working tree | Search → place detail with Grok SSE enrichment |
 | Last verified | xcodebuild + iOS 26.5 simulator launch |
 
 ## Merged / Shipped
@@ -31,6 +31,15 @@ Last updated: 2026-06-20
   - Build phase generates `gumimap-v2/Generated/Secrets.generated.swift` (gitignored)
   - `Secrets.swift` exposes `kakaoRestAPIKey`
 
+## Shipped on `feat/place-detail-sheet`
+
+- **Place detail via NavigationStack push** (`AppRoute.placeDetail(Place)`)
+  - Search result tap → `PlaceDetailView`
+  - Grok SSE enrichment via `GrokPlaceSearchService` (xAI Responses API stream)
+  - Live progress checklist (v1 pattern): web search → analyze → organize → complete
+  - Staggered reveal animation for structured fields + pretty-printed JSON
+- **xAI API key** added to secrets pipeline (`XAI_API_KEY` → `Secrets.xaiAPIKey`)
+
 ## What Is on the App Now
 
 - Entry: `RootView` (replaces `ContentView` at app launch)
@@ -40,14 +49,15 @@ Last updated: 2026-06-20
   - Custom back button + interactive swipe-back
   - Auto keyboard focus on enter; query reset on leave
   - Live Kakao keyword search with debounce (구미 지역 한정: center + 20km radius)
-  - Search results are display-only (no place detail yet)
+  - Result tap → `PlaceDetailView` with Grok SSE enrichment + animated JSON reveal
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Next Task
 
-- Place detail via **NavigationStack push** (`AppRoute.placeDetail(Place)`) from search results
+- Polish place detail UI (map preview, business hours formatting, open/closed badge)
 - Merge `feat/kakao-search-api` → `main` when ready
+- Merge `feat/place-detail-sheet` → `main` when ready
 
 ## Other Backlog
 
@@ -64,10 +74,15 @@ Last updated: 2026-06-20
 | `scripts/generate-secrets.sh` | Build-time secrets → `Generated/Secrets.generated.swift` |
 | `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
+| `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE place enrichment |
+| `gumimap-v2/Models/GrokSearchProgress.swift` | SSE progress message model |
+| `gumimap-v2/Models/GrokPlaceDetail.swift` | Grok JSON result model |
+| `gumimap-v2/Features/PlaceDetail/PlaceDetailView.swift` | Detail screen + animations |
+| `gumimap-v2/Features/PlaceDetail/PlaceDetailViewModel.swift` | Loading/progress/reveal state |
 | `gumimap-v2/Features/Search/Place.swift` | Search result model |
 | `gumimap-v2/App/RootView.swift` | `NavigationStack` root + toolbar |
 | `gumimap-v2/Navigation/TabRouter.swift` | Tab state + `path: [AppRoute]` |
-| `gumimap-v2/Navigation/AppRoute.swift` | `.search` destination |
+| `gumimap-v2/Navigation/AppRoute.swift` | `.search`, `.placeDetail(Place)` |
 | `gumimap-v2/Navigation/InteractivePopEnabler.swift` | Swipe-back gesture fix |
 | `gumimap-v2/Navigation/FloatingToolbar.swift` | Pill toolbar; search → `openSearch()` |
 | `gumimap-v2/Features/Search/SearchTabView.swift` | Search screen UI |

@@ -63,7 +63,10 @@ struct SearchTabView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(search.results) { place in
-                        resultRow(place)
+                        NavigationLink(value: AppRoute.placeDetail(place)) {
+                            resultRow(place)
+                        }
+                        .buttonStyle(.plain)
 
                         if place.id != search.results.last?.id {
                             Divider()

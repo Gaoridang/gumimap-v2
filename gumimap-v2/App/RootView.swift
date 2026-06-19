@@ -25,6 +25,8 @@ struct RootView: View {
                 switch route {
                 case .search:
                     SearchTabView(search: search)
+                case let .placeDetail(place):
+                    PlaceDetailView(place: place)
                 }
             }
         }
