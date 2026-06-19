@@ -4,20 +4,30 @@ struct SearchOverlayView: View {
     @Bindable var search: SearchViewModel
     @FocusState private var isFieldFocused: Bool
     @State private var keyboardHeight: CGFloat = 0
+    @State private var backdropVisible = false
+    @State private var searchBarVisible = false
+    @State private var resultsVisible = false
+    @State private var isDismissing = false
 
     private let clusterMaxWidth: CGFloat = 360
     private let resultsMaxHeight: CGFloat = 280
     private let searchBarTopPadding: CGFloat = 96
 
+    private var hasQuery: Bool {
+        !search.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
-            Color.black.opacity(0.35)
+            Color.black.opacity(backdropVisible ? 0.35 : 0)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture { dismiss() }
 
             VStack(alignment: .center, spacing: 10) {
                 searchBar
+                    .offset(y: searchBarOffset)
+                    .opacity(searchBarVisible ? 1 : 0)
 
                 resultsSection
             }
@@ -25,24 +35,29 @@ struct SearchOverlayView: View {
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.top, searchBarTopPadding)
             .padding(.horizontal, 24)
-            .offset(y: keyboardOffset)
         }
-        .onAppear {
-            Task { @MainActor in
-                isFieldFocused = true
+        .onAppear { playEntrance() }
+        .onChange(of: hasQuery) { _, newValue in
+            withAnimation(SearchMotion.results) {
+                resultsVisible = newValue
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
             guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-            withAnimation(.easeOut(duration: 0.25)) {
+            withAnimation(SearchMotion.keyboard) {
                 keyboardHeight = frame.height
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-            withAnimation(.easeOut(duration: 0.25)) {
+            withAnimation(SearchMotion.keyboard) {
                 keyboardHeight = 0
             }
         }
+    }
+
+    private var searchBarOffset: CGFloat {
+        let travel = searchBarVisible ? 0 : SearchMotion.searchBarTravel
+        return travel + keyboardOffset
     }
 
     private var keyboardOffset: CGFloat {
@@ -68,9 +83,6 @@ struct SearchOverlayView: View {
 
     @ViewBuilder
     private var resultsSection: some View {
-        let trimmedQuery = search.query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hasQuery = !trimmedQuery.isEmpty
-
         ZStack(alignment: .top) {
             if hasQuery {
                 VStack(spacing: 0) {
@@ -98,12 +110,12 @@ struct SearchOverlayView: View {
                 }
                 .frame(height: resultsMaxHeight, alignment: .top)
                 .floatingCardStyle(shape: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .frame(height: hasQuery ? resultsMaxHeight : 0)
+        .offset(y: resultsVisible ? 0 : SearchMotion.resultsTravel)
+        .opacity(resultsVisible ? 1 : 0)
         .clipped()
-        .animation(.spring(response: 0.38, dampingFraction: 0.78), value: hasQuery)
     }
 
     private func resultRow(_ place: MockPlace) -> some View {
@@ -128,9 +140,43 @@ struct SearchOverlayView: View {
         .buttonStyle(.plain)
     }
 
+    private func playEntrance() {
+        backdropVisible = false
+        searchBarVisible = false
+        resultsVisible = false
+
+        withAnimation(SearchMotion.backdrop) {
+            backdropVisible = true
+        }
+        withAnimation(SearchMotion.searchBar) {
+            searchBarVisible = true
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(80))
+            isFieldFocused = true
+        }
+    }
+
     private func dismiss() {
+        guard !isDismissing else { return }
+        isDismissing = true
         isFieldFocused = false
-        search.dismiss()
+
+        withAnimation(SearchMotion.results) {
+            resultsVisible = false
+        }
+        withAnimation(SearchMotion.searchBar) {
+            searchBarVisible = false
+        }
+        withAnimation(SearchMotion.backdrop) {
+            backdropVisible = false
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: SearchMotion.dismissDelay)
+            search.dismissImmediately()
+        }
     }
 }
 

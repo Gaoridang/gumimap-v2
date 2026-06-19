@@ -10,22 +10,14 @@ final class SearchViewModel {
 
     private let allPlaces = MockPlace.samples
 
-    private var overlayAnimation: Animation {
-        .spring(response: 0.38, dampingFraction: 0.78)
-    }
-
     func present() {
-        withAnimation(overlayAnimation) {
-            isPresented = true
-        }
+        isPresented = true
     }
 
-    func dismiss() {
-        withAnimation(overlayAnimation) {
-            isPresented = false
-            query = ""
-            results = []
-        }
+    func dismissImmediately() {
+        isPresented = false
+        query = ""
+        results = []
     }
 
     func select(_ place: MockPlace) {
