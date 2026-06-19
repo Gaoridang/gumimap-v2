@@ -4,11 +4,15 @@ struct FloatingToolbar: View {
     @Bindable var router: TabRouter
 
     private let itemSpacing: CGFloat = 10
+    private let tabGroupSpacing: CGFloat = 6
 
     var body: some View {
         HStack(spacing: itemSpacing) {
-            tabButton(asset: .pin, tab: .map)
-            tabButton(asset: .list, tab: .list)
+            HStack(spacing: tabGroupSpacing) {
+                tabButton(asset: .pin, tab: .map)
+                tabButton(asset: .list, tab: .list)
+            }
+
             toolbarDivider
             searchButton
         }
