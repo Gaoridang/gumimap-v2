@@ -121,6 +121,9 @@ final class PlaceDetailViewModel {
             let result = try await service.enrichPlace(
                 name: place.name,
                 address: place.address,
+                category: place.category,
+                phone: place.phone,
+                kakaoMapURL: place.kakaoMapURL,
                 onProgress: handleProgress
             )
             guard !Task.isCancelled else { return }
