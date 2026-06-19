@@ -8,11 +8,7 @@ struct FloatingToolbar: View {
 
     var body: some View {
         HStack(spacing: itemSpacing) {
-            HStack(spacing: tabGroupSpacing) {
-                tabButton(asset: .pin, tab: .map)
-                tabButton(asset: .list, tab: .list)
-            }
-
+            tabGroup
             toolbarDivider
             searchButton
         }
@@ -23,6 +19,52 @@ struct FloatingToolbar: View {
                 .fill(.white)
                 .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
         }
+        .animation(.spring(response: 0.38, dampingFraction: 0.78), value: router.isListMode)
+        .animation(.easeInOut(duration: 0.2), value: router.listSubTab)
+    }
+
+    @ViewBuilder
+    private var tabGroup: some View {
+        HStack(spacing: tabGroupSpacing) {
+            leadingSlot
+
+            if router.isListMode {
+                listSubTabButton(asset: .visited, subTab: .visited)
+                    .transition(listSubTabTransition)
+                listSubTabButton(asset: .wishlist, subTab: .wishlist)
+                    .transition(listSubTabTransition)
+            } else {
+                listEntryButton
+                    .transition(listEntryTransition)
+            }
+        }
+    }
+
+    private var leadingSlot: some View {
+        ZStack {
+            if router.isListMode {
+                iconButton(asset: .back, isSelected: true, action: router.selectMap)
+                    .transition(leadingIconTransition)
+            } else {
+                iconButton(asset: .pin, isSelected: router.selectedTab == .map, action: router.selectMap)
+                    .transition(leadingIconTransition)
+            }
+        }
+        .toolbarTapTarget()
+    }
+
+    private var listEntryButton: some View {
+        iconButton(asset: .list, isSelected: false, action: router.openList)
+            .toolbarTapTarget()
+    }
+
+    private func listSubTabButton(asset: ToolbarIconAsset, subTab: ListSubTab) -> some View {
+        iconButton(
+            asset: asset,
+            isSelected: router.listSubTab == subTab,
+            action: { router.selectListSubTab(subTab) }
+        )
+        .toolbarTapTarget()
     }
 
     private var toolbarDivider: some View {
@@ -41,14 +83,36 @@ struct FloatingToolbar: View {
         .toolbarTapTarget()
     }
 
-    private func tabButton(asset: ToolbarIconAsset, tab: AppTab) -> some View {
-        Button {
-            router.selectedTab = tab
-        } label: {
-            ToolbarIcon(asset: asset, isSelected: router.selectedTab == tab)
+    private func iconButton(
+        asset: ToolbarIconAsset,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            ToolbarIcon(asset: asset, isSelected: isSelected)
         }
         .buttonStyle(.plain)
-        .toolbarTapTarget()
+    }
+
+    private var leadingIconTransition: AnyTransition {
+        .asymmetric(
+            insertion: .scale(scale: 0.75).combined(with: .opacity),
+            removal: .scale(scale: 0.75).combined(with: .opacity)
+        )
+    }
+
+    private var listEntryTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .leading).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        )
+    }
+
+    private var listSubTabTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .trailing).combined(with: .opacity)
+        )
     }
 }
 
@@ -60,7 +124,9 @@ private extension View {
 }
 
 #Preview {
-    FloatingToolbar(router: TabRouter())
+    @Previewable @State var router = TabRouter()
+
+    FloatingToolbar(router: router)
         .padding()
         .background(Color.gray.opacity(0.2))
 }

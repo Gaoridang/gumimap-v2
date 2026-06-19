@@ -7,8 +7,8 @@ Last updated: 2026-06-19
 | Field | Value |
 |-------|-------|
 | Active branch | `feature/floating-toolbar` |
-| Working tree | Floating pill toolbar implemented; build verified |
-| Last verified | xcodebuild succeeded; simulator install blocked (sim iOS 26.2 vs target 26.5) |
+| Working tree | List-mode animated toolbar with visited/wishlist sub-tabs |
+| Last verified | xcodebuild + iOS 26.5 simulator launch succeeded |
 
 ## Merged / Shipped
 
@@ -16,8 +16,10 @@ Last updated: 2026-06-19
 
 ## What Is on the App Now
 
-- `RootView` with custom floating pill toolbar (`[mappin][list.bullet] | [search]`)
-- Placeholder `MapTabView` / `ListTabView` (gray background + label)
+- `RootView` with custom floating pill toolbar
+- Map mode: `[pin][list] | [search]`
+- List mode: `[back][visited][wishlist] | [search]` with spring transition
+- Placeholder `MapTabView` / `ListTabView` (가본 곳 / 가고 싶은 곳)
 - Search button is UI-only placeholder
 - Original `ContentView` + `Item` SwiftData template unchanged (not wired in)
 

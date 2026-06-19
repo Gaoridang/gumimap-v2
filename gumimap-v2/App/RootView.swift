@@ -10,7 +10,7 @@ struct RootView: View {
                 case .map:
                     MapTabView()
                 case .list:
-                    ListTabView()
+                    ListTabView(subTab: router.listSubTab)
                 }
             }
 
