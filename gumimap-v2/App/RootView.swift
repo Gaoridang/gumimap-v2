@@ -12,15 +12,14 @@ struct RootView: View {
                     MapTabView()
                 case .list:
                     ListTabView(subTab: router.listSubTab)
+                case .search:
+                    SearchTabView(router: router, search: search)
                 }
             }
 
-            FloatingToolbar(router: router, search: search)
-                .padding(.bottom, 12)
-
-            if search.isPresented {
-                SearchOverlayView(search: search)
-                    .zIndex(1)
+            if !router.isSearchMode {
+                FloatingToolbar(router: router)
+                    .padding(.bottom, 12)
             }
         }
     }

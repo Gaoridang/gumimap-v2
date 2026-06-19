@@ -7,14 +7,14 @@ Last updated: 2026-06-19
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/search-overlay` |
-| Working tree | Spotlight search overlay with mock results implemented |
+| Working tree | Full-screen search tab navigation with mock results |
 | Last verified | xcodebuild + iOS 26.5 simulator launch succeeded |
 
 ## Merged / Shipped
 
 - Agent workflow rules: `AGENTS.md`, `docs/agent-workflow.md`, `.cursor/rules/`, `scripts/run-simulator.sh`
 - Floating pill toolbar (Lucide icons, map/list modes, list sub-tabs)
-- Spotlight search overlay (mock place results, toolbar-matched design)
+- Full-screen search tab (mock place results, toolbar-matched design)
 
 ## What Is on the App Now
 
@@ -25,9 +25,9 @@ Last updated: 2026-06-19
   - Spring animation on mode switch; sub-tabs slide in from the right
 - **List sub-tabs:** 가본 곳 (visited) / 가고 싶은 곳 (wishlist)
 - Placeholder `MapTabView` / `ListTabView`
-- Search opens upper Spotlight overlay with auto keyboard focus (fixed search bar position)
+- Search button navigates to `SearchTabView` (floating toolbar hidden)
+- Back button returns to previous tab (map or list)
 - Mock place search filters 10 Korean sample locations
-- Tap outside dimmed area dismisses search and clears query
 - Original `ContentView` + `Item` SwiftData template unchanged (not wired in)
 
 ## Next Tasks
@@ -49,7 +49,7 @@ Last updated: 2026-06-19
 | `gumimap-v2/Navigation/ToolbarIcon.swift` | Lucide asset icon wrapper |
 | `gumimap-v2/Features/Map/MapTabView.swift` | Map placeholder |
 | `gumimap-v2/Features/List/ListTabView.swift` | List placeholder |
-| `gumimap-v2/Features/Search/SearchOverlayView.swift` | Spotlight search UI |
+| `gumimap-v2/Features/Search/SearchTabView.swift` | Full-screen search UI |
 | `gumimap-v2/Features/Search/SearchViewModel.swift` | Search state and filtering |
 | `gumimap-v2/Features/Search/MockPlace.swift` | Mock place samples |
 | `gumimap-v2/Assets.xcassets/toolbar-*.imageset/` | Lucide SVG toolbar icons |

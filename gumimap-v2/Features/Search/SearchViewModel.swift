@@ -2,7 +2,6 @@ import SwiftUI
 
 @Observable
 final class SearchViewModel {
-    var isPresented = false
     var query = "" {
         didSet { updateResults() }
     }
@@ -10,12 +9,7 @@ final class SearchViewModel {
 
     private let allPlaces = MockPlace.samples
 
-    func present() {
-        isPresented = true
-    }
-
-    func dismissImmediately() {
-        isPresented = false
+    func reset() {
         query = ""
         results = []
     }
