@@ -10,20 +10,20 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
     let latitude: Double
     let longitude: Double
     let category: String
-    let businessHours: String
-    let isOpenNow: Bool
+    let reviewSummary: String
+    let features: String
+    let waitInfo: String
 
-    var hasBusinessHours: Bool {
-        !businessHours.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private func hasContent(_ value: String) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed != "정보 없음"
     }
 
-    var formattedJSON: String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(self),
-              let string = String(data: data, encoding: .utf8) else {
-            return "{}"
-        }
-        return string
+    var hasReviewSummary: Bool { hasContent(reviewSummary) }
+    var hasFeatures: Bool { hasContent(features) }
+    var hasWaitInfo: Bool { hasContent(waitInfo) }
+
+    var hasAnyInsight: Bool {
+        hasReviewSummary || hasFeatures || hasWaitInfo
     }
 }

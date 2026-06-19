@@ -274,28 +274,43 @@ struct GrokPlaceSearchService: Sendable {
                 "latitude": JSONSchemaProperty(type: "number"),
                 "longitude": JSONSchemaProperty(type: "number"),
                 "category": JSONSchemaProperty(type: "string"),
-                "businessHours": JSONSchemaProperty(type: "string"),
-                "isOpenNow": JSONSchemaProperty(type: "boolean")
+                "reviewSummary": JSONSchemaProperty(
+                    type: "string",
+                    description: "2-3 sentence Korean summary of community reviews and reputation"
+                ),
+                "features": JSONSchemaProperty(
+                    type: "string",
+                    description: "Signature menu, atmosphere, and standout traits in Korean"
+                ),
+                "waitInfo": JSONSchemaProperty(
+                    type: "string",
+                    description: "Typical wait time, peak hours, or reservation tips in Korean"
+                )
             ],
-            required: ["name", "address", "latitude", "longitude", "category", "businessHours", "isOpenNow"],
+            required: [
+                "name", "address", "latitude", "longitude", "category",
+                "reviewSummary", "features", "waitInfo"
+            ],
             additionalProperties: false
         )
     }
 
     private static let placeDetailSystemPrompt = """
-    You look up ONE real restaurant or cafe in Gumi (구미), Gyeongsangbuk-do, South Korea.
+    You research ONE real restaurant or cafe in Gumi (구미), Gyeongsangbuk-do, South Korea.
+    Focus on visitor-facing insights from community sources — not business hours.
 
-    Use at most 2 web_search calls:
-    1. map.naver.com or place.map.kakao.com for "{name} 구미"
-    2. Only if hours still missing: blog.naver.com or www.google.com for hours
+    Use at most 3 web_search calls:
+    1. map.naver.com or place.map.kakao.com for "{name} 구미" — verify name, address, coordinates
+    2. blog.naver.com, www.diningcode.com, or www.google.com for "{name} 구미 후기"
+    3. Only if wait/reservation info still missing: search peak hours or waiting tips
 
     Return exactly 1 place with:
-    - name: official listing name
-    - address: full Korean 도로명주소
-    - latitude/longitude: WGS84 from map pin
-    - category: food category in Korean
-    - businessHours: all 7 weekdays, format "월 HH:MM-HH:MM, 화 ..., ..."
-    - isOpenNow: based on businessHours and current KST
+    - name, address, latitude/longitude, category: from official map listing
+    - reviewSummary: 2-3 sentences summarizing what people praise or criticize (Korean)
+    - features: signature menu, vibe, parking, best for groups/couples, etc. (Korean, concise)
+    - waitInfo: typical wait, busy times, reservation needed? (Korean; use "정보 없음" if unknown)
+
+    Do NOT invent reviews. Prefer recent blog and dining community sources.
     """
 }
 

@@ -38,8 +38,9 @@ Last updated: 2026-06-20
   - Grok SSE enrichment via `GrokPlaceSearchService` (xAI Responses API stream)
   - Kakao baseline (address, category, phone, map link) shown immediately on open
   - Live SSE progress checklist unchanged (v1 pattern)
-  - Grok-only fields (hours, open status) load async with skeleton → staggered reveal
-  - JSON in collapsed disclosure; Grok failure is field-scoped with retry
+  - Additional info (리뷰, 특징, 대기) appears only after Grok search completes
+  - Staggered reveal for insight cards; no business hours or JSON shown to users
+  - Fixed bottom "+ 등록하기" button (persistence TODO)
 - **xAI API key** added to secrets pipeline (`XAI_API_KEY` → `Secrets.xaiAPIKey`)
 
 ## What Is on the App Now

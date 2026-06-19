@@ -38,6 +38,15 @@ final class PlaceDetailViewModel {
         isLoading || (revealStep == 0 && !progressLog.isEmpty)
     }
 
+    var showAdditionalInfo: Bool {
+        switch enrichmentState {
+        case .loaded, .failed:
+            true
+        case .idle, .loading:
+            false
+        }
+    }
+
     var headerSubtitle: String {
         switch enrichmentState {
         case .loading:
@@ -79,6 +88,10 @@ final class PlaceDetailViewModel {
         loadTask?.cancel()
         loadTask = nil
         cancelReveal()
+    }
+
+    func register() {
+        // TODO: persist place + Grok insights
     }
 
     private func load() async {

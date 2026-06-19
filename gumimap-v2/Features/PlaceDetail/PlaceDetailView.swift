@@ -3,7 +3,6 @@ import SwiftUI
 
 struct PlaceDetailView: View {
     @State private var viewModel: PlaceDetailViewModel
-    @State private var isJSONExpanded = false
     @Environment(\.dismiss) private var dismiss
 
     init(place: Place) {
@@ -21,11 +20,14 @@ struct PlaceDetailView: View {
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                enrichmentSection
+                if viewModel.showAdditionalInfo {
+                    additionalInfoSection
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .padding(.bottom, 32)
+            .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
@@ -33,9 +35,13 @@ struct PlaceDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbarBackground(.hidden, for: .navigationBar)
         .enableInteractivePopGesture()
+        .safeAreaInset(edge: .bottom) {
+            registerButton
+        }
         .animation(.snappy, value: viewModel.isLoading)
         .animation(.snappy, value: viewModel.progressLog.count)
         .animation(.snappy, value: viewModel.revealStep)
+        .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfo)
         .onAppear { viewModel.loadIfNeeded() }
         .onDisappear { viewModel.cancelTasks() }
     }
@@ -170,10 +176,10 @@ struct PlaceDetailView: View {
         ))
     }
 
-    // MARK: - Grok Enrichment
+    // MARK: - Additional Info
 
     @ViewBuilder
-    private var enrichmentSection: some View {
+    private var additionalInfoSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("추가 정보")
                 .font(.caption.weight(.semibold))
@@ -181,50 +187,60 @@ struct PlaceDetailView: View {
                 .textCase(.uppercase)
 
             switch viewModel.enrichmentState {
-            case .idle, .loading:
-                enrichmentSkeleton
             case .loaded:
                 if let detail = viewModel.detail {
-                    enrichmentResult(detail)
+                    insightResult(detail)
                 }
             case .failed(let message):
-                enrichmentFailure(message)
+                additionalInfoFailure(message)
+            case .idle, .loading:
+                EmptyView()
             }
         }
     }
 
-    private var enrichmentSkeleton: some View {
+    private func insightResult(_ detail: GrokPlaceDetail) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            skeletonChip(title: "영업 상태")
-            skeletonCard(title: "영업시간", lines: 2)
-        }
-    }
+            if !detail.hasAnyInsight {
+                Text("커뮤니티에서 찾은 추가 정보가 없어요.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                    .transition(resultTransition)
+            }
 
-    private func enrichmentResult(_ detail: GrokPlaceDetail) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if viewModel.revealStep >= 1 {
-                detailChip(
-                    title: "영업 상태",
-                    value: detail.isOpenNow ? "영업 중" : "영업 종료",
-                    tint: detail.isOpenNow ? .green : .orange
+            if viewModel.revealStep >= 1, detail.hasReviewSummary {
+                insightCard(
+                    title: "리뷰",
+                    icon: "text.quote",
+                    value: detail.reviewSummary
                 )
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .transition(resultTransition)
             }
 
-            if viewModel.revealStep >= 2, detail.hasBusinessHours {
-                detailCard(title: "영업시간", value: detail.businessHours)
-                    .transition(resultTransition)
+            if viewModel.revealStep >= 2, detail.hasFeatures {
+                insightCard(
+                    title: "특징",
+                    icon: "sparkles",
+                    value: detail.features
+                )
+                .transition(resultTransition)
             }
 
-            if viewModel.revealStep >= 3 {
-                jsonDisclosure(detail.formattedJSON)
-                    .transition(resultTransition)
+            if viewModel.revealStep >= 3, detail.hasWaitInfo {
+                insightCard(
+                    title: "대기",
+                    icon: "clock",
+                    value: detail.waitInfo
+                )
+                .transition(resultTransition)
             }
         }
     }
 
-    private func enrichmentFailure(_ message: String) -> some View {
+    private func additionalInfoFailure(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.circle")
@@ -248,6 +264,34 @@ struct PlaceDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
+    // MARK: - Register
+
+    private var registerButton: some View {
+        Button {
+            viewModel.register()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.body.weight(.semibold))
+                Text("등록하기")
+                    .font(.body.weight(.semibold))
+            }
+            .foregroundStyle(Color(.systemBackground))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color.primary, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .background {
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea(edges: .bottom)
+                .shadow(color: .black.opacity(0.06), radius: 8, y: -4)
+        }
+    }
+
     // MARK: - Components
 
     private func detailCard(title: String, value: String) -> some View {
@@ -267,7 +311,7 @@ struct PlaceDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private func detailChip(title: String, value: String, tint: Color = .secondary) -> some View {
+    private func detailChip(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption2.weight(.semibold))
@@ -275,76 +319,26 @@ struct PlaceDetailView: View {
 
             Text(value)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(tint)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func skeletonChip(title: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.tertiary)
-
-            HStack(spacing: 6) {
-                ProgressView()
-                    .controlSize(.mini)
-                Text("불러오는 중")
-                    .font(.subheadline)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func skeletonCard(title: String, lines: Int) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
+    private func insightCard(title: String, icon: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: icon)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
 
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(0 ..< lines, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(.tertiarySystemFill))
-                        .frame(height: 14)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(alignment: .bottomTrailing) {
-            HStack(spacing: 6) {
-                ProgressView()
-                    .controlSize(.mini)
-                Text("Grok 확인 중")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(12)
-        }
-    }
-
-    private func jsonDisclosure(_ json: String) -> some View {
-        DisclosureGroup(isExpanded: $isJSONExpanded) {
-            Text(json)
-                .font(.system(.caption, design: .monospaced))
+            Text(value)
+                .font(.body)
                 .foregroundStyle(.primary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 8)
-        } label: {
-            Text("JSON")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .textCase(.uppercase)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
