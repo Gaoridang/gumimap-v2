@@ -10,38 +10,27 @@ struct SearchTabView: View {
     }
 
     var body: some View {
-        Color(.systemGroupedBackground)
-            .overlay(alignment: .top) {
-                VStack(spacing: 0) {
-                    searchHeader
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
-
-                    resultsContent
-                }
+        VStack(spacing: 0) {
+            searchHeader
+            resultsContent
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemGroupedBackground))
+        .onAppear {
+            Task { @MainActor in
+                isFieldFocused = true
             }
-            .ignoresSafeArea(edges: .bottom)
-            .onAppear {
-                Task { @MainActor in
-                    isFieldFocused = true
-                }
-            }
-            .onDisappear {
-                search.reset()
-            }
+        }
+        .onDisappear {
+            search.reset()
+        }
     }
 
     private var searchHeader: some View {
         HStack(spacing: 12) {
             Button(action: router.closeSearch) {
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.08))
-                        .frame(width: 36, height: 36)
-
-                    ToolbarIcon(asset: .back, isSelected: true, size: 17)
-                }
+                ToolbarIcon(asset: .back, isSelected: true, size: 20)
+                    .frame(width: 36, height: 36)
             }
             .buttonStyle(.plain)
 
@@ -51,18 +40,13 @@ struct SearchTabView: View {
                 TextField("장소 검색", text: $search.query)
                     .textFieldStyle(.plain)
                     .font(.body)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
                     .focused($isFieldFocused)
                     .submitLabel(.search)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background {
-                Capsule()
-                    .fill(.white)
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
-            }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
     @ViewBuilder
@@ -89,14 +73,7 @@ struct SearchTabView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
                 .padding(.bottom, 24)
-            }
-            .background {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.white)
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
-                    .padding(.horizontal, 16)
             }
         }
     }
@@ -108,7 +85,7 @@ struct SearchTabView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(place.name)
                     .font(.body)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
 
                 Text(place.address)
                     .font(.caption)
@@ -116,7 +93,7 @@ struct SearchTabView: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
