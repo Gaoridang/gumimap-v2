@@ -7,8 +7,8 @@ Last updated: 2026-06-20
 | Field | Value |
 |-------|-------|
 | Active branch | `feat/grok-place-enrichment` |
-| Working tree | Unified PlaceEnrichmentCard with granular phase timeline → result |
-| Last verified | xcodebuild + iOS 26.5 simulator launch (UDID `33061315-12AA-4456-B68A-29E603FCF1FC`) |
+| Working tree | Grok place detail demo removed; search-only flow restored |
+| Last verified | xcodebuild + iOS 26.5 simulator launch |
 
 ## Merged / Shipped
 
@@ -40,22 +40,14 @@ Last updated: 2026-06-20
   - Custom back button + interactive swipe-back
   - Auto keyboard focus on enter; query reset on leave
   - Live Kakao keyword search with debounce (구미 지역 한정: center + 20km radius)
+  - Search results are display-only (no place detail sheet)
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
-## Demo — Place Detail Sheet + Grok (`feat/grok-place-enrichment`)
-
-- Search result tap → `fullScreenCover` → `PlaceDetailSheet`
-- Grok (`GrokPlaceService`) streams xAI Responses API (`grok-4.3` + `web_search`) and shows live activity feed in sheet
-- `XAI_API_KEY` wired via `scripts/generate-secrets.sh` → `Secrets.xaiAPIKey`
-- Bottom actions: 추가하기 (+ icon) + paperplane Kakao map link
-- Layout stability: open-status row always reserved; enrichment skeleton matches final structure (no jump when Grok returns)
-
 ## Next Task
 
-- User review of place detail demo → polish UI / merge
-- MapKit mini-map in sheet + "지도에서 보기"
 - Merge `feat/kakao-search-api` → `main` when ready
+- Revisit place detail sheet design (without Grok) when needed
 
 ## Other Backlog
 
