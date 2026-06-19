@@ -25,8 +25,9 @@ struct SearchOverlayView: View {
 
             VStack(alignment: .center, spacing: 10) {
                 searchBar
-                    .offset(y: searchBarOffset)
+                    .scaleEffect(searchBarVisible ? 1 : SearchMotion.searchBarScale)
                     .opacity(searchBarVisible ? 1 : 0)
+                    .offset(y: keyboardOffset)
 
                 resultsSection
             }
@@ -52,11 +53,6 @@ struct SearchOverlayView: View {
                 keyboardHeight = 0
             }
         }
-    }
-
-    private var searchBarOffset: CGFloat {
-        let travel = searchBarVisible ? 0 : SearchMotion.searchBarTravel
-        return travel + keyboardOffset
     }
 
     private var keyboardOffset: CGFloat {
@@ -112,7 +108,7 @@ struct SearchOverlayView: View {
             }
         }
         .frame(height: hasQuery ? resultsMaxHeight : 0)
-        .offset(y: resultsVisible ? 0 : SearchMotion.resultsTravel)
+        .scaleEffect(resultsVisible ? 1 : SearchMotion.resultsScale, anchor: .top)
         .opacity(resultsVisible ? 1 : 0)
         .clipped()
     }

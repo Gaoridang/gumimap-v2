@@ -1,20 +1,19 @@
 import SwiftUI
 
 enum SearchMotion {
-    /// Matches FloatingToolbar spring
-    static let searchBarIn = Animation.spring(response: 0.38, dampingFraction: 0.78)
+    // macOS Spotlight: scale + fade with critically damped spring (no overshoot)
 
-    static let searchBarOut = Animation.spring(response: 0.34, dampingFraction: 0.86)
+    static let searchBarIn = Animation.smooth(duration: 0.32, extraBounce: 0)
+    static let searchBarOut = Animation.smooth(duration: 0.26, extraBounce: 0)
 
-    static let resultsIn = Animation.spring(response: 0.34, dampingFraction: 0.82)
+    static let resultsIn = Animation.smooth(duration: 0.28, extraBounce: 0)
+    static let resultsOut = Animation.smooth(duration: 0.22, extraBounce: 0)
 
-    static let resultsOut = Animation.spring(response: 0.3, dampingFraction: 0.88)
+    static let keyboard = Animation.smooth(duration: 0.25, extraBounce: 0)
 
-    static let keyboard = Animation.spring(response: 0.35, dampingFraction: 0.86)
+    /// Spotlight window scales from ~0.94 → 1.0
+    static let searchBarScale: CGFloat = 0.94
+    static let resultsScale: CGFloat = 0.97
 
-    static let searchBarTravel: CGFloat = 24
-    static let resultsTravel: CGFloat = 12
-
-    /// Buffer beyond spring settle for searchBarOut
-    static let dismissDelay: Duration = .milliseconds(420)
+    static let dismissDelay: Duration = .milliseconds(320)
 }
