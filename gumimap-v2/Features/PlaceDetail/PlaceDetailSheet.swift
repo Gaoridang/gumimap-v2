@@ -16,6 +16,9 @@ struct PlaceDetailSheet: View {
                         .padding(.bottom, 4)
 
                     addressSection
+                        .padding(.bottom, 4)
+
+                    openStatusSection
                         .padding(.bottom, 20)
 
                     mapPlaceholder
@@ -62,6 +65,42 @@ struct PlaceDetailSheet: View {
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var openStatusSection: some View {
+        if let enrichment = viewModel.enrichment {
+            let status = enrichment.openStatus()
+            if status != .unknown {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(status.isPositive ? Color.green : Color.primary.opacity(0.25))
+                        .frame(width: 6, height: 6)
+
+                    Text(status.label)
+                        .font(.subheadline)
+                        .foregroundStyle(status.isPositive ? .primary : .secondary)
+
+                    if let detail = status.detail {
+                        Text(detail)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } else if viewModel.isLoadingEnrichment {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.primary.opacity(0.15))
+                    .frame(width: 6, height: 6)
+
+                Text("영업시간 확인 중")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private var mapPlaceholder: some View {

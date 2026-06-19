@@ -35,6 +35,8 @@ struct GrokPlaceService: Sendable {
             throw GrokPlaceError.missingAPIKey
         }
 
+        let nowKST = Self.kstTimestamp()
+
         let requestBody = GrokChatRequest(
             model: model,
             temperature: 0.3,
@@ -47,13 +49,17 @@ struct GrokPlaceService: Sendable {
                     Reply only valid JSON with keys:
                     summary (string, 1-2 sentences Korean),
                     highlights (array of up to 3 short Korean strings),
-                    visit_tip (string, one short Korean sentence).
-                    Focus on practical visitor info. If unsure, use cautious wording.
+                    visit_tip (string, one short Korean sentence),
+                    is_closed_today (boolean, true if closed all day today),
+                    today_open (string or null, 24h HH:mm for today's opening in Korea),
+                    today_close (string or null, 24h HH:mm for today's closing in Korea; use next-day close for overnight hours).
+                    Use the provided KST datetime to pick today's hours. If unsure, set hours fields to null.
                     """
                 ),
                 .init(
                     role: "user",
                     content: """
+                    current_datetime_kst: \(nowKST)
                     place_name: \(place.name)
                     address: \(place.address)
                     category: \(place.category)
@@ -85,6 +91,14 @@ struct GrokPlaceService: Sendable {
         }
 
         return try JSONDecoder().decode(PlaceEnrichment.self, from: Data(content.utf8))
+    }
+
+    private static func kstTimestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "Asia/Seoul")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        return formatter.string(from: .now)
     }
 }
 
