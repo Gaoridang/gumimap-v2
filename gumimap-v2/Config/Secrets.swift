@@ -2,8 +2,13 @@ import Foundation
 
 enum Secrets {
     static var kakaoRestAPIKey: String { GeneratedSecrets.kakaoRestAPIKey }
+    static var xaiAPIKey: String { GeneratedSecrets.xaiAPIKey }
 
-    static var isConfigured: Bool {
+    static var isKakaoConfigured: Bool {
         !kakaoRestAPIKey.isEmpty
+    }
+
+    static var isGrokConfigured: Bool {
+        !xaiAPIKey.isEmpty
     }
 }

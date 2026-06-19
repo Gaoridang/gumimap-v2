@@ -6,8 +6,8 @@ Last updated: 2026-06-19
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/place-detail-sheet-demo` |
-| Working tree | Search result tap → PlaceDetailSheet demo (phone + Kakao map link); pending user review |
+| Active branch | `feat/grok-place-enrichment` |
+| Working tree | Grok enriches place detail on sheet open; wishlist manual fields removed |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (UDID `33061315-12AA-4456-B68A-29E603FCF1FC`) |
 
 ## Merged / Shipped
@@ -43,11 +43,12 @@ Last updated: 2026-06-19
 - Placeholder `MapTabView` / `ListTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
-## Demo — Place Detail Sheet (`feat/place-detail-sheet-demo`)
+## Demo — Place Detail Sheet + Grok (`feat/grok-place-enrichment`)
 
 - Search result tap → `fullScreenCover` → `PlaceDetailSheet`
-- Shows: name, category, address, phone, Kakao map link, map placeholder
-- `Place` extended with `phone`, `kakaoMapURL` from Kakao API
+- Grok (`GrokPlaceService`) enriches place on appear: summary, highlights, visit tip
+- `XAI_API_KEY` wired via `scripts/generate-secrets.sh` → `Secrets.xaiAPIKey`
+- Bottom actions: 추가하기 (+ icon) + paperplane Kakao map link
 
 ## Next Task
 
