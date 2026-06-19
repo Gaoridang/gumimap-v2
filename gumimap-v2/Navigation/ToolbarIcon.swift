@@ -12,12 +12,13 @@ enum ToolbarIconAsset: String {
 struct ToolbarIcon: View {
     let asset: ToolbarIconAsset
     var isSelected: Bool = true
+    var size: CGFloat = 20
 
     var body: some View {
         Image(asset.rawValue)
             .resizable()
             .scaledToFit()
-            .frame(width: 20, height: 20)
+            .frame(width: size, height: size)
             .foregroundStyle(.black)
             .opacity(isSelected ? 1 : 0.4)
     }

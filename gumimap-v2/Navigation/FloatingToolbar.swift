@@ -43,7 +43,7 @@ struct FloatingToolbar: View {
     private var leadingSlot: some View {
         ZStack {
             if router.isListMode {
-                iconButton(asset: .back, isSelected: true, action: router.selectMap)
+                backButton
                     .transition(leadingIconTransition)
             } else {
                 iconButton(asset: .pin, isSelected: router.selectedTab == .map, action: router.selectMap)
@@ -51,6 +51,19 @@ struct FloatingToolbar: View {
             }
         }
         .toolbarTapTarget()
+    }
+
+    private var backButton: some View {
+        Button(action: router.selectMap) {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.08))
+                    .frame(width: 28, height: 28)
+
+                ToolbarIcon(asset: .back, isSelected: true, size: 17)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private var listEntryButton: some View {
