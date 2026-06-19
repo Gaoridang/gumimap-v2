@@ -1,19 +1,31 @@
 import SwiftUI
 
 enum SearchMotion {
-    /// Backdrop fade — iOS system-like ease-out
-    static let backdrop = Animation.timingCurve(0.33, 0, 0.2, 1, duration: 0.28)
+    // MARK: - Insertion (ease-out)
 
-    /// Search bar reveal — quick start, soft landing
-    static let searchBar = Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.4)
+    /// Backdrop fade in — iOS standard ease-in-out
+    static let backdropIn = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.32)
 
-    /// Results panel — gentle ease without bounce
-    static let results = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.32)
+    /// Search bar slide up — decelerate into place, 50ms after backdrop
+    static let searchBarIn = Animation.timingCurve(0, 0, 0.58, 1, duration: 0.35).delay(0.05)
 
-    /// Keyboard offset
-    static let keyboard = Animation.timingCurve(0.33, 0, 0.2, 1, duration: 0.25)
+    /// Results panel reveal
+    static let resultsIn = Animation.timingCurve(0, 0, 0.58, 1, duration: 0.28)
 
-    static let searchBarTravel: CGFloat = 32
-    static let resultsTravel: CGFloat = 16
-    static let dismissDelay: Duration = .milliseconds(300)
+    // MARK: - Removal (ease-in)
+
+    static let backdropOut = Animation.timingCurve(0.42, 0, 0.58, 1, duration: 0.28)
+
+    static let searchBarOut = Animation.timingCurve(0.42, 0, 1, 1, duration: 0.32)
+
+    static let resultsOut = Animation.timingCurve(0.42, 0, 1, 1, duration: 0.24)
+
+    /// Keyboard offset — symmetric, matches UIKeyboard
+    static let keyboard = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.25)
+
+    static let searchBarTravel: CGFloat = 24
+    static let resultsTravel: CGFloat = 12
+
+    /// Must exceed longest removal animation (searchBarOut 320ms) + frame buffer
+    static let dismissDelay: Duration = .milliseconds(360)
 }

@@ -38,7 +38,7 @@ struct SearchOverlayView: View {
         }
         .onAppear { playEntrance() }
         .onChange(of: hasQuery) { _, newValue in
-            withAnimation(SearchMotion.results) {
+            withAnimation(newValue ? SearchMotion.resultsIn : SearchMotion.resultsOut) {
                 resultsVisible = newValue
             }
         }
@@ -145,10 +145,10 @@ struct SearchOverlayView: View {
         searchBarVisible = false
         resultsVisible = false
 
-        withAnimation(SearchMotion.backdrop) {
+        withAnimation(SearchMotion.backdropIn) {
             backdropVisible = true
         }
-        withAnimation(SearchMotion.searchBar) {
+        withAnimation(SearchMotion.searchBarIn) {
             searchBarVisible = true
         }
 
@@ -163,13 +163,13 @@ struct SearchOverlayView: View {
         isDismissing = true
         isFieldFocused = false
 
-        withAnimation(SearchMotion.results) {
+        withAnimation(SearchMotion.resultsOut) {
             resultsVisible = false
         }
-        withAnimation(SearchMotion.searchBar) {
+        withAnimation(SearchMotion.searchBarOut) {
             searchBarVisible = false
         }
-        withAnimation(SearchMotion.backdrop) {
+        withAnimation(SearchMotion.backdropOut) {
             backdropVisible = false
         }
 
