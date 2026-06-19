@@ -6,6 +6,9 @@ struct PlaceDetailSheet: View {
     let onDismiss: () -> Void
 
     @State private var selectedListType: ListSubTab = .wishlist
+    @State private var memo = ""
+    @State private var selectedTags: Set<WishlistTag> = []
+    @State private var priority: WishlistPriority = .medium
 
     var body: some View {
         NavigationStack {
@@ -21,6 +24,11 @@ struct PlaceDetailSheet: View {
                         .padding(.bottom, 24)
 
                     listTypeSection
+
+                    if selectedListType == .wishlist {
+                        wishlistOptionsSection
+                            .padding(.top, 16)
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -109,6 +117,102 @@ struct PlaceDetailSheet: View {
                     .foregroundStyle(isSelected ? .primary : .secondary)
             }
             .animation(nil, value: selectedListType)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var wishlistOptionsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            TextField("메모 (선택)", text: $memo, axis: .vertical)
+                .lineLimit(1...3)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(optionFieldBackground)
+
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 72), spacing: 8)],
+                alignment: .leading,
+                spacing: 8
+            ) {
+                ForEach(WishlistTag.allCases) { tag in
+                    tagChip(tag)
+                }
+            }
+
+            HStack(spacing: 8) {
+                ForEach(WishlistPriority.allCases) { level in
+                    priorityButton(level)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        }
+    }
+
+    private var optionFieldBackground: some View {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(Color(.tertiarySystemGroupedBackground))
+    }
+
+    private func tagChip(_ tag: WishlistTag) -> some View {
+        let isSelected = selectedTags.contains(tag)
+
+        return Button {
+            if isSelected {
+                selectedTags.remove(tag)
+            } else {
+                selectedTags.insert(tag)
+            }
+        } label: {
+            Text(tag.title)
+                .font(.subheadline)
+                .foregroundStyle(isSelected ? .primary : .secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .background {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isSelected ? Color(.tertiarySystemGroupedBackground) : Color.clear)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(
+                                    isSelected ? Color.primary.opacity(0.25) : Color.primary.opacity(0.12),
+                                    lineWidth: 1
+                                )
+                        }
+                }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func priorityButton(_ level: WishlistPriority) -> some View {
+        let isSelected = priority == level
+
+        return Button {
+            priority = level
+        } label: {
+            Text(level.title)
+                .font(.subheadline)
+                .foregroundStyle(isSelected ? .primary : .secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isSelected ? Color(.tertiarySystemGroupedBackground) : Color.clear)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(
+                                    isSelected ? Color.primary.opacity(0.25) : Color.primary.opacity(0.12),
+                                    lineWidth: 1
+                                )
+                        }
+                }
         }
         .buttonStyle(.plain)
     }
