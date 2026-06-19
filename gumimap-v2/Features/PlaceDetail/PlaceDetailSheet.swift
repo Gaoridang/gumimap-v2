@@ -15,9 +15,6 @@ struct PlaceDetailSheet: View {
                         .padding(.bottom, 4)
 
                     addressSection
-                        .padding(.bottom, 4)
-
-                    phoneSection
                         .padding(.bottom, 20)
 
                     mapPlaceholder
@@ -57,23 +54,6 @@ struct PlaceDetailSheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder
-    private var phoneSection: some View {
-        if let phone = place.phone, let phoneURL = place.phoneURL {
-            Link(destination: phoneURL) {
-                Text(phone)
-                    .font(.body)
-                    .foregroundStyle(.black)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } else {
-            Text("정보 없음")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
     private var mapPlaceholder: some View {
         RoundedRectangle(cornerRadius: 12, style: .continuous)
             .fill(Color(.tertiarySystemFill))
@@ -102,13 +82,15 @@ struct PlaceDetailSheet: View {
 
     private func listTypeButton(_ listType: ListSubTab, title: String) -> some View {
         let isSelected = selectedListType == listType
-        let asset: ToolbarIconAsset = listType == .wishlist ? .wishlist : .visited
 
         return Button {
             selectedListType = listType
         } label: {
             HStack(spacing: 8) {
-                ToolbarIcon(asset: asset, isSelected: true, size: 18)
+                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(.black)
+
                 Text(title)
                     .font(.subheadline)
                     .foregroundStyle(.primary)
@@ -118,7 +100,7 @@ struct PlaceDetailSheet: View {
             .background {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(
-                        isSelected ? Color.black : Color.clear,
+                        isSelected ? Color.black : Color.black.opacity(0.15),
                         lineWidth: 1.5
                     )
             }
