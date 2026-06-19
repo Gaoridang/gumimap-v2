@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct SearchTabView: View {
-    @Bindable var router: TabRouter
     @Bindable var search: SearchViewModel
+    @Environment(\.dismiss) private var dismiss
     @FocusState private var isFieldFocused: Bool
 
     private var trimmedQuery: String {
@@ -16,6 +16,7 @@ struct SearchTabView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             Task { @MainActor in
                 isFieldFocused = true
@@ -28,7 +29,9 @@ struct SearchTabView: View {
 
     private var searchHeader: some View {
         HStack(spacing: 12) {
-            Button(action: router.closeSearch) {
+            Button {
+                dismiss()
+            } label: {
                 ToolbarIcon(asset: .back, isSelected: true, size: 20)
                     .frame(width: 36, height: 36)
             }
@@ -102,9 +105,9 @@ struct SearchTabView: View {
 }
 
 #Preview {
-    @Previewable @State var router = TabRouter()
     @Previewable @State var search = SearchViewModel()
 
-    SearchTabView(router: router, search: search)
-        .onAppear { router.openSearch() }
+    NavigationStack {
+        SearchTabView(search: search)
+    }
 }

@@ -25,8 +25,8 @@ Last updated: 2026-06-19
   - Spring animation on mode switch; sub-tabs slide in from the right
 - **List sub-tabs:** 가본 곳 (visited) / 가고 싶은 곳 (wishlist)
 - Placeholder `MapTabView` / `ListTabView`
-- Search button navigates to `SearchTabView` (floating toolbar hidden)
-- Back button returns to previous tab (map or list)
+- Search pushes `SearchTabView` via `NavigationStack` (swipe-back supported)
+- Back button or edge swipe returns to map/list
 - Mock place search filters 10 Korean sample locations
 - Original `ContentView` + `Item` SwiftData template unchanged (not wired in)
 
@@ -45,7 +45,8 @@ Last updated: 2026-06-19
 | `gumimap-v2/gumimap_v2App.swift` | App entry point |
 | `gumimap-v2/App/RootView.swift` | Root view (content + toolbar) |
 | `gumimap-v2/Navigation/FloatingToolbar.swift` | Pill toolbar UI and animations |
-| `gumimap-v2/Navigation/TabRouter.swift` | Tab + list sub-tab state |
+| `gumimap-v2/Navigation/TabRouter.swift` | Tab + list sub-tab + navigation path |
+| `gumimap-v2/Navigation/AppRoute.swift` | NavigationStack destinations |
 | `gumimap-v2/Navigation/ToolbarIcon.swift` | Lucide asset icon wrapper |
 | `gumimap-v2/Features/Map/MapTabView.swift` | Map placeholder |
 | `gumimap-v2/Features/List/ListTabView.swift` | List placeholder |
