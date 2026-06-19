@@ -7,21 +7,25 @@ struct SearchOverlayView: View {
 
     private let clusterMaxWidth: CGFloat = 360
     private let resultsMaxHeight: CGFloat = 280
+    private let searchBarTopPadding: CGFloat = 96
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.black.opacity(0.35)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture { dismiss() }
 
-            searchCluster
-                .frame(maxWidth: clusterMaxWidth)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .offset(y: -keyboardHeight * 0.35)
-                .transition(.scale(scale: 0.96).combined(with: .opacity))
-                .animation(.spring(response: 0.38, dampingFraction: 0.78), value: search.results.count)
-                .animation(.spring(response: 0.38, dampingFraction: 0.78), value: search.query)
+            VStack(alignment: .center, spacing: 10) {
+                searchBar
+
+                resultsSection
+            }
+            .frame(maxWidth: clusterMaxWidth)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, searchBarTopPadding)
+            .padding(.horizontal, 24)
+            .offset(y: keyboardOffset)
         }
         .onAppear {
             Task { @MainActor in
@@ -41,11 +45,9 @@ struct SearchOverlayView: View {
         }
     }
 
-    private var searchCluster: some View {
-        VStack(spacing: 10) {
-            searchBar
-            resultsSection
-        }
+    private var keyboardOffset: CGFloat {
+        guard keyboardHeight > 0 else { return 0 }
+        return -min(keyboardHeight * 0.2, 60)
     }
 
     private var searchBar: some View {
@@ -67,35 +69,41 @@ struct SearchOverlayView: View {
     @ViewBuilder
     private var resultsSection: some View {
         let trimmedQuery = search.query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasQuery = !trimmedQuery.isEmpty
 
-        if !trimmedQuery.isEmpty {
-            VStack(spacing: 0) {
-                if search.results.isEmpty {
-                    Text("검색 결과가 없습니다")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(search.results) { place in
-                                resultRow(place)
+        ZStack(alignment: .top) {
+            if hasQuery {
+                VStack(spacing: 0) {
+                    if search.results.isEmpty {
+                        Text("검색 결과가 없습니다")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                ForEach(search.results) { place in
+                                    resultRow(place)
 
-                                if place.id != search.results.last?.id {
-                                    Divider()
-                                        .padding(.leading, 16)
+                                    if place.id != search.results.last?.id {
+                                        Divider()
+                                            .padding(.leading, 16)
+                                    }
                                 }
                             }
                         }
                     }
-                    .frame(maxHeight: resultsMaxHeight)
                 }
+                .frame(height: resultsMaxHeight, alignment: .top)
+                .floatingCardStyle(shape: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .floatingCardStyle(shape: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .transition(.move(edge: .top).combined(with: .opacity))
         }
+        .frame(height: hasQuery ? resultsMaxHeight : 0)
+        .clipped()
+        .animation(.spring(response: 0.38, dampingFraction: 0.78), value: hasQuery)
     }
 
     private func resultRow(_ place: MockPlace) -> some View {

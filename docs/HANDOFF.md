@@ -25,7 +25,7 @@ Last updated: 2026-06-19
   - Spring animation on mode switch; sub-tabs slide in from the right
 - **List sub-tabs:** 가본 곳 (visited) / 가고 싶은 곳 (wishlist)
 - Placeholder `MapTabView` / `ListTabView`
-- Search opens centered Spotlight overlay with auto keyboard focus
+- Search opens upper Spotlight overlay with auto keyboard focus (fixed search bar position)
 - Mock place search filters 10 Korean sample locations
 - Tap outside dimmed area dismisses search and clears query
 - Original `ContentView` + `Item` SwiftData template unchanged (not wired in)
