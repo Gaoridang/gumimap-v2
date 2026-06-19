@@ -114,43 +114,60 @@ struct PlaceDetailSheet: View {
     }
 
     private var bottomActionBar: some View {
-        HStack(spacing: 10) {
-            if let kakaoMapURL = place.kakaoMapURL {
-                Link(destination: kakaoMapURL) {
-                    Text("지도보기")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background {
-                            Capsule()
-                                .fill(.white)
-                                .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
-                        }
+        HStack {
+            Spacer(minLength: 0)
+
+            HStack(spacing: 10) {
+                if let kakaoMapURL = place.kakaoMapURL {
+                    Link(destination: kakaoMapURL) {
+                        bottomActionLabel("지도보기", isEmphasized: false)
+                    }
+
+                    bottomActionDivider
                 }
+
+                Button {
+                    // TODO: Save place to selected list
+                    onDismiss()
+                } label: {
+                    bottomActionLabel("추가하기", isEmphasized: true)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background {
+                Capsule()
+                    .fill(.white)
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
             }
 
-            Button {
-                // TODO: Save place to selected list
-                onDismiss()
-            } label: {
-                Text("추가하기")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background {
-                        Capsule()
-                            .fill(.black)
-                            .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
-                    }
-            }
-            .buttonStyle(.plain)
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
         .background(Color(.systemGroupedBackground))
+    }
+
+    private var bottomActionDivider: some View {
+        Rectangle()
+            .fill(Color.black.opacity(0.15))
+            .frame(width: 1, height: 16)
+    }
+
+    private func bottomActionLabel(_ title: String, isEmphasized: Bool) -> some View {
+        Text(title)
+            .font(.subheadline.weight(isEmphasized ? .semibold : .regular))
+            .foregroundStyle(.black)
+            .padding(.horizontal, isEmphasized ? 10 : 4)
+            .padding(.vertical, 6)
+            .background {
+                if isEmphasized {
+                    Capsule()
+                        .fill(Color.black.opacity(0.08))
+                }
+            }
     }
 }
 
