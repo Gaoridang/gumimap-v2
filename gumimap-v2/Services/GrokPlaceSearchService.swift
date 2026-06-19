@@ -274,6 +274,36 @@ struct GrokPlaceSearchService: Sendable {
         )
     }
 
+    private var placeFeaturesSchema: JSONSchema {
+        JSONSchema(
+            type: "object",
+            properties: [
+                "popularMenu": JSONSchemaProperty(
+                    type: "string",
+                    description: "인기 메뉴·시그니처 메뉴 (Korean, concise)"
+                ),
+                "breakTime": JSONSchemaProperty(
+                    type: "string",
+                    description: "브레이크 타임 시간대 (e.g. 15:00-17:00) or 정보 없음"
+                ),
+                "parking": JSONSchemaProperty(
+                    type: "string",
+                    description: "주차 가능 여부·위치·요금 (Korean)"
+                ),
+                "wait": JSONSchemaProperty(
+                    type: "string",
+                    description: "평균 대기·혼잡 시간대·예약 필요 여부 (Korean)"
+                ),
+                "closedDay": JSONSchemaProperty(
+                    type: "string",
+                    description: "정기 휴무일 (e.g. 매주 월요일) or 정보 없음"
+                )
+            ],
+            required: ["popularMenu", "breakTime", "parking", "wait", "closedDay"],
+            additionalProperties: false
+        )
+    }
+
     private var placeItemJSONSchema: JSONSchema {
         JSONSchema(
             type: "object",
@@ -291,23 +321,14 @@ struct GrokPlaceSearchService: Sendable {
                     maxItems: 4
                 ),
                 "features": JSONSchemaProperty(
-                    type: "array",
-                    description: "2-4 short Korean bullet points: signature menu, vibe, parking, etc.",
-                    items: stringItemSchema,
-                    minItems: 1,
-                    maxItems: 4
-                ),
-                "waitInfo": JSONSchemaProperty(
-                    type: "array",
-                    description: "1-3 short Korean bullet points about wait times and peak hours",
-                    items: stringItemSchema,
-                    minItems: 1,
-                    maxItems: 3
+                    type: "object",
+                    description: "Structured place traits with exactly 5 fields",
+                    nestedSchema: placeFeaturesSchema
                 )
             ],
             required: [
                 "name", "address", "latitude", "longitude", "category",
-                "reviews", "features", "waitInfo"
+                "reviews", "features"
             ],
             additionalProperties: false
         )
@@ -315,20 +336,24 @@ struct GrokPlaceSearchService: Sendable {
 
     private static let placeDetailSystemPrompt = """
     You research ONE real restaurant or cafe in Gumi (구미), Gyeongsangbuk-do, South Korea.
-    Focus on visitor-facing insights from community sources — not business hours.
+    Focus on visitor-facing insights from community sources.
 
     Use at most 3 web_search calls:
     1. map.naver.com or place.map.kakao.com for "{name} 구미" — verify name, address, coordinates
     2. blog.naver.com, www.diningcode.com, or www.google.com for "{name} 구미 후기"
-    3. Only if wait/reservation info still missing: search peak hours or waiting tips
+    3. If traits still missing: search menu, parking, break time, or holiday info
 
     Return exactly 1 place with:
     - name, address, latitude/longitude, category: from official map listing
     - reviews: 2-4 bullet points (one insight per item, Korean, max ~40 chars each)
-    - features: 2-4 bullet points (signature menu, vibe, parking, etc., Korean)
-    - waitInfo: 1-3 bullet points (wait time, busy hours, reservation; use ["정보 없음"] if unknown)
+    - features: object with exactly these 5 fields (use "정보 없음" when unknown):
+      • popularMenu — 인기 메뉴 / 시그니처 메뉴
+      • breakTime — 브레이크 타임 (e.g. "15:00-17:00" or "없음")
+      • parking — 주차 정보
+      • wait — 대기·혼잡·예약 정보
+      • closedDay — 정기 휴무일
 
-    Each array item must be a single scannable line — no paragraphs, no numbering prefix.
+    Each reviews item must be a single scannable line — no paragraphs, no numbering prefix.
     Do NOT invent reviews. Prefer recent blog and dining community sources.
     """
 }
@@ -402,6 +427,7 @@ private struct JSONSchemaProperty: Encodable {
     let description: String?
     let enumValues: [String]?
     let items: JSONSchema?
+    let nestedSchema: JSONSchema?
     let minItems: Int?
     let maxItems: Int?
 
@@ -410,6 +436,9 @@ private struct JSONSchemaProperty: Encodable {
         case description
         case enumValues = "enum"
         case items
+        case properties
+        case required
+        case additionalProperties
         case minItems
         case maxItems
     }
@@ -419,6 +448,7 @@ private struct JSONSchemaProperty: Encodable {
         description: String? = nil,
         enumValues: [String]? = nil,
         items: JSONSchema? = nil,
+        nestedSchema: JSONSchema? = nil,
         minItems: Int? = nil,
         maxItems: Int? = nil
     ) {
@@ -426,8 +456,25 @@ private struct JSONSchemaProperty: Encodable {
         self.description = description
         self.enumValues = enumValues
         self.items = items
+        self.nestedSchema = nestedSchema
         self.minItems = minItems
         self.maxItems = maxItems
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encodeIfPresent(description, forKey: .description)
+        try container.encodeIfPresent(enumValues, forKey: .enumValues)
+        try container.encodeIfPresent(items, forKey: .items)
+        try container.encodeIfPresent(minItems, forKey: .minItems)
+        try container.encodeIfPresent(maxItems, forKey: .maxItems)
+
+        if let nestedSchema {
+            try container.encode(nestedSchema.properties, forKey: .properties)
+            try container.encode(nestedSchema.required, forKey: .required)
+            try container.encode(nestedSchema.additionalProperties, forKey: .additionalProperties)
+        }
     }
 }
 

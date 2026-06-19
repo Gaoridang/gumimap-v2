@@ -155,12 +155,10 @@ final class PlaceDetailViewModel {
                 revealStep = 1
             }
 
-            for step in 2 ... 3 {
-                try? await Task.sleep(for: .milliseconds(180))
-                guard !Task.isCancelled else { return }
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.84)) {
-                    revealStep = step
-                }
+            try? await Task.sleep(for: .milliseconds(180))
+            guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.84)) {
+                revealStep = 2
             }
         }
     }

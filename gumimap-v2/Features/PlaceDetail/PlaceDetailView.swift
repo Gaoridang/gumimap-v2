@@ -220,22 +220,9 @@ struct PlaceDetailView: View {
                 .transition(resultTransition)
             }
 
-            if viewModel.revealStep >= 2, detail.hasFeatures {
-                bulletCard(
-                    title: "특징",
-                    icon: "sparkles",
-                    points: detail.featurePoints
-                )
-                .transition(resultTransition)
-            }
-
-            if viewModel.revealStep >= 3, detail.hasWaitInfo {
-                bulletCard(
-                    title: "대기",
-                    icon: "clock",
-                    points: detail.waitPoints
-                )
-                .transition(resultTransition)
+            if viewModel.revealStep >= 2 {
+                structuredFeaturesCard(detail.features)
+                    .transition(resultTransition)
             }
         }
     }
@@ -324,6 +311,45 @@ struct PlaceDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func structuredFeaturesCard(_ features: PlaceFeatures) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("특징", systemImage: "sparkles")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .textCase(.uppercase)
+
+            VStack(spacing: 0) {
+                ForEach(Array(features.rows.enumerated()), id: \.offset) { index, row in
+                    featureRow(label: row.label, value: row.value)
+
+                    if index < features.rows.count - 1 {
+                        Divider()
+                            .padding(.leading, 88)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func featureRow(label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(label)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 88, alignment: .leading)
+
+            Text(value)
+                .font(.body)
+                .foregroundStyle(value == "정보 없음" ? .tertiary : .primary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 10)
     }
 
     private func bulletCard(title: String, icon: String, points: [String]) -> some View {
