@@ -6,14 +6,21 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `feat/map-fullscreen` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after merge |
+| Working tree | Clean after map commit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
 Pick up from backlog below (map pins, Kakao search gaps, etc.).
+
+### Full-screen map (`feat/map-fullscreen` — in progress)
+
+- **`MapTabView`** — MapKit `Map` fills the screen; 구미 중심 12km region; nav bar hidden on map root
+- Floating toolbar unchanged (overlaid at bottom)
+
+**Key paths:** `MapTabView.swift`, `SearchRegion.swift`
 
 ## Merged / Shipped on `main`
 
@@ -99,12 +106,12 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
-- Placeholder `MapTabView`
+- **Map tab:** full-screen MapKit map centered on 구미
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
 
-- Wire MapKit into `MapTabView`
+- Map pins for saved places
 - Saved detail Grok re-enrichment
 - Place detail map preview, business hours formatting
 - "Already saved" badge on discovery detail

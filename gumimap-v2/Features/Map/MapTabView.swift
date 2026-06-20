@@ -1,14 +1,20 @@
+import MapKit
 import SwiftUI
 
 struct MapTabView: View {
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: SearchRegion.gumiCenter,
+            latitudinalMeters: 12_000,
+            longitudinalMeters: 12_000
+        )
+    )
+
     var body: some View {
-        Color(.systemGroupedBackground)
-            .overlay {
-                Text("지도")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-            }
+        Map(position: $position)
+            .mapStyle(.standard(elevation: .realistic))
             .ignoresSafeArea()
+            .toolbar(.hidden, for: .navigationBar)
     }
 }
 
