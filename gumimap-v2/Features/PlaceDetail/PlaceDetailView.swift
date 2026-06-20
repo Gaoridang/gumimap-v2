@@ -26,11 +26,6 @@ struct PlaceDetailView: View {
                 headerSubtitle
                 kakaoBaselineSection
 
-                if viewModel.showProgress {
-                    progressSection
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-
                 if viewModel.showAdditionalInfo {
                     additionalInfoSection
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -64,7 +59,6 @@ struct PlaceDetailView: View {
             }
         }
         .animation(.snappy, value: viewModel.isLoading)
-        .animation(.snappy, value: viewModel.progressLog.count)
         .animation(.snappy, value: viewModel.revealStep)
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfo)
         .onAppear { viewModel.loadIfNeeded() }
@@ -195,64 +189,6 @@ struct PlaceDetailView: View {
                 }
             }
         }
-    }
-
-    // MARK: - SSE Progress
-
-    private var progressSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if viewModel.progressLog.isEmpty {
-                HStack(spacing: 10) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text(viewModel.currentProgress?.message ?? "추가 정보를 불러오고 있어요")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                ForEach(Array(viewModel.progressLog.enumerated()), id: \.offset) { index, progress in
-                    progressLine(
-                        progress,
-                        isCurrent: viewModel.isLoading && index == viewModel.progressLog.count - 1
-                    )
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func progressLine(_ progress: GrokSearchProgress, isCurrent: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Group {
-                if isCurrent {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Image(systemName: "checkmark")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .frame(width: 16, height: 16)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(progress.message)
-                    .font(.subheadline)
-                    .foregroundStyle(isCurrent ? .primary : .tertiary)
-                    .contentTransition(.opacity)
-
-                if let detail = progress.detail {
-                    Text(detail)
-                        .font(.caption)
-                        .foregroundStyle(isCurrent ? .secondary : .tertiary)
-                        .contentTransition(.opacity)
-                }
-            }
-        }
-        .transition(.asymmetric(
-            insertion: .opacity.combined(with: .offset(y: 8)),
-            removal: .opacity
-        ))
     }
 
     // MARK: - Additional Info
