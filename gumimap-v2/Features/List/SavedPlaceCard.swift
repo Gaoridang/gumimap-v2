@@ -47,11 +47,10 @@ struct SavedPlaceCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var nameRow: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             Text(content.name)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.primary)
@@ -139,6 +138,6 @@ extension SavedPlace {
             )
         }
         .padding(20)
+        .background(Color(.systemGroupedBackground))
     }
-    .background(Color(.systemGroupedBackground))
 }

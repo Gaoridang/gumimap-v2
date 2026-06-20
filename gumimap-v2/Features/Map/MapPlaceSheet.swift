@@ -23,6 +23,7 @@ struct MapPlaceSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     headerSection
+                    detailLinkButton
                     infoSection
 
                     if let detail = savedPlace.grokDetail, detail.hasAnyInsight {
@@ -149,6 +150,26 @@ struct MapPlaceSheet: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(Color.green.opacity(0.12), in: Capsule())
+    }
+
+    private var detailLinkButton: some View {
+        Button {
+            openSavedDetail()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.subheadline.weight(.medium))
+                Text("상세 보기")
+                    .font(.subheadline.weight(.medium))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(.primary)
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
     }
 
     private var infoSection: some View {
@@ -290,6 +311,12 @@ struct MapPlaceSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func openSavedDetail() {
+        let savedPlaceId = savedPlace.id
+        dismiss()
+        router.openSavedPlaceDetail(id: savedPlaceId)
     }
 
     private func handleMove(listKind: ListSubTab) async {

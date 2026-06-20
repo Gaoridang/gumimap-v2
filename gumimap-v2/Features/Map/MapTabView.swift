@@ -7,18 +7,35 @@ private struct SelectedMapPlace: Identifiable {
 
 struct MapTabView: View {
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
+    @Environment(TabRouter.self) private var router
     @State private var isMapActive = false
     @State private var selectedPlace: SelectedMapPlace?
+    @State private var focusPlaceId: String?
 
     var body: some View {
         Group {
             if Secrets.isKakaoMapConfigured {
-                KakaoMapView(isActive: isMapActive, places: savedPlaces) { placeID in
+                KakaoMapView(
+                    isActive: isMapActive,
+                    places: savedPlaces,
+                    focusPlaceId: focusPlaceId
+                ) { placeID in
                     selectedPlace = SelectedMapPlace(id: placeID)
                 }
                 .ignoresSafeArea()
                 .onAppear { isMapActive = true }
                 .onDisappear { isMapActive = false }
+                .onChange(of: router.pendingMapFocusPlaceId) { _, placeId in
+                    guard let placeId else { return }
+                    focusPlaceId = placeId
+                    selectedPlace = SelectedMapPlace(id: placeId)
+                    router.pendingMapFocusPlaceId = nil
+
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(400))
+                        focusPlaceId = nil
+                    }
+                }
             } else {
                 missingKeyState
             }

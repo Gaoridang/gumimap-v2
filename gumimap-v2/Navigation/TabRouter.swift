@@ -6,6 +6,7 @@ final class TabRouter {
     var selectedTab: AppTab = .map
     var listSubTab: ListSubTab = .visited
     var path: [AppRoute] = []
+    var pendingMapFocusPlaceId: String?
 
     var isListMode: Bool { selectedTab == .list }
 
@@ -31,6 +32,14 @@ final class TabRouter {
 
     func openSavedPlaceDetail(id: String) {
         path.append(.savedPlaceDetail(id: id))
+    }
+
+    func openSavedPlaceOnMap(id: String) {
+        withAnimation(toolbarAnimation) {
+            path = []
+            selectedTab = .map
+            pendingMapFocusPlaceId = id
+        }
     }
 
     func selectListSubTab(_ subTab: ListSubTab) {

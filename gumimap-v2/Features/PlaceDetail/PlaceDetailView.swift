@@ -194,6 +194,26 @@ struct PlaceDetailView: View {
                 }
             }
 
+            if !viewModel.isDiscoveryMode, let savedPlaceId = viewModel.savedPlaceId {
+                Button {
+                    router.openSavedPlaceOnMap(id: savedPlaceId)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "map")
+                            .font(.subheadline.weight(.medium))
+                        Text("지도에서 보기")
+                            .font(.subheadline.weight(.medium))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(.tint)
+                    .padding(16)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+            }
+
             if let mapURL = viewModel.place.kakaoMapURL {
                 Link(destination: mapURL) {
                     HStack(spacing: 6) {

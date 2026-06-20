@@ -6,9 +6,9 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/saved-badge-hours-format` |
+| Active branch | `feat/list-map-link` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after saved badge + business hours formatting |
+| Working tree | Clean after list ↔ map linking |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -20,6 +20,18 @@ Pick up from backlog below.
 - Place detail map preview
 - Kakao REST API search gaps (e.g. 와일드차일드)
 - Fix `run-simulator.sh` UDID fallback edge cases
+
+## Shipped on `feat/list-map-link` (pending merge)
+
+### List ↔ map linking (2026-06-20)
+
+- **List card map button** — trailing `map` icon switches to map tab, zooms to pin (level 15), opens `MapPlaceSheet`
+- **Saved detail** — "지도에서 보기" row pops nav and focuses map + sheet
+- **Map sheet** — "상세 보기" dismisses sheet and pushes `PlaceDetailView` saved detail
+- **`TabRouter.openSavedPlaceOnMap(id:)`** — clears nav path, sets `pendingMapFocusPlaceId`
+- **`KakaoMapView.focusPlaceId`** — camera focus with pending-until-ready retry
+
+**Key paths:** `TabRouter.swift`, `KakaoMapView.swift`, `MapTabView.swift`, `ListTabView.swift`, `MapPlaceSheet.swift`, `PlaceDetailView.swift`
 
 ## Shipped on `feat/saved-badge-hours-format` (pending merge)
 
@@ -132,10 +144,10 @@ Pick up from backlog below.
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
+- **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + pin focus + sheet
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle); already-saved banner + disabled register row when place exists in either list; formatted business hours in enrichment card
 - **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); circle-style saved pins (green/blue ring); tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); circle-style saved pins (green/blue ring); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Key Paths

@@ -6,6 +6,7 @@ struct ListTabView: View {
 
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
     @Environment(ListHeaderStore.self) private var listHeaderStore
+    @Environment(TabRouter.self) private var router
 
     private var places: [SavedPlace] {
         savedPlaces.filter { $0.listKind == subTab.rawValue }
@@ -44,10 +45,24 @@ struct ListTabView: View {
 
                 LazyVStack(spacing: 10) {
                     ForEach(places, id: \.id) { savedPlace in
-                        NavigationLink(value: AppRoute.savedPlaceDetail(id: savedPlace.id)) {
-                            SavedPlaceCard(content: savedPlace.cardContent)
+                        HStack(spacing: 0) {
+                            NavigationLink(value: AppRoute.savedPlaceDetail(id: savedPlace.id)) {
+                                SavedPlaceCard(content: savedPlace.cardContent)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                router.openSavedPlaceOnMap(id: savedPlace.id)
+                            } label: {
+                                Image(systemName: "map")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 44, height: 44)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("지도에서 보기")
                         }
-                        .buttonStyle(.plain)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                     }
                 }
             }
@@ -74,4 +89,5 @@ struct ListTabView: View {
 #Preview {
     ListTabView(subTab: .visited)
         .environment(ListHeaderStore())
+        .environment(TabRouter())
 }

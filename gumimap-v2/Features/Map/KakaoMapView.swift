@@ -6,6 +6,7 @@ import UIKit
 struct KakaoMapView: UIViewRepresentable {
     var isActive: Bool
     let places: [SavedPlace]
+    var focusPlaceId: String?
     let onPinTap: (String) -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -27,6 +28,7 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         context.coordinator.updatePlaces(places)
+        context.coordinator.applyFocus(placeId: focusPlaceId, in: places)
 
         if isActive {
             context.coordinator.activate()
@@ -48,6 +50,7 @@ extension KakaoMapView {
             static let mapViewName = "mapview"
             static let layerID = "saved-places"
             static let defaultLevel = 12
+            static let focusLevel = 15
         }
 
         private let onPinTap: (String) -> Void
@@ -57,6 +60,8 @@ extension KakaoMapView {
         private var didSetInitialCamera = false
         private var lastAppliedSize: CGSize = .zero
         private var pendingPlaces: [SavedPlace] = []
+        private var pendingFocusPlaceId: String?
+        private var appliedFocusPlaceId: String?
         private var displayedPlaceIDs: Set<String> = []
         private var registeredStyleIDs: Set<String> = []
         private var observersInstalled = false
@@ -99,6 +104,28 @@ extension KakaoMapView {
         func updatePlaces(_ places: [SavedPlace]) {
             pendingPlaces = places
             syncPinsIfReady()
+        }
+
+        func applyFocus(placeId: String?, in places: [SavedPlace]) {
+            guard let placeId else {
+                appliedFocusPlaceId = nil
+                pendingFocusPlaceId = nil
+                return
+            }
+            guard placeId != appliedFocusPlaceId else { return }
+
+            guard isMapReady, let mapView = kakaoMap else {
+                pendingFocusPlaceId = placeId
+                return
+            }
+
+            guard focusCamera(on: placeId, in: places, mapView: mapView) else {
+                pendingFocusPlaceId = placeId
+                return
+            }
+
+            pendingFocusPlaceId = nil
+            appliedFocusPlaceId = placeId
         }
 
         func handleResize(_ size: CGSize) {
@@ -144,6 +171,7 @@ extension KakaoMapView {
             }
 
             syncPinsIfReady()
+            applyPendingFocusIfNeeded()
         }
 
         func addViewFailed(_ viewName: String, viewInfoName: String) {
@@ -246,6 +274,34 @@ extension KakaoMapView {
             }
 
             displayedPlaceIDs = nextIDs
+            applyPendingFocusIfNeeded()
+        }
+
+        private func applyPendingFocusIfNeeded() {
+            guard let pendingFocusPlaceId else { return }
+            applyFocus(placeId: pendingFocusPlaceId, in: pendingPlaces)
+        }
+
+        @discardableResult
+        private func focusCamera(
+            on placeId: String,
+            in places: [SavedPlace],
+            mapView: KakaoMap
+        ) -> Bool {
+            guard let place = places.first(where: { $0.id == placeId }) else { return false }
+
+            let coordinate = place.asPlace.coordinate
+            let target = MapPoint(
+                longitude: coordinate.longitude,
+                latitude: coordinate.latitude
+            )
+            let cameraUpdate = CameraUpdate.make(
+                target: target,
+                zoomLevel: Constants.focusLevel,
+                mapView: mapView
+            )
+            mapView.moveCamera(cameraUpdate)
+            return true
         }
 
         private func ensureStyleRegistered(
