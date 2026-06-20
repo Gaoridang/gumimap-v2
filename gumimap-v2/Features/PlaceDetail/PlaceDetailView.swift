@@ -4,9 +4,16 @@ import SwiftUI
 struct PlaceDetailView: View {
     @State private var viewModel: PlaceDetailViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.placeStore) private var placeStore
+    @Environment(TabRouter.self) private var router
+    @State private var showRegistrationSheet = false
 
     init(place: Place) {
         _viewModel = State(initialValue: PlaceDetailViewModel(place: place))
+    }
+
+    init(savedPlaceId: String, store: PlaceStore) {
+        _viewModel = State(initialValue: PlaceDetailViewModel(savedPlaceId: savedPlaceId, store: store))
     }
 
     var body: some View {
@@ -27,7 +34,7 @@ struct PlaceDetailView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .padding(.bottom, 24)
+            .padding(.bottom, viewModel.isDiscoveryMode ? 24 : 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
@@ -36,7 +43,9 @@ struct PlaceDetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .enableInteractivePopGesture()
         .safeAreaInset(edge: .bottom) {
-            registerButton
+            if viewModel.isDiscoveryMode {
+                registerButton
+            }
         }
         .animation(.snappy, value: viewModel.isLoading)
         .animation(.snappy, value: viewModel.progressLog.count)
@@ -44,6 +53,16 @@ struct PlaceDetailView: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfo)
         .onAppear { viewModel.loadIfNeeded() }
         .onDisappear { viewModel.cancelTasks() }
+        .sheet(isPresented: $showRegistrationSheet) {
+            PlaceRegistrationSheet(
+                placeName: viewModel.place.name,
+                isSaving: viewModel.isSavingRegistration
+            ) { listKind in
+                Task {
+                    await handleRegistration(listKind: listKind)
+                }
+            }
+        }
     }
 
     // MARK: - Header
@@ -238,10 +257,12 @@ struct PlaceDetailView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Button("다시 시도") {
-                viewModel.retryEnrichment()
+            if viewModel.isDiscoveryMode {
+                Button("다시 시도") {
+                    viewModel.retryEnrichment()
+                }
+                .font(.subheadline.weight(.medium))
             }
-            .font(.subheadline.weight(.medium))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -253,7 +274,7 @@ struct PlaceDetailView: View {
     private var registerButton: some View {
         HStack(spacing: 10) {
             Button {
-                viewModel.register()
+                showRegistrationSheet = true
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "plus")
@@ -267,6 +288,7 @@ struct PlaceDetailView: View {
                 .background(Color.primary, in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
+            .disabled(viewModel.isSavingRegistration)
 
             if let isOpen = viewModel.isOpenNow, isOpen {
                 openStatusBadge
@@ -296,6 +318,16 @@ struct PlaceDetailView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 16)
         .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func handleRegistration(listKind: ListSubTab) async {
+        guard let placeStore else { return }
+        guard let savedPlaceId = await viewModel.register(listKind: listKind, store: placeStore) else {
+            return
+        }
+
+        showRegistrationSheet = false
+        router.completeRegistration(savedPlaceId: savedPlaceId, listKind: listKind)
     }
 
     // MARK: - Components

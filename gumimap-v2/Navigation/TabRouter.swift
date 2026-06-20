@@ -34,4 +34,13 @@ final class TabRouter {
             listSubTab = subTab
         }
     }
+
+    func completeRegistration(savedPlaceId: String, listKind: ListSubTab) {
+        withAnimation(toolbarAnimation) {
+            path = []
+            listSubTab = listKind
+            selectedTab = .list
+            path.append(.savedPlaceDetail(id: savedPlaceId))
+        }
+    }
 }

@@ -1,8 +1,11 @@
+import SwiftData
 import SwiftUI
 
 struct RootView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var router = TabRouter()
     @State private var search = SearchViewModel()
+    @State private var placeStore: PlaceStore?
 
     var body: some View {
         @Bindable var router = router
@@ -27,7 +30,18 @@ struct RootView: View {
                     SearchTabView(search: search)
                 case let .placeDetail(place):
                     PlaceDetailView(place: place)
+                case let .savedPlaceDetail(id):
+                    if let placeStore {
+                        PlaceDetailView(savedPlaceId: id, store: placeStore)
+                    }
                 }
+            }
+        }
+        .environment(router)
+        .environment(\.placeStore, placeStore)
+        .onAppear {
+            if placeStore == nil {
+                placeStore = PlaceStore(modelContext: modelContext)
             }
         }
     }
@@ -35,4 +49,5 @@ struct RootView: View {
 
 #Preview {
     RootView()
+        .modelContainer(for: SavedPlace.self, inMemory: true)
 }

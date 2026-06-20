@@ -6,29 +6,37 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
-| Next branch | `feat/place-register` (create before first code change) |
-| Working tree | Clean; `feat/place-detail-sheet` merged into `main` |
+| Active branch | `feat/place-register` |
+| Next branch | (create before first code change on next task) |
+| Working tree | Clean after commit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
-## Next Task — 등록하기
+## Next Task — Backlog
 
-Wire the fixed bottom **등록하기** button in `PlaceDetailView`:
+Pick up from backlog below (map pins, list delete/move, saved-detail re-enrichment, etc.).
 
-- `PlaceDetailViewModel.register()` is a TODO stub
-- Persist `Place` + optional `GrokPlaceDetail` (enrichment fields/reviews)
-- Surface saved places in `ListTabView` sub-tabs (`visited` / `wishlist`) — currently placeholders
-- Decide storage: SwiftData (project already has `Item.swift` scaffold) vs new model
+## Shipped on `feat/place-register`
 
-**Key entry points**
+### Place registration flow
+
+- **등록하기** button opens `PlaceRegistrationSheet` (가본 곳 / 가고 싶은 곳)
+- `PlaceStore` persists `Place` + optional `GrokPlaceDetail` via SwiftData `SavedPlace`
+- Upsert by composite id `kakaoPlaceId-listKind`
+- After save: `TabRouter.completeRegistration` clears search stack → list tab + sub-tab → saved detail push
+- `PlaceDetailView` dual mode: `.discovery` (Grok fetch) / `.saved` (cached enrichment, no register button)
+- `ListTabView` shows saved places per sub-tab via `@Query`
+
+**Key paths**
 
 | Path | Notes |
 |------|-------|
-| `gumimap-v2/Features/PlaceDetail/PlaceDetailViewModel.swift` | `register()` |
-| `gumimap-v2/Features/PlaceDetail/PlaceDetailView.swift` | `registerButton` |
-| `gumimap-v2/Features/List/ListTabView.swift` | List sub-tab UI |
-| `gumimap-v2/Navigation/ListSubTab.swift` | `.visited` / `.wishlist` |
-| `gumimap-v2/Features/Search/Place.swift` | Search result model to persist |
+| `gumimap-v2/Models/SavedPlace.swift` | SwiftData model |
+| `gumimap-v2/Services/PlaceStore.swift` | Register + lookup |
+| `gumimap-v2/Features/PlaceDetail/PlaceRegistrationSheet.swift` | List-kind picker sheet |
+| `gumimap-v2/Features/PlaceDetail/PlaceDetailViewModel.swift` | Discovery/saved modes |
+| `gumimap-v2/Features/List/ListTabView.swift` | Saved place list |
+| `gumimap-v2/Navigation/TabRouter.swift` | `completeRegistration` |
+| `gumimap-v2/Navigation/AppRoute.swift` | `.savedPlaceDetail(id:)` |
 
 ## Merged / Shipped on `main`
 
@@ -55,21 +63,24 @@ Wire the fixed bottom **등록하기** button in `PlaceDetailView`:
   - UI shows 6 curated fields: 영업시간, 브레이크타임, 휴무일, 주차, 분위기, 특징
   - Extra fields + reviews stored in model; reviews shown as bullet card
   - `businessHours` used for **영업중** badge on register row (not shown as its own row)
-- Staggered reveal after SSE completes; **등록하기** button UI ready (no persistence yet)
-- xAI key: `XAI_API_KEY` → `Secrets.xaiAPIKey`
+- Staggered reveal after SSE completes
 
 ## What Is on the App Now
 
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
-- **Search:** Kakao live search → tap result → `PlaceDetailView` with Grok enrichment
-- Placeholder `MapTabView` / `ListTabView` (no saved data yet)
+- **Search:** Kakao live search → tap result → `PlaceDetailView` with Grok enrichment → 등록하기 → list tab saved detail
+- **List tabs:** 가본 곳 / 가고 싶은 곳 show persisted places; tap row → saved detail (no Grok re-fetch)
+- Placeholder `MapTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
 
 - Wire MapKit into `MapTabView`
+- List delete / move between visited and wishlist
+- Saved detail Grok re-enrichment
 - Place detail polish (map preview, business hours formatting)
+- "Already saved" badge on discovery detail
 - Fix `run-simulator.sh` UDID fallback edge cases
 
 ## Key Paths
