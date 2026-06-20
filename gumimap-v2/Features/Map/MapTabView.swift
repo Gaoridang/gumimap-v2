@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-private struct SelectedMapPlace: Identifiable {
+private struct SelectedMapPlace: Identifiable, Equatable {
     let id: String
 }
 
@@ -24,32 +24,40 @@ struct MapTabView: View {
                     onPinTap: { placeID in
                         selectedPlace = SelectedMapPlace(id: placeID)
                     },
+                    onFocusStarted: { placeId in
+                        guard animatedFocus, focusPlaceId == placeId else { return }
+
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(380))
+                            guard animatedFocus, focusPlaceId == placeId else { return }
+                            presentSheet(for: placeId)
+                        }
+                    },
                     onFocusCompleted: { placeId in
-                        guard animatedFocus else { return }
+                        guard animatedFocus, focusPlaceId == placeId else { return }
                         presentSheet(for: placeId)
                     }
                 )
                 .ignoresSafeArea()
-                .onAppear { isMapActive = true }
-                .onDisappear { isMapActive = false }
-                .onChange(of: router.pendingMapFocusPlaceId) { _, placeId in
-                    guard let placeId else { return }
-                    animatedFocus = true
-                    focusPlaceId = placeId
-                    router.pendingMapFocusPlaceId = nil
-
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(380))
-                        guard animatedFocus, focusPlaceId == placeId else { return }
-                        presentSheet(for: placeId)
-                    }
-                }
             } else {
                 missingKeyState
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            isMapActive = true
+            consumePendingMapFocusIfNeeded()
+        }
+        .onDisappear { isMapActive = false }
+        .onChange(of: router.pendingMapFocusPlaceId) { _, _ in
+            consumePendingMapFocusIfNeeded()
+        }
+        .onChange(of: selectedPlace) { _, newValue in
+            guard newValue == nil else { return }
+            focusPlaceId = nil
+            animatedFocus = false
+        }
         .sheet(item: $selectedPlace) { selection in
             if let savedPlace = savedPlaces.first(where: { $0.id == selection.id }) {
                 MapPlaceSheet(savedPlace: savedPlace)
@@ -57,16 +65,33 @@ struct MapTabView: View {
         }
     }
 
+    private func consumePendingMapFocusIfNeeded() {
+        guard let placeId = router.pendingMapFocusPlaceId else { return }
+        startMapFocus(to: placeId)
+    }
+
+    private func startMapFocus(to placeId: String) {
+        router.pendingMapFocusPlaceId = nil
+        animatedFocus = true
+        focusPlaceId = placeId
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(2_000))
+            guard animatedFocus, focusPlaceId == placeId else { return }
+            presentSheet(for: placeId)
+        }
+    }
+
     private func presentSheet(for placeId: String) {
+        guard selectedPlace?.id != placeId else {
+            animatedFocus = false
+            return
+        }
+
         animatedFocus = false
 
         withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
             selectedPlace = SelectedMapPlace(id: placeId)
-        }
-
-        Task {
-            try? await Task.sleep(for: .milliseconds(400))
-            focusPlaceId = nil
         }
     }
 

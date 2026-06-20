@@ -25,7 +25,7 @@ Pick up from backlog below.
 
 ### List ↔ map linking (2026-06-20)
 
-- **List card map button** — trailing `map` icon switches to map tab, animated zoom to pin (level 15, 700ms), sheet rises mid-zoom
+- **List card map button** — trailing `map` icon switches to map tab, animated zoom to pin (level 15, 700ms), sheet rises mid-zoom; `onAppear` consumes pending focus when `MapTabView` remounts from list tab
 - **Saved detail** — "지도에서 보기" row pops nav and focuses map + sheet
 - **Map sheet** — "상세 보기" dismisses sheet and pushes `PlaceDetailView` saved detail
 - **`TabRouter.openSavedPlaceOnMap(id:)`** — clears nav path, sets `pendingMapFocusPlaceId`

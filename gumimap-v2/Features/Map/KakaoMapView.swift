@@ -9,10 +9,15 @@ struct KakaoMapView: UIViewRepresentable {
     var focusPlaceId: String?
     var animatedFocus = false
     let onPinTap: (String) -> Void
+    var onFocusStarted: ((String) -> Void)?
     var onFocusCompleted: ((String) -> Void)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onPinTap: onPinTap, onFocusCompleted: onFocusCompleted)
+        Coordinator(
+            onPinTap: onPinTap,
+            onFocusStarted: onFocusStarted,
+            onFocusCompleted: onFocusCompleted
+        )
     }
 
     func makeUIView(context: Context) -> KMViewContainer {
@@ -30,6 +35,7 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         context.coordinator.updatePlaces(places)
+        context.coordinator.onFocusStarted = onFocusStarted
         context.coordinator.onFocusCompleted = onFocusCompleted
         context.coordinator.applyFocus(
             placeId: focusPlaceId,
@@ -62,6 +68,7 @@ extension KakaoMapView {
         }
 
         private let onPinTap: (String) -> Void
+        var onFocusStarted: ((String) -> Void)?
         var onFocusCompleted: ((String) -> Void)?
         private weak var container: KMViewContainer?
         private var controller: KMController?
@@ -78,9 +85,11 @@ extension KakaoMapView {
 
         init(
             onPinTap: @escaping (String) -> Void,
+            onFocusStarted: ((String) -> Void)?,
             onFocusCompleted: ((String) -> Void)?
         ) {
             self.onPinTap = onPinTap
+            self.onFocusStarted = onFocusStarted
             self.onFocusCompleted = onFocusCompleted
             super.init()
         }
@@ -330,6 +339,8 @@ extension KakaoMapView {
             )
 
             if animated {
+                onFocusStarted?(placeId)
+
                 let options = CameraAnimationOptions(
                     autoElevation: true,
                     consecutive: false,
