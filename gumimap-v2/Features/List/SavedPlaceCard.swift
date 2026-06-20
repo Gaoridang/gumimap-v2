@@ -1,19 +1,5 @@
 import SwiftUI
 
-enum SavedPlaceCardStyle: String, CaseIterable, Identifiable {
-    case text
-    case icon
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .text: "A · 텍스트"
-        case .icon: "B · 아이콘"
-        }
-    }
-}
-
 struct SavedPlaceCardContent: Equatable {
     let name: String
     let address: String
@@ -24,7 +10,6 @@ struct SavedPlaceCardContent: Equatable {
 
 struct SavedPlaceCard: View {
     let content: SavedPlaceCardContent
-    let style: SavedPlaceCardStyle
 
     private var shortCategory: String {
         let parts = content.category
@@ -35,44 +20,6 @@ struct SavedPlaceCard: View {
     }
 
     var body: some View {
-        Group {
-            switch style {
-            case .text:
-                textCard
-            case .icon:
-                iconCard
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    private var textCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            nameRow
-
-            if !shortCategory.isEmpty {
-                Text(shortCategory)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
-
-            Text(content.address)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
-
-            if let insightLine = content.insightLine {
-                Text(insightLine)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
-    }
-
-    private var iconCard: some View {
         HStack(alignment: .top, spacing: 12) {
             categoryIcon
 
@@ -98,6 +45,9 @@ struct SavedPlaceCard: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var nameRow: some View {
@@ -166,50 +116,27 @@ extension SavedPlace {
     }
 }
 
-extension SavedPlaceCardContent {
-    static let demoSamples: [SavedPlaceCardContent] = [
-        SavedPlaceCardContent(
-            name: "와일드차일드",
-            address: "경북 구미시 인동가산로35길 14",
-            category: "음식점 > 카페",
-            insightLine: "조용하고 넓은 공간, 디저트가 인기",
-            isOpenNow: true
-        ),
-        SavedPlaceCardContent(
-            name: "구미중앙시장",
-            address: "경북 구미시 원평동 123-4",
-            category: "쇼핑 > 시장",
-            insightLine: nil,
-            isOpenNow: false
-        ),
-        SavedPlaceCardContent(
-            name: "금오산 산책로",
-            address: "경북 구미시 산동읍",
-            category: "여가시설 > 공원",
-            insightLine: "가벼운 등산과 전망대가 좋아요",
-            isOpenNow: false
-        ),
-    ]
-}
-
-#Preview("A · Text") {
+#Preview {
     ScrollView {
         LazyVStack(spacing: 10) {
-            ForEach(Array(SavedPlaceCardContent.demoSamples.enumerated()), id: \.offset) { _, sample in
-                SavedPlaceCard(content: sample, style: .text)
-            }
-        }
-        .padding(20)
-    }
-    .background(Color(.systemGroupedBackground))
-}
-
-#Preview("B · Icon") {
-    ScrollView {
-        LazyVStack(spacing: 10) {
-            ForEach(Array(SavedPlaceCardContent.demoSamples.enumerated()), id: \.offset) { _, sample in
-                SavedPlaceCard(content: sample, style: .icon)
-            }
+            SavedPlaceCard(
+                content: SavedPlaceCardContent(
+                    name: "와일드차일드",
+                    address: "경북 구미시 인동가산로35길 14",
+                    category: "음식점 > 카페",
+                    insightLine: "조용하고 넓은 공간, 디저트가 인기",
+                    isOpenNow: true
+                )
+            )
+            SavedPlaceCard(
+                content: SavedPlaceCardContent(
+                    name: "구미중앙시장",
+                    address: "경북 구미시 원평동 123-4",
+                    category: "쇼핑 > 시장",
+                    insightLine: nil,
+                    isOpenNow: false
+                )
+            )
         }
         .padding(20)
     }

@@ -8,26 +8,23 @@ Last updated: 2026-06-20
 |-------|-------|
 | Active branch | `feat/list-place-card-demo` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Uncommitted — list place card A/B demo |
+| Working tree | Clean after list card finalize |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
-
-## In Progress — List place card demo (`feat/list-place-card-demo`)
-
-- **A · 텍스트 카드** and **B · 아이콘 카드** demos in `SavedPlaceCard`
-- Empty list: scrollable side-by-side sample sections (3 mock places each)
-- Saved list: segmented picker toggles A/B on real `SavedPlace` data
-- Category → SF Symbol mapping in `PlaceCategoryIcon`
-- Enrichment teaser: 분위기 → 특징; 영업중 badge when `grokDetail.isCurrentlyOpen`
-
-**Key paths:** `SavedPlaceCard.swift`, `PlaceCategoryIcon.swift`, `ListTabView.swift`
-
-**Next:** User picks A or B (or hybrid) → remove demo banner/samples → commit final style
 
 ## Next Task — Backlog
 
-Pick up from backlog below (map pins, Kakao search gaps, etc.) after card style is chosen.
+Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
 ## Merged / Shipped on `main`
+
+### List place card — icon style (`feat/list-place-card-demo`)
+
+- `SavedPlaceCard` — category icon + name, category, address, enrichment teaser
+- `PlaceCategoryIcon` — Kakao category → SF Symbol + tint
+- `ListTabView` — `ScrollView` + card rows (replaces plain text list rows)
+- 영업중 badge when `grokDetail.isCurrentlyOpen`; insight line: 분위기 → 특징
+
+**Key paths:** `SavedPlaceCard.swift`, `PlaceCategoryIcon.swift`, `ListTabView.swift`
 
 ### Saved place edit & delete (`feat/saved-place-edit-delete` → merged 2026-06-20)
 
@@ -90,7 +87,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.) after card style 
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 show persisted places; tap row → saved detail
+- **List tabs:** 가본 곳 / 가고 싶은 곳 show icon place cards; tap card → saved detail
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
 - Placeholder `MapTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
