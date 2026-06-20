@@ -8,6 +8,9 @@ struct PlaceDetailView: View {
     @Environment(\.placeEnrichmentService) private var enrichmentService
     @Environment(TabRouter.self) private var router
     @State private var showRegistrationSheet = false
+    @State private var showEditSheet = false
+    @State private var showDeleteConfirmation = false
+    @State private var isManagingSavedPlace = false
 
     init(place: Place) {
         _viewModel = State(initialValue: PlaceDetailViewModel(place: place))
@@ -46,6 +49,12 @@ struct PlaceDetailView: View {
             ToolbarItem(placement: .topBarLeading) {
                 backButton
             }
+
+            if !viewModel.isDiscoveryMode {
+                ToolbarItem(placement: .topBarTrailing) {
+                    savedPlaceMenu
+                }
+            }
         }
         .toolbarBackground(.automatic, for: .navigationBar)
         .enableInteractivePopGesture()
@@ -72,14 +81,44 @@ struct PlaceDetailView: View {
             viewModel.refreshFromStore(store: placeStore)
         }
         .sheet(isPresented: $showRegistrationSheet) {
-            PlaceRegistrationSheet(
+            PlaceListKindSheet(
                 placeName: viewModel.place.name,
-                isSaving: viewModel.isSavingRegistration
+                title: "어디에 저장할까요?",
+                isProcessing: viewModel.isSavingRegistration,
+                processingMessage: "저장하고 있어요",
+                disabledListKind: nil
             ) { listKind in
                 Task {
                     await handleRegistration(listKind: listKind)
                 }
             }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            PlaceListKindSheet(
+                placeName: viewModel.place.name,
+                title: "어디로 옮길까요?",
+                isProcessing: isManagingSavedPlace,
+                processingMessage: "옮기고 있어요",
+                disabledListKind: viewModel.savedListKind
+            ) { listKind in
+                Task {
+                    await handleMove(listKind: listKind)
+                }
+            }
+        }
+        .confirmationDialog(
+            "이 장소를 삭제할까요?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("삭제", role: .destructive) {
+                Task {
+                    await handleDelete()
+                }
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("삭제하면 이 리스트에서 장소가 사라져요.")
         }
     }
 
@@ -102,6 +141,25 @@ struct PlaceDetailView: View {
                 .frame(width: 36, height: 36)
         }
         .buttonStyle(.plain)
+    }
+
+    private var savedPlaceMenu: some View {
+        Menu {
+            Button {
+                showEditSheet = true
+            } label: {
+                Label("리스트 변경", systemImage: "arrow.left.arrow.right")
+            }
+
+            Button(role: .destructive) {
+                showDeleteConfirmation = true
+            } label: {
+                Label("삭제", systemImage: "trash")
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.body.weight(.medium))
+        }
     }
 
     // MARK: - Kakao Baseline
@@ -351,6 +409,41 @@ struct PlaceDetailView: View {
 
         showRegistrationSheet = false
         router.completeRegistration(savedPlaceId: savedPlaceId, listKind: listKind)
+    }
+
+    private func handleMove(listKind: ListSubTab) async {
+        guard let placeStore, let savedPlaceId = viewModel.savedPlaceId else { return }
+        guard viewModel.savedListKind != listKind else { return }
+
+        isManagingSavedPlace = true
+        defer {
+            isManagingSavedPlace = false
+            showEditSheet = false
+        }
+
+        do {
+            let newSavedPlaceId = try placeStore.moveListKind(
+                savedPlaceId: savedPlaceId,
+                to: listKind
+            )
+            router.replaceSavedPlaceDetail(savedPlaceId: newSavedPlaceId, listKind: listKind)
+        } catch {
+            return
+        }
+    }
+
+    private func handleDelete() async {
+        guard let placeStore, let savedPlaceId = viewModel.savedPlaceId else { return }
+
+        isManagingSavedPlace = true
+        defer { isManagingSavedPlace = false }
+
+        do {
+            try placeStore.delete(savedPlaceId: savedPlaceId)
+            dismiss()
+        } catch {
+            return
+        }
     }
 
     // MARK: - Components

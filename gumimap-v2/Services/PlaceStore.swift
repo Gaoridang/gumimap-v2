@@ -76,6 +76,64 @@ final class PlaceStore {
         descriptor.fetchLimit = 1
         return try? modelContext.fetch(descriptor).first
     }
+
+    func delete(savedPlaceId: String) throws {
+        guard let saved = savedPlace(id: savedPlaceId) else { return }
+        modelContext.delete(saved)
+        try modelContext.save()
+    }
+
+    @discardableResult
+    func moveListKind(savedPlaceId: String, to listKind: ListSubTab) throws -> String {
+        guard let saved = savedPlace(id: savedPlaceId) else {
+            throw PlaceStoreError.savedPlaceNotFound
+        }
+
+        let targetId = SavedPlace.makeID(kakaoPlaceId: saved.kakaoPlaceId, listKind: listKind)
+        guard targetId != savedPlaceId else { return savedPlaceId }
+
+        let now = Date()
+
+        if let target = savedPlace(id: targetId) {
+            if saved.enrichmentData != nil {
+                target.enrichmentData = saved.enrichmentData
+            }
+            target.updatedAt = now
+            modelContext.delete(saved)
+        } else {
+            let moved = SavedPlace(
+                id: targetId,
+                kakaoPlaceId: saved.kakaoPlaceId,
+                listKind: listKind,
+                name: saved.name,
+                address: saved.address,
+                category: saved.category,
+                phone: saved.phone,
+                kakaoMapURLString: saved.kakaoMapURLString,
+                latitude: saved.latitude,
+                longitude: saved.longitude,
+                enrichmentData: saved.enrichmentData,
+                registeredAt: saved.registeredAt,
+                updatedAt: now
+            )
+            modelContext.insert(moved)
+            modelContext.delete(saved)
+        }
+
+        try modelContext.save()
+        return targetId
+    }
+}
+
+enum PlaceStoreError: LocalizedError {
+    case savedPlaceNotFound
+
+    var errorDescription: String? {
+        switch self {
+        case .savedPlaceNotFound:
+            "저장된 장소를 찾을 수 없어요."
+        }
+    }
 }
 
 private struct PlaceStoreKey: EnvironmentKey {

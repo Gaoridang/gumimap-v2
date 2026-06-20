@@ -1,14 +1,17 @@
 import SwiftUI
 
-struct PlaceRegistrationSheet: View {
+struct PlaceListKindSheet: View {
     let placeName: String
-    let isSaving: Bool
+    let title: String
+    let isProcessing: Bool
+    let processingMessage: String
+    let disabledListKind: ListSubTab?
     let onSelect: (ListSubTab) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("어디에 저장할까요?")
+                Text(title)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.primary)
 
@@ -19,28 +22,24 @@ struct PlaceRegistrationSheet: View {
             }
 
             VStack(spacing: 12) {
-                registrationOption(
-                    title: ListSubTab.visited.title,
+                listKindOption(
+                    listKind: .visited,
                     subtitle: "다녀온 장소로 기록해요",
                     icon: "checkmark.circle"
-                ) {
-                    onSelect(.visited)
-                }
+                )
 
-                registrationOption(
-                    title: ListSubTab.wishlist.title,
+                listKindOption(
+                    listKind: .wishlist,
                     subtitle: "나중에 가고 싶은 곳으로 모아둬요",
                     icon: "bookmark"
-                ) {
-                    onSelect(.wishlist)
-                }
+                )
             }
 
-            if isSaving {
+            if isProcessing {
                 HStack(spacing: 10) {
                     ProgressView()
                         .controlSize(.small)
-                    Text("저장하고 있어요")
+                    Text(processingMessage)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -52,26 +51,29 @@ struct PlaceRegistrationSheet: View {
         .padding(.bottom, 24)
         .presentationDetents([.height(320)])
         .presentationDragIndicator(.visible)
-        .interactiveDismissDisabled(isSaving)
+        .interactiveDismissDisabled(isProcessing)
     }
 
-    private func registrationOption(
-        title: String,
+    private func listKindOption(
+        listKind: ListSubTab,
         subtitle: String,
-        icon: String,
-        action: @escaping () -> Void
+        icon: String
     ) -> some View {
-        Button(action: action) {
+        let isDisabled = isProcessing || disabledListKind == listKind
+
+        return Button {
+            onSelect(listKind)
+        } label: {
             HStack(spacing: 14) {
                 Image(systemName: icon)
                     .font(.title3.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isDisabled ? .tertiary : .primary)
                     .frame(width: 28)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
+                    Text(listKind.title)
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(isDisabled ? .tertiary : .primary)
 
                     Text(subtitle)
                         .font(.caption)
@@ -80,14 +82,20 @@ struct PlaceRegistrationSheet: View {
 
                 Spacer(minLength: 0)
 
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                if disabledListKind == listKind {
+                    Text("현재")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
             }
             .padding(16)
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
-        .disabled(isSaving)
+        .disabled(isDisabled)
     }
 }

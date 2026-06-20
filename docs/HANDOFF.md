@@ -6,14 +6,32 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/place-detail-sticky-header` |
+| Active branch | `feat/saved-place-edit-delete` |
 | Next branch | (create before first code change on next task) |
 | Working tree | Clean after commit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
-Pick up from backlog below (map pins, list delete/move, etc.).
+Pick up from backlog below (map pins, Kakao search gaps, etc.).
+
+## Shipped on `feat/saved-place-edit-delete`
+
+- **List swipe actions:** leading "옮기기" opens `PlaceListKindSheet`; trailing "삭제" removes from SwiftData
+- **Saved detail menu (`...`):** "리스트 변경" and "삭제" with confirmation dialog
+- `PlaceStore.delete()` and `PlaceStore.moveListKind()` — move merges enrichment if target already exists
+- `PlaceRegistrationSheet` renamed/generalized to `PlaceListKindSheet` (register + move; shows "현재" for active list)
+- `TabRouter.replaceSavedPlaceDetail()` — after move from detail, switches sub-tab and replaces nav destination
+
+**Key paths**
+
+| Path | Notes |
+|------|-------|
+| `gumimap-v2/Services/PlaceStore.swift` | delete, moveListKind |
+| `gumimap-v2/Features/PlaceDetail/PlaceListKindSheet.swift` | List-kind picker sheet |
+| `gumimap-v2/Features/List/ListTabView.swift` | Swipe delete/move |
+| `gumimap-v2/Features/PlaceDetail/PlaceDetailView.swift` | Saved-place menu |
+| `gumimap-v2/Navigation/TabRouter.swift` | `replaceSavedPlaceDetail` |
 
 ## Shipped on `feat/place-detail-sticky-header`
 
@@ -29,7 +47,7 @@ Pick up from backlog below (map pins, list delete/move, etc.).
 
 ### Place registration flow
 
-- **등록하기** button opens `PlaceRegistrationSheet` (가본 곳 / 가고 싶은 곳)
+- **등록하기** button opens `PlaceListKindSheet` (가본 곳 / 가고 싶은 곳)
 - `PlaceStore` persists `Place` + optional `GrokPlaceDetail` via SwiftData `SavedPlace`
 - Upsert by composite id `kakaoPlaceId-listKind`
 - After save: `TabRouter.completeRegistration` clears search stack → list tab + sub-tab → saved detail push
@@ -42,7 +60,7 @@ Pick up from backlog below (map pins, list delete/move, etc.).
 |------|-------|
 | `gumimap-v2/Models/SavedPlace.swift` | SwiftData model |
 | `gumimap-v2/Services/PlaceStore.swift` | Register + lookup |
-| `gumimap-v2/Features/PlaceDetail/PlaceRegistrationSheet.swift` | List-kind picker sheet |
+| `gumimap-v2/Features/PlaceDetail/PlaceListKindSheet.swift` | List-kind picker sheet |
 | `gumimap-v2/Features/PlaceDetail/PlaceDetailViewModel.swift` | Discovery/saved modes |
 | `gumimap-v2/Features/List/ListTabView.swift` | Saved place list |
 | `gumimap-v2/Navigation/TabRouter.swift` | `completeRegistration` |
@@ -80,17 +98,18 @@ Pick up from backlog below (map pins, list delete/move, etc.).
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → `PlaceDetailView` with Grok enrichment → 등록하기 → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 show persisted places; tap row → saved detail (no Grok re-fetch)
+- **List tabs:** 가본 곳 / 가고 싶은 곳 show persisted places; swipe to move/delete; tap row → saved detail
+- **Saved detail:** `...` menu for list change or delete
 - Placeholder `MapTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
 
 - Wire MapKit into `MapTabView`
-- List delete / move between visited and wishlist
 - Saved detail Grok re-enrichment
 - Place detail polish (map preview, business hours formatting)
 - "Already saved" badge on discovery detail
+- Kakao REST API search gaps (e.g. 와일드차일드)
 - Fix `run-simulator.sh` UDID fallback edge cases
 
 ## Key Paths

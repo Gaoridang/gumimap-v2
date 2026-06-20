@@ -31,6 +31,7 @@ final class PlaceDetailViewModel {
     private(set) var detail: GrokPlaceDetail?
     private(set) var revealStep = 0
     private(set) var registrationState: RegistrationState = .idle
+    private(set) var savedListKind: ListSubTab?
 
     private var revealTask: Task<Void, Never>?
     private var loadTask: Task<Void, Never>?
@@ -48,6 +49,7 @@ final class PlaceDetailViewModel {
     init(savedPlaceId: String, store: PlaceStore) {
         mode = .saved(id: savedPlaceId)
         if let saved = store.savedPlace(id: savedPlaceId) {
+            savedListKind = saved.listSubTab
             place = saved.asPlace
             detail = saved.grokDetail
             if saved.grokDetail != nil {

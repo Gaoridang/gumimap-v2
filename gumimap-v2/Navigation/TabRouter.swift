@@ -43,4 +43,15 @@ final class TabRouter {
             path.append(.savedPlaceDetail(id: savedPlaceId))
         }
     }
+
+    func replaceSavedPlaceDetail(savedPlaceId: String, listKind: ListSubTab) {
+        withAnimation(toolbarAnimation) {
+            if !path.isEmpty {
+                path.removeLast()
+            }
+            listSubTab = listKind
+            selectedTab = .list
+            path.append(.savedPlaceDetail(id: savedPlaceId))
+        }
+    }
 }
