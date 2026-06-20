@@ -111,6 +111,16 @@ final class PlaceStore {
         return try? modelContext.fetch(descriptor).first
     }
 
+    func savedListKind(forKakaoPlaceId kakaoPlaceId: String) -> ListSubTab? {
+        for listKind in ListSubTab.allCases {
+            let id = SavedPlace.makeID(kakaoPlaceId: kakaoPlaceId, listKind: listKind)
+            if savedPlace(id: id) != nil {
+                return listKind
+            }
+        }
+        return nil
+    }
+
     func delete(savedPlaceId: String) throws {
         guard let saved = savedPlace(id: savedPlaceId) else { return }
         modelContext.delete(saved)

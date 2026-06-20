@@ -6,9 +6,9 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `feat/saved-badge-hours-format` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after merge of Kakao map + saved place info edit |
+| Working tree | Clean after saved badge + business hours formatting |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -17,10 +17,19 @@ Pick up from backlog below.
 
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
-- Place detail map preview, business hours formatting
-- "Already saved" badge on discovery detail
+- Place detail map preview
 - Kakao REST API search gaps (e.g. 와일드차일드)
 - Fix `run-simulator.sh` UDID fallback edge cases
+
+## Shipped on `feat/saved-badge-hours-format` (pending merge)
+
+### Discovery "already saved" badge + business hours formatting (2026-06-20)
+
+- **Discovery detail:** green/blue "가본 곳/가고 싶은 곳에 저장됨" banner when place already registered; register button shows checkmark + list name and stays disabled
+- **`PlaceStore.savedListKind(forKakaoPlaceId:)`** — lookup by Kakao place id across both lists
+- **`BusinessHoursParser.formatDisplay`** — weekday grouping (e.g. `월–금  10:00 – 22:00`), `매일` shortcut, normalized en-dash times; applied via `GrokPlaceDetail.visibleFieldRows`
+
+**Key paths:** `PlaceStore.swift`, `BusinessHoursParser.swift`, `GrokPlaceDetail.swift`, `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
 
 ## Merged / Shipped on `main`
 
@@ -124,7 +133,7 @@ Pick up from backlog below.
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
-- **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
+- **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle); already-saved banner + disabled register row when place exists in either list; formatted business hours in enrichment card
 - **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제
 - **Map tab:** full-screen Kakao Map centered on 구미 (level 12); circle-style saved pins (green/blue ring); tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`

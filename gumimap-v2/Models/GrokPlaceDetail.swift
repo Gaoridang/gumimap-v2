@@ -80,8 +80,14 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
     var visibleFieldRows: [GrokVisibleFieldRow] {
         GrokVisibleField.allCases.map { field in
             let raw = value(for: field)
-            let value = Self.hasContent(raw) ? raw : "정보 없음"
-            return GrokVisibleFieldRow(label: field.title, value: value)
+            guard Self.hasContent(raw) else {
+                return GrokVisibleFieldRow(label: field.title, value: "정보 없음")
+            }
+
+            let displayValue = field == .businessHours
+                ? BusinessHoursParser.formatDisplay(raw)
+                : raw
+            return GrokVisibleFieldRow(label: field.title, value: displayValue)
         }
     }
 

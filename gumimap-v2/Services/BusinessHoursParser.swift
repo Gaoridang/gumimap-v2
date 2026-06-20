@@ -17,6 +17,34 @@ enum BusinessHoursParser {
         return days[weekday - 1]
     }
 
+    static func formatDisplay(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != "정보 없음" else { return trimmed }
+
+        let entries = parse(trimmed)
+        guard !entries.isEmpty else { return trimmed }
+
+        if entries.allSatisfy({ $0.hours == entries[0].hours }) {
+            return "매일  \(formatHours(entries[0].hours))"
+        }
+
+        var lines: [String] = []
+        var groupStart = 0
+
+        for index in entries.indices {
+            let isLast = index == entries.count - 1
+            let continuesGroup = !isLast && entries[index].hours == entries[index + 1].hours
+            guard isLast || !continuesGroup else { continue }
+
+            let group = Array(entries[groupStart...index])
+            let dayLabel = formatDayRange(group.map(\.day))
+            lines.append("\(dayLabel)  \(formatHours(group[0].hours))")
+            groupStart = index + 1
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
     static func isOpenNow(
         businessHours raw: String,
         breakTime: String? = nil,
@@ -49,6 +77,39 @@ enum BusinessHoursParser {
     private static func isClosedDay(_ hours: String) -> Bool {
         let lowered = hours.lowercased()
         return lowered.contains("휴무") || lowered.contains("closed")
+    }
+
+    private static func formatDayRange(_ days: [String]) -> String {
+        guard let first = days.first else { return "" }
+        guard days.count > 1 else { return first }
+
+        let indices = days.compactMap { weekdayOrder.firstIndex(of: $0) }
+        let isConsecutive = indices.count == days.count
+            && indices == Array(indices[0]...(indices[0] + days.count - 1))
+
+        if isConsecutive, let last = days.last {
+            return "\(first)–\(last)"
+        }
+
+        return days.joined(separator: ", ")
+    }
+
+    private static func formatHours(_ hours: String) -> String {
+        if isClosedDay(hours) { return "휴무" }
+
+        return hours.replacing(timeRangePattern) { match in
+            let startHour = Int(match.1) ?? 0
+            let startMinute = Int(match.2) ?? 0
+            let endHour = Int(match.3) ?? 0
+            let endMinute = Int(match.4) ?? 0
+            return String(
+                format: "%02d:%02d – %02d:%02d",
+                startHour,
+                startMinute,
+                endHour,
+                endMinute
+            )
+        }
     }
 
     private static func parse(_ raw: String) -> [(day: String, hours: String)] {

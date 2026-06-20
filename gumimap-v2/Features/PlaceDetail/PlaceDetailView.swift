@@ -61,7 +61,12 @@ struct PlaceDetailView: View {
         .animation(.snappy, value: viewModel.isLoading)
         .animation(.snappy, value: viewModel.revealStep)
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfo)
-        .onAppear { viewModel.loadIfNeeded() }
+        .onAppear {
+            viewModel.loadIfNeeded()
+            if let placeStore {
+                viewModel.refreshSavedStatus(store: placeStore)
+            }
+        }
         .onDisappear { viewModel.cancelTasks() }
         .onChange(of: viewModel.canRegister) { _, canRegister in
             if !canRegister {
@@ -173,6 +178,10 @@ struct PlaceDetailView: View {
 
     private var kakaoBaselineSection: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if viewModel.isDiscoveryMode, let listKind = viewModel.existingSavedListKind {
+                savedListBadge(listKind)
+            }
+
             detailCard(title: "주소", value: viewModel.place.address)
 
             HStack(spacing: 10) {
@@ -295,10 +304,10 @@ struct PlaceDetailView: View {
                             .controlSize(.small)
                             .tint(Color(.systemBackground))
                     } else {
-                        Image(systemName: "plus")
+                        Image(systemName: viewModel.isAlreadySaved ? "checkmark.circle.fill" : "plus")
                             .font(.body.weight(.semibold))
                     }
-                    Text(viewModel.isLoading ? "추가 정보 확인 중" : "등록하기")
+                    Text(registerButtonTitle)
                         .font(.body.weight(.semibold))
                 }
                 .foregroundStyle(Color(.systemBackground))
@@ -323,6 +332,36 @@ struct PlaceDetailView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: .black.opacity(0.06), radius: 8, y: -4)
         }
+    }
+
+    private var registerButtonTitle: String {
+        if viewModel.isLoading {
+            return "추가 정보 확인 중"
+        }
+        if viewModel.isAlreadySaved, let listKind = viewModel.existingSavedListKind {
+            return "\(listKind.title)에 저장됨"
+        }
+        return "등록하기"
+    }
+
+    private func savedListBadge(_ listKind: ListSubTab) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(listKind == .visited ? .green : .blue)
+
+            Text("\(listKind.title)에 저장됨")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(listKind == .visited ? .green : .blue)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            (listKind == .visited ? Color.green : Color.blue).opacity(0.12),
+            in: RoundedRectangle(cornerRadius: 14)
+        )
+        .accessibilityLabel("\(listKind.title)에 이미 저장된 장소")
     }
 
     private var openStatusBadge: some View {

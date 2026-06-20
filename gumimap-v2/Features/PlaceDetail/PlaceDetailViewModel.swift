@@ -30,6 +30,7 @@ final class PlaceDetailViewModel {
     private(set) var revealStep = 0
     private(set) var registrationState: RegistrationState = .idle
     private(set) var savedListKind: ListSubTab?
+    private(set) var existingSavedListKind: ListSubTab?
 
     private var revealTask: Task<Void, Never>?
     private var loadTask: Task<Void, Never>?
@@ -80,8 +81,12 @@ final class PlaceDetailViewModel {
         registrationState == .saving
     }
 
+    var isAlreadySaved: Bool {
+        existingSavedListKind != nil
+    }
+
     var canRegister: Bool {
-        isDiscoveryMode && !isLoading && !isSavingRegistration
+        isDiscoveryMode && !isLoading && !isSavingRegistration && !isAlreadySaved
     }
 
     var savedPlaceId: String? {
@@ -106,6 +111,11 @@ final class PlaceDetailViewModel {
         case .idle, .loading:
             false
         }
+    }
+
+    func refreshSavedStatus(store: PlaceStore) {
+        guard isDiscoveryMode else { return }
+        existingSavedListKind = store.savedListKind(forKakaoPlaceId: place.id)
     }
 
     func loadIfNeeded() {
