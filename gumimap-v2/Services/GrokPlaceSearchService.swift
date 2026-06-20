@@ -204,7 +204,6 @@ struct GrokPlaceSearchService: Sendable {
                 }
 
             case "response.completed":
-                onProgress?(GrokSearchProgress(message: "추가 정보를 불러왔어요"))
                 if let json = try? JSONSerialization.jsonObject(with: eventData) as? [String: Any],
                    let responseObject = json["response"],
                    let responseData = try? JSONSerialization.data(withJSONObject: responseObject) {

@@ -216,13 +216,6 @@ struct PlaceDetailView: View {
                         isCurrent: viewModel.isLoading && index == viewModel.progressLog.count - 1
                     )
                 }
-
-                if !viewModel.isLoading, viewModel.detail != nil {
-                    progressLine(
-                        GrokSearchProgress(message: "추가 정보를 불러왔어요"),
-                        isCurrent: viewModel.revealStep == 0
-                    )
-                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

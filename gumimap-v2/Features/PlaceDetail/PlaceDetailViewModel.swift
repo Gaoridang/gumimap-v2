@@ -122,7 +122,7 @@ final class PlaceDetailViewModel {
             if let detail, let isOpen = detail.isCurrentlyOpen {
                 return isOpen ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
             }
-            return "추가 정보를 불러왔어요."
+            return place.address
         case .failed:
             return place.address
         case .idle:
@@ -252,6 +252,7 @@ final class PlaceDetailViewModel {
     private func handleProgress(_ progress: GrokSearchProgress) {
         Task { @MainActor in
             currentProgress = progress
+            guard progress.message != "추가 정보를 불러왔어요" else { return }
             guard progressLog.last?.message != progress.message else { return }
             withAnimation(.snappy) {
                 progressLog.append(progress)
