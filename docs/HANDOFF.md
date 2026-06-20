@@ -22,7 +22,8 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - `SavedPlaceCard` — category icon + name, category, address, enrichment teaser
 - `PlaceCategoryIcon` — Kakao category → SF Symbol + tint
 - `ListTabView` — Grok-generated header + `ScrollView` card rows
-- `GrokListHeaderService` — `grok-4.3` + `reasoning.effort: none`; varied copy per visit/sub-tab
+- `GrokListHeaderService` + `ListHeaderStore` — cached per sub-tab; refresh on sub-tab or count change only
+- First load: placeholder → Grok (or fallback after 450ms); re-entry keeps last line without flash
 - `StyledListHeader` — two-tone text (emphasis primary/semibold, fillers secondary)
 - 영업중 badge when `grokDetail.isCurrentlyOpen`; insight line: 분위기 → 특징
 

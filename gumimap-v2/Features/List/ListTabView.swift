@@ -5,15 +5,14 @@ struct ListTabView: View {
     let subTab: ListSubTab
 
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
-    @State private var headerViewModel = ListHeaderViewModel()
-    @State private var appearCount = 0
+    @Environment(ListHeaderStore.self) private var listHeaderStore
 
     private var places: [SavedPlace] {
         savedPlaces.filter { $0.listKind == subTab.rawValue }
     }
 
     private var headerLoadKey: String {
-        "\(subTab.rawValue)-\(places.count)-\(appearCount)"
+        "\(subTab.rawValue)-\(places.count)"
     }
 
     var body: some View {
@@ -28,14 +27,8 @@ struct ListTabView: View {
         .background(Color(.systemGroupedBackground))
         .animation(.easeInOut(duration: 0.2), value: subTab)
         .animation(.easeInOut(duration: 0.2), value: places.count)
-        .onAppear {
-            appearCount += 1
-        }
         .task(id: headerLoadKey) {
-            headerViewModel.load(subTab: subTab, placeCount: places.count)
-        }
-        .onDisappear {
-            headerViewModel.cancel()
+            listHeaderStore.loadIfNeeded(subTab: subTab, placeCount: places.count)
         }
     }
 
@@ -71,14 +64,31 @@ struct ListTabView: View {
         }
     }
 
+    @ViewBuilder
     private var listHeader: some View {
-        StyledListHeader(prompt: headerViewModel.prompt)
-            .contentTransition(.opacity)
-            .animation(.easeInOut(duration: 0.25), value: headerViewModel.prompt)
-            .accessibilityLabel(headerViewModel.prompt.fullText)
+        if let prompt = listHeaderStore.prompt(for: subTab) {
+            StyledListHeader(prompt: prompt)
+                .contentTransition(.opacity)
+                .animation(
+                    listHeaderStore.shouldAnimatePrompt ? .easeInOut(duration: 0.45) : nil,
+                    value: prompt.fullText
+                )
+                .accessibilityLabel(prompt.fullText)
+        } else if listHeaderStore.isLoading(subTab) {
+            headerPlaceholder
+        }
+    }
+
+    private var headerPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 6)
+            .fill(Color.primary.opacity(0.06))
+            .frame(height: 28)
+            .frame(maxWidth: 260, alignment: .leading)
+            .accessibilityHidden(true)
     }
 }
 
 #Preview {
     ListTabView(subTab: .visited)
+        .environment(ListHeaderStore())
 }

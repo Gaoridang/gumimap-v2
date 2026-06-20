@@ -7,6 +7,7 @@ struct RootView: View {
     @State private var search = SearchViewModel()
     @State private var placeStore: PlaceStore?
     @State private var enrichmentService = PlaceEnrichmentService()
+    @State private var listHeaderStore = ListHeaderStore()
 
     var body: some View {
         @Bindable var router = router
@@ -39,6 +40,7 @@ struct RootView: View {
             }
         }
         .environment(router)
+        .environment(listHeaderStore)
         .environment(\.placeStore, placeStore)
         .environment(\.placeEnrichmentService, enrichmentService)
         .onAppear {
