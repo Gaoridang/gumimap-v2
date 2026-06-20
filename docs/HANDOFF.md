@@ -6,9 +6,9 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/list-place-card-demo` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after list card finalize |
+| Working tree | Clean after merge |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -17,17 +17,25 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
 ## Merged / Shipped on `main`
 
-### List place card — icon style (`feat/list-place-card-demo`)
+### List place cards & header (`feat/list-place-card-demo` → merged 2026-06-20)
 
-- `SavedPlaceCard` — category icon + name, category, address, enrichment teaser
-- `PlaceCategoryIcon` — Kakao category → SF Symbol + tint
-- `ListTabView` — Grok-generated header + `ScrollView` card rows
-- `ListHeaderPromptLibrary` — 8 curated lines per sub-tab with emphasis segments; random rotation
-- `ListHeaderStore` — picks next line on list appear or sub-tab switch (no Grok API)
-- `StyledListHeader` — two-tone text (emphasis primary/semibold, fillers secondary)
+- **`SavedPlaceCard`** — category icon (44pt) + name, short category, address, enrichment teaser
+- **`PlaceCategoryIcon`** — Kakao category → SF Symbol + tint
+- **`ListTabView`** — `ScrollView` + card rows (replaces plain text list rows)
+- **`ListHeaderPromptLibrary`** — 8 curated two-tone lines per sub-tab (가본 곳 / 가고 싶은 곳)
+- **`ListHeaderStore`** + **`StyledListHeader`** — random rotation on map→list entry; per-tab cache on sub-tab switch
 - 영업중 badge when `grokDetail.isCurrentlyOpen`; insight line: 분위기 → 특징
 
-**Key paths:** `SavedPlaceCard.swift`, `PlaceCategoryIcon.swift`, `ListTabView.swift`
+**Key paths:** `SavedPlaceCard.swift`, `PlaceCategoryIcon.swift`, `ListHeaderPromptLibrary.swift`, `ListHeaderStore.swift`, `StyledListHeader.swift`, `ListTabView.swift`, `RootView.swift`
+
+### Place detail polish (`feat/list-place-card-demo` → merged 2026-06-20)
+
+- Removed SSE **progress checklist** area entirely
+- Removed **header subtitle** under navigation title (address no longer duplicated)
+- Grok enrichment still runs; additional info cards appear with staggered reveal when ready
+- Register row still shows **영업중** badge and disables during load
+
+**Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`, `GrokPlaceSearchService.swift`
 
 ### Saved place edit & delete (`feat/saved-place-edit-delete` → merged 2026-06-20)
 
@@ -56,7 +64,6 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - `SavedPlace` SwiftData model; upsert by composite id `kakaoPlaceId-listKind`
 - After save: `TabRouter.completeRegistration` → list tab + sub-tab + saved detail push
 - `PlaceDetailView` dual mode: `.discovery` (Grok fetch) / `.saved` (cached, no register button)
-- `ListTabView` shows saved places per sub-tab via `@Query` (respects top safe area)
 
 **Key paths:** `SavedPlace.swift`, `PlaceStore.swift`, `PlaceDetailViewModel.swift`, `ListTabView.swift`, `AppRoute.swift`
 
@@ -78,19 +85,19 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - `AppRoute.placeDetail(Place)` push from search results
 - **Kakao baseline** shown immediately (address, category, phone, 카카오맵 링크)
 - **Grok enrichment** — single web search per place (`{이름} 구미`, reasoning `medium`)
-  - `GrokPlaceSearchService` → xAI Responses API SSE
-  - Production-friendly progress copy (no Grok/JSON jargon)
+  - `GrokPlaceSearchService` → xAI Responses API SSE (no UI progress log)
   - UI shows 6 curated fields: 영업시간, 브레이크타임, 휴무일, 주차, 분위기, 특징
   - Extra fields + reviews stored in model; reviews shown as bullet card
   - `businessHours` used for **영업중** badge on register row
-- Staggered reveal after SSE completes
+- Staggered reveal after fetch completes
 
 ## What Is on the App Now
 
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 show icon place cards; tap card → saved detail
+- **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
+- **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
 - Placeholder `MapTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
@@ -99,7 +106,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
 - Wire MapKit into `MapTabView`
 - Saved detail Grok re-enrichment
-- Place detail polish (map preview, business hours formatting)
+- Place detail map preview, business hours formatting
 - "Already saved" badge on discovery detail
 - Kakao REST API search gaps (e.g. 와일드차일드)
 - Fix `run-simulator.sh` UDID fallback edge cases
@@ -115,16 +122,15 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 | `gumimap-v2/Models/SavedPlace.swift` | SwiftData saved place model |
 | `gumimap-v2/Services/PlaceStore.swift` | Register, delete, move, enrichment update |
 | `gumimap-v2/Services/PlaceEnrichmentService.swift` | Background Grok enrichment |
+| `gumimap-v2/Services/ListHeaderStore.swift` | List header prompt rotation |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
 | `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE single search |
 | `gumimap-v2/Models/GrokPlaceDetail.swift` | Enrichment model + visible field mapping |
-| `gumimap-v2/Models/GrokSearchProgress.swift` | SSE progress messages |
+| `gumimap-v2/Models/ListHeaderPromptLibrary.swift` | Curated list header copy pool |
 | `gumimap-v2/Services/BusinessHoursParser.swift` | Open-now from hours + break time |
 | `gumimap-v2/Features/PlaceDetail/` | Detail screen, view model, list-kind sheet |
 | `gumimap-v2/Features/Search/` | Search UI + `Place` model |
-| `gumimap-v2/Features/List/ListTabView.swift` | Saved place list |
-| `gumimap-v2/Models/ListHeaderPromptLibrary.swift` | Curated list header copy pool |
-| `gumimap-v2/Features/List/StyledListHeader.swift` | Two-tone header rendering |
+| `gumimap-v2/Features/List/` | List tab, cards, styled header |
 | `gumimap-v2/App/RootView.swift` | Navigation root |
 | `gumimap-v2/Navigation/` | Routes, toolbar, tab router |
 | `scripts/run-simulator.sh` | Build, install, launch |
