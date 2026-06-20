@@ -23,10 +23,6 @@ struct PlaceDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if let subtitle = viewModel.headerSubtitle {
-                    headerSubtitle(subtitle)
-                }
-
                 kakaoBaselineSection
 
                 if viewModel.showAdditionalInfo {
@@ -117,17 +113,6 @@ struct PlaceDetailView: View {
         } message: {
             Text("삭제하면 이 리스트에서 장소가 사라져요.")
         }
-    }
-
-    // MARK: - Header
-
-    private func headerSubtitle(_ text: String) -> some View {
-        Text(text)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentTransition(.opacity)
-            .animation(.snappy, value: text)
     }
 
     private var backButton: some View {

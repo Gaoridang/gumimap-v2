@@ -108,18 +108,6 @@ final class PlaceDetailViewModel {
         }
     }
 
-    var headerSubtitle: String? {
-        switch enrichmentState {
-        case .loading:
-            return "추가 정보를 확인하고 있어요."
-        case .loaded:
-            guard let detail, let isOpen = detail.isCurrentlyOpen else { return nil }
-            return isOpen ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
-        case .failed, .idle:
-            return nil
-        }
-    }
-
     func loadIfNeeded() {
         guard isDiscoveryMode else { return }
         guard loadTask == nil else { return }
