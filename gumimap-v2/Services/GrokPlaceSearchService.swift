@@ -11,15 +11,15 @@ enum GrokPlaceSearchError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            "xAI API 키가 설정되지 않았습니다. Config/secrets.local.env를 확인해 주세요."
+            "추가 정보를 불러올 수 없어요. 잠시 후 다시 시도해 주세요."
         case .emptyQuery:
-            "검색할 장소 이름을 입력해 주세요."
+            "장소 정보를 확인할 수 없어요."
         case .invalidResponse:
-            "Grok API 응답을 해석할 수 없습니다."
-        case let .apiError(statusCode, message):
-            "Grok API 오류 (\(statusCode)): \(message)"
+            "추가 정보를 불러오지 못했어요."
+        case .apiError:
+            "일시적인 오류가 발생했어요. 다시 시도해 주세요."
         case .decodingFailed:
-            "장소 정보 JSON 파싱에 실패했습니다."
+            "추가 정보를 불러오지 못했어요."
         }
     }
 }
@@ -58,8 +58,8 @@ struct GrokPlaceSearchService: Sendable {
         let searchQuery = "\(trimmed) 구미"
 
         onProgress?(GrokSearchProgress(
-            message: "Grok에 검색 요청을 보냈어요",
-            detail: searchQuery
+            message: "추가 정보를 불러오고 있어요",
+            detail: trimmed
         ))
 
         let response: GrokPlaceSearchResponse = try await executeSearch(
@@ -71,7 +71,7 @@ struct GrokPlaceSearchService: Sendable {
             schemaName: "gumi_place_search",
             allowedDomains: nil,
             reasoningEffort: "medium",
-            searchProgressMessage: "웹에서 장소 정보 검색 중"
+            searchProgressMessage: "영업시간과 리뷰를 살펴보고 있어요"
         )
 
         return GrokPlaceDetail.from(
@@ -183,34 +183,28 @@ struct GrokPlaceSearchService: Sendable {
 
             switch event.type {
             case "response.created", "response.in_progress":
-                onProgress?(GrokSearchProgress(message: "Grok이 검색을 준비하고 있어요"))
+                onProgress?(GrokSearchProgress(message: "잠시만 기다려 주세요"))
 
             case "response.output_item.added":
                 if event.item?.type == "web_search_call", !hasWebSearchStarted {
                     hasWebSearchStarted = true
-                    onProgress?(GrokSearchProgress(
-                        message: searchProgressMessage,
-                        detail: "'\(query)'"
-                    ))
+                    onProgress?(GrokSearchProgress(message: searchProgressMessage))
                 }
 
             case "response.output_item.done":
                 if event.item?.type == "web_search_call", !hasWebSearchFinished {
                     hasWebSearchFinished = true
-                    onProgress?(GrokSearchProgress(
-                        message: "웹 검색 완료",
-                        detail: "검색 결과를 정리하고 있어요"
-                    ))
+                    onProgress?(GrokSearchProgress(message: "찾은 내용을 정리하고 있어요"))
                 }
 
             case "response.content_part.added":
                 if !hasReportedOrganizing {
                     hasReportedOrganizing = true
-                    onProgress?(GrokSearchProgress(message: "JSON 결과를 정리하고 있어요"))
+                    onProgress?(GrokSearchProgress(message: "장소 정보를 정리하고 있어요"))
                 }
 
             case "response.completed":
-                onProgress?(GrokSearchProgress(message: "검색 완료", detail: "결과를 확인해 주세요"))
+                onProgress?(GrokSearchProgress(message: "추가 정보를 불러왔어요"))
                 if let json = try? JSONSerialization.jsonObject(with: eventData) as? [String: Any],
                    let responseObject = json["response"],
                    let responseData = try? JSONSerialization.data(withJSONObject: responseObject) {

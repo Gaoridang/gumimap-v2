@@ -116,7 +116,7 @@ struct PlaceDetailView: View {
                 HStack(spacing: 10) {
                     ProgressView()
                         .controlSize(.small)
-                    Text(viewModel.currentProgress?.message ?? "검색을 시작하고 있어요")
+                    Text(viewModel.currentProgress?.message ?? "추가 정보를 불러오고 있어요")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -130,10 +130,7 @@ struct PlaceDetailView: View {
 
                 if !viewModel.isLoading, viewModel.detail != nil {
                     progressLine(
-                        GrokSearchProgress(
-                            message: "검색 완료",
-                            detail: viewModel.detail?.name
-                        ),
+                        GrokSearchProgress(message: "추가 정보를 불러왔어요"),
                         isCurrent: viewModel.revealStep == 0
                     )
                 }
@@ -202,7 +199,7 @@ struct PlaceDetailView: View {
     private func insightResult(_ detail: GrokPlaceDetail) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             if !detail.hasAnyInsight {
-                Text("웹 검색 결과가 없어요.")
+                Text("추가로 찾은 정보가 없어요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

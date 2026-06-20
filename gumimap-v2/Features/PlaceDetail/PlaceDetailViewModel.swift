@@ -55,7 +55,7 @@ final class PlaceDetailViewModel {
     var headerSubtitle: String {
         switch enrichmentState {
         case .loading:
-            return "Grok이 추가 정보를 찾고 있어요."
+            return "추가 정보를 확인하고 있어요."
         case .loaded:
             if let detail, let isOpen = detail.isCurrentlyOpen {
                 return isOpen ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
