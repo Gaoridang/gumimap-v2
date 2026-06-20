@@ -24,15 +24,6 @@ struct MapTabView: View {
                     onPinTap: { placeID in
                         selectedPlace = SelectedMapPlace(id: placeID)
                     },
-                    onFocusStarted: { placeId in
-                        guard animatedFocus, focusPlaceId == placeId else { return }
-
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(380))
-                            guard animatedFocus, focusPlaceId == placeId else { return }
-                            presentSheet(for: placeId)
-                        }
-                    },
                     onFocusCompleted: { placeId in
                         guard animatedFocus, focusPlaceId == placeId else { return }
                         presentSheet(for: placeId)
@@ -76,7 +67,7 @@ struct MapTabView: View {
         focusPlaceId = placeId
 
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(2_000))
+            try? await Task.sleep(for: .milliseconds(900))
             guard animatedFocus, focusPlaceId == placeId else { return }
             presentSheet(for: placeId)
         }
