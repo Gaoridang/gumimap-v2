@@ -20,28 +20,20 @@ struct SavedPlaceMapPin: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                Circle()
-                    .fill(categoryTint.opacity(0.15))
-                    .frame(width: 30, height: 30)
-
-                Circle()
-                    .strokeBorder(listKindColor, lineWidth: 2)
-                    .frame(width: 30, height: 30)
-
-                Image(systemName: categorySymbol)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(categoryTint)
-            }
-            .shadow(color: .black.opacity(0.12), radius: 3, y: 1)
+        ZStack {
+            MapPinPointer()
+                .fill(categoryTint)
+                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
 
             MapPinPointer()
-                .fill(categoryTint.opacity(0.15))
-                .frame(width: 10, height: 5)
-                .offset(y: -1)
+                .stroke(listKindColor, lineWidth: 2.5)
+
+            Image(systemName: categorySymbol)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white)
+                .offset(y: -2)
         }
-        .frame(width: 36, height: 40)
+        .frame(width: 36, height: 44)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }
