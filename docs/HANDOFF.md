@@ -21,7 +21,8 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
 - `SavedPlaceCard` — category icon + name, category, address, enrichment teaser
 - `PlaceCategoryIcon` — Kakao category → SF Symbol + tint
-- `ListTabView` — `ScrollView` + card rows (replaces plain text list rows)
+- `ListTabView` — header prompt per sub-tab + `ScrollView` card rows
+- **가본 곳** header: "지금까지 다녀온 장소, 어땠나요?" / **가고 싶은 곳**: "다음에 가보고 싶은 곳이에요"
 - 영업중 badge when `grokDetail.isCurrentlyOpen`; insight line: 분위기 → 특징
 
 **Key paths:** `SavedPlaceCard.swift`, `PlaceCategoryIcon.swift`, `ListTabView.swift`

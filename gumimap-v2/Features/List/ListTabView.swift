@@ -38,18 +38,31 @@ struct ListTabView: View {
 
     private var listContent: some View {
         ScrollView {
-            LazyVStack(spacing: 10) {
-                ForEach(places, id: \.id) { savedPlace in
-                    NavigationLink(value: AppRoute.savedPlaceDetail(id: savedPlace.id)) {
-                        SavedPlaceCard(content: savedPlace.cardContent)
+            LazyVStack(alignment: .leading, spacing: 16) {
+                listHeader
+
+                LazyVStack(spacing: 10) {
+                    ForEach(places, id: \.id) { savedPlace in
+                        NavigationLink(value: AppRoute.savedPlaceDetail(id: savedPlace.id)) {
+                            SavedPlaceCard(content: savedPlace.cardContent)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
             .padding(.bottom, 120)
         }
+    }
+
+    private var listHeader: some View {
+        Text(subTab.listHeaderPrompt)
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentTransition(.opacity)
+            .animation(.easeInOut(duration: 0.2), value: subTab)
     }
 }
 
