@@ -157,7 +157,7 @@ struct PlaceDetailView: View {
                 Label("삭제", systemImage: "trash")
             }
         } label: {
-            Image(systemName: "ellipsis.circle")
+            Image(systemName: "ellipsis")
                 .font(.body.weight(.medium))
         }
     }

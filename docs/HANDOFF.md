@@ -17,7 +17,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
 ## Shipped on `feat/saved-place-edit-delete`
 
-- **List swipe actions:** leading "옮기기" opens `PlaceListKindSheet`; trailing "삭제" removes from SwiftData
+- **Saved detail menu only** for edit/delete (list swipe actions removed)
 - **Saved detail menu (`...`):** "리스트 변경" and "삭제" with confirmation dialog
 - `PlaceStore.delete()` and `PlaceStore.moveListKind()` — move merges enrichment if target already exists
 - `PlaceRegistrationSheet` renamed/generalized to `PlaceListKindSheet` (register + move; shows "현재" for active list)
@@ -98,7 +98,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → `PlaceDetailView` with Grok enrichment → 등록하기 → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 show persisted places; swipe to move/delete; tap row → saved detail
+- **List tabs:** 가본 곳 / 가고 싶은 곳 show persisted places; tap row → saved detail; edit/delete via detail menu
 - **Saved detail:** `...` menu for list change or delete
 - Placeholder `MapTabView`
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
