@@ -1,25 +1,26 @@
 import SwiftUI
 
-/// Classic map-pin teardrop; tip sits at the bottom center of the rect.
+/// Round head + pointed tail; tip sits at the bottom center of the rect.
 struct MapPinPointer: Shape {
-    var headRadiusRatio: CGFloat = 0.42
-
     func path(in rect: CGRect) -> Path {
-        let radius = rect.width * headRadiusRatio
+        let headDiameter = min(rect.width * 0.78, rect.height * 0.58)
+        let headRadius = headDiameter / 2
         let centerX = rect.midX
-        let centerY = radius + 2
-        let tip = CGPoint(x: centerX, y: rect.maxY)
+        let headCenterY = headRadius + 1
+        let tailHalfWidth = headRadius * 0.4
+        let tailTopY = headCenterY + headRadius - 1.5
+        let tipY = rect.maxY
 
         var path = Path()
-        path.move(to: CGPoint(x: centerX - radius, y: centerY))
-        path.addArc(
-            center: CGPoint(x: centerX, y: centerY),
-            radius: radius,
-            startAngle: .degrees(180),
-            endAngle: .degrees(0),
-            clockwise: false
-        )
-        path.addLine(to: tip)
+        path.addEllipse(in: CGRect(
+            x: centerX - headRadius,
+            y: headCenterY - headRadius,
+            width: headDiameter,
+            height: headDiameter
+        ))
+        path.move(to: CGPoint(x: centerX - tailHalfWidth, y: tailTopY))
+        path.addLine(to: CGPoint(x: centerX + tailHalfWidth, y: tailTopY))
+        path.addLine(to: CGPoint(x: centerX, y: tipY))
         path.closeSubpath()
         return path
     }

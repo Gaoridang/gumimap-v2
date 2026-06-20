@@ -2,8 +2,9 @@ import UIKit
 
 enum KakaoMapPinImageRenderer {
     private static let renderScale: CGFloat = 2
-    private static let canvasSize = CGSize(width: 32, height: 40)
-    private static let headRadiusRatio: CGFloat = 0.44
+    private static let canvasSize = CGSize(width: 30, height: 42)
+    private static let headDiameter: CGFloat = 22
+    private static let tailHalfWidth: CGFloat = 5
 
     static func image(listKind: ListSubTab, category: String) -> UIImage {
         let fillColor = listKindColor(for: listKind)
@@ -15,7 +16,7 @@ enum KakaoMapPinImageRenderer {
 
         let rendered = UIGraphicsImageRenderer(size: canvasSize, format: format).image { context in
             let cgContext = context.cgContext
-            let pinPath = teardropPath(in: CGRect(origin: .zero, size: canvasSize))
+            let pinPath = pinPath(in: CGRect(origin: .zero, size: canvasSize))
 
             cgContext.setShadow(
                 offset: CGSize(width: 0, height: 1),
@@ -30,26 +31,29 @@ enum KakaoMapPinImageRenderer {
     }
 
     static func styleID(listKind: ListSubTab, category: String) -> String {
-        "saved-pin-v5-solid-\(listKind.rawValue)"
+        "saved-pin-v6-bubble-\(listKind.rawValue)"
     }
 
-    private static func teardropPath(in rect: CGRect) -> UIBezierPath {
-        let radius = rect.width * headRadiusRatio
+    private static func pinPath(in rect: CGRect) -> UIBezierPath {
         let centerX = rect.midX
-        let centerY = radius + 2
-        let tip = CGPoint(x: centerX, y: rect.maxY)
-
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: centerX - radius, y: centerY))
-        path.addArc(
-            withCenter: CGPoint(x: centerX, y: centerY),
-            radius: radius,
-            startAngle: .pi,
-            endAngle: 0,
-            clockwise: false
+        let headRadius = headDiameter / 2
+        let headCenterY = headRadius + 1
+        let headRect = CGRect(
+            x: centerX - headRadius,
+            y: headCenterY - headRadius,
+            width: headDiameter,
+            height: headDiameter
         )
-        path.addLine(to: tip)
-        path.close()
+        let tailTopY = headRect.maxY - 1.5
+        let tipY = rect.maxY
+
+        let path = UIBezierPath(ovalIn: headRect)
+        let tail = UIBezierPath()
+        tail.move(to: CGPoint(x: centerX - tailHalfWidth, y: tailTopY))
+        tail.addLine(to: CGPoint(x: centerX + tailHalfWidth, y: tailTopY))
+        tail.addLine(to: CGPoint(x: centerX, y: tipY))
+        tail.close()
+        path.append(tail)
         return path
     }
 
