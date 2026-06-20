@@ -108,19 +108,15 @@ final class PlaceDetailViewModel {
         }
     }
 
-    var headerSubtitle: String {
+    var headerSubtitle: String? {
         switch enrichmentState {
         case .loading:
             return "추가 정보를 확인하고 있어요."
         case .loaded:
-            if let detail, let isOpen = detail.isCurrentlyOpen {
-                return isOpen ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
-            }
-            return place.address
-        case .failed:
-            return place.address
-        case .idle:
-            return place.address
+            guard let detail, let isOpen = detail.isCurrentlyOpen else { return nil }
+            return isOpen ? "지금 영업 중이에요." : "지금은 영업 시간이 아니에요."
+        case .failed, .idle:
+            return nil
         }
     }
 

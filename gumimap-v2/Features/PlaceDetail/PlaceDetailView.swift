@@ -23,7 +23,10 @@ struct PlaceDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                headerSubtitle
+                if let subtitle = viewModel.headerSubtitle {
+                    headerSubtitle(subtitle)
+                }
+
                 kakaoBaselineSection
 
                 if viewModel.showAdditionalInfo {
@@ -118,13 +121,13 @@ struct PlaceDetailView: View {
 
     // MARK: - Header
 
-    private var headerSubtitle: some View {
-        Text(viewModel.headerSubtitle)
+    private func headerSubtitle(_ text: String) -> some View {
+        Text(text)
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentTransition(.opacity)
-            .animation(.snappy, value: viewModel.headerSubtitle)
+            .animation(.snappy, value: text)
     }
 
     private var backButton: some View {
