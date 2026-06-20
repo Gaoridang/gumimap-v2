@@ -31,6 +31,8 @@ struct KakaoMapView: UIViewRepresentable {
         } else {
             context.coordinator.pause()
         }
+
+        context.coordinator.refreshDebug(isMapTabActive: isActive)
     }
 
     static func dismantleUIView(_ uiView: KMViewContainer, coordinator: Coordinator) {
@@ -49,9 +51,11 @@ struct KakaoMapView: UIViewRepresentable {
         private weak var viewContainer: KMViewContainer?
         private weak var mapController: KMController?
         private var isMapReady = false
+        private var didAuthenticate = false
         private var didSetInitialCamera = false
         private var lastAppliedSize: CGSize = .zero
         private var pendingContainerSize: CGSize = .zero
+        private var lastAddViewSize: CGSize?
         private var pendingPlaces: [SavedPlace] = []
         private var displayedPlaceIDs: Set<String> = []
         private var registeredStyleIDs: Set<String> = []
@@ -72,21 +76,25 @@ struct KakaoMapView: UIViewRepresentable {
             controller.delegate = self
             mapController = controller
             installAppLifecycleObserversIfNeeded()
-            controller.prepareEngine()
+            let prepared = controller.prepareEngine()
+            refreshDebug(event: "prepareEngine(\(prepared))")
         }
 
         func tearDown() {
             removeAppLifecycleObservers()
             mapController?.pauseEngine()
+            refreshDebug(event: "tearDown")
         }
 
         func activateIfNeeded() {
             guard mapController?.isEngineActive == false else { return }
             mapController?.activateEngine()
+            refreshDebug(event: "activateEngine")
         }
 
         func pause() {
             mapController?.pauseEngine()
+            refreshDebug(event: "pauseEngine")
         }
 
         func updatePlaces(_ places: [SavedPlace]) {
@@ -99,6 +107,7 @@ struct KakaoMapView: UIViewRepresentable {
 
             pendingContainerSize = size
             applyLayoutIfPossible()
+            refreshDebug(event: "containerResize \(KakaoMapDebugSnapshot.format(size))")
         }
 
         private func applyLayoutIfPossible(force: Bool = false) {
@@ -110,16 +119,55 @@ struct KakaoMapView: UIViewRepresentable {
             lastAppliedSize = size
             mapView.viewRect = CGRect(origin: .zero, size: size)
             setInitialCameraIfNeeded(on: mapView)
+            refreshDebug(event: "applyViewRect \(KakaoMapDebugSnapshot.format(size))")
+        }
+
+        @MainActor
+        func refreshDebug(event: String? = nil, isMapTabActive: Bool? = nil) {
+            if let event {
+                runtimeState.record(event: event)
+            }
+
+            runtimeState.apply { snapshot in
+                snapshot.phaseLabel = Self.phaseLabel(for: runtimeState.phase)
+                if let isMapTabActive {
+                    snapshot.isMapTabActive = isMapTabActive
+                }
+                snapshot.sdkPhase = String(describing: SDKInitializer.GetPhase())
+                snapshot.isEnginePrepared = mapController?.isEnginePrepared ?? false
+                snapshot.isEngineActive = mapController?.isEngineActive ?? false
+                snapshot.isMapReady = isMapReady
+                snapshot.didAuthenticate = didAuthenticate
+                snapshot.hasMapView = kakaoMap != nil
+                snapshot.viewRectApplied = lastAppliedSize.width > 0 && lastAppliedSize.height > 0
+                snapshot.cameraSet = didSetInitialCamera
+                snapshot.containerSize = KakaoMapDebugSnapshot.format(viewContainer?.bounds.size ?? .zero)
+                snapshot.pendingSize = KakaoMapDebugSnapshot.format(pendingContainerSize)
+                snapshot.appliedViewRectSize = KakaoMapDebugSnapshot.format(lastAppliedSize)
+                if let lastAddViewSize {
+                    snapshot.addViewSize = KakaoMapDebugSnapshot.format(lastAddViewSize)
+                }
+                snapshot.pinCount = displayedPlaceIDs.count
+                snapshot.engineStateMessage = mapController?.getStateDescMessage() ?? "(no controller)"
+                if case let .authFailed(code, message) = runtimeState.phase {
+                    snapshot.authError = "[\(code)] \(message)"
+                } else {
+                    snapshot.authError = nil
+                }
+            }
         }
 
         // MARK: - MapControllerDelegate
 
         func authenticationSucceeded() {
+            didAuthenticate = true
             activateIfNeeded()
+            refreshDebug(event: "authenticationSucceeded")
         }
 
         func authenticationFailed(_ errorCode: Int, desc: String) {
             runtimeState.phase = .authFailed(code: errorCode, message: desc)
+            refreshDebug(event: "authenticationFailed(\(errorCode))")
             print("Kakao Maps authentication failed (\(errorCode)): \(desc)")
         }
 
@@ -136,9 +184,12 @@ struct KakaoMapView: UIViewRepresentable {
             let viewSize = resolvedContainerSize()
             if viewSize.width > 0, viewSize.height > 0 {
                 pendingContainerSize = viewSize
+                lastAddViewSize = viewSize
                 mapController?.addView(mapviewInfo, viewSize: viewSize)
+                refreshDebug(event: "addView \(KakaoMapDebugSnapshot.format(viewSize))")
             } else {
                 mapController?.addView(mapviewInfo)
+                refreshDebug(event: "addView (no explicit size)")
             }
         }
 
@@ -152,15 +203,18 @@ struct KakaoMapView: UIViewRepresentable {
 
             applyLayoutIfPossible(force: true)
             syncPinsIfReady()
+            refreshDebug(event: "addViewSucceeded(\(viewInfoName))")
         }
 
         func addViewFailed(_ viewName: String, viewInfoName: String) {
             runtimeState.phase = .addViewFailed
+            refreshDebug(event: "addViewFailed(\(viewName))")
             print("Kakao Maps addView failed: \(viewName) / \(viewInfoName)")
         }
 
         func containerDidResized(_ size: CGSize) {
             handleContainerResize(size)
+            refreshDebug(event: "delegate.containerDidResized")
         }
 
         // MARK: - Pins
@@ -215,6 +269,7 @@ struct KakaoMapView: UIViewRepresentable {
             )
             mapView.moveCamera(cameraUpdate)
             didSetInitialCamera = true
+            refreshDebug(event: "moveCamera(level:\(Constants.defaultLevel))")
         }
 
         private func syncPinsIfReady() {
@@ -247,6 +302,7 @@ struct KakaoMapView: UIViewRepresentable {
             }
 
             displayedPlaceIDs = nextIDs
+            refreshDebug(event: "syncPins(\(nextIDs.count))")
         }
 
         private func ensureStyleRegistered(
@@ -273,6 +329,19 @@ struct KakaoMapView: UIViewRepresentable {
         ) {
             guard layerID == Constants.layerID else { return }
             onPinTap(poiID)
+        }
+
+        private static func phaseLabel(for phase: KakaoMapRuntimeState.Phase) -> String {
+            switch phase {
+            case .loading:
+                "loading"
+            case .ready:
+                "ready"
+            case .authFailed:
+                "authFailed"
+            case .addViewFailed:
+                "addViewFailed"
+            }
         }
 
         // MARK: - App lifecycle
@@ -303,10 +372,12 @@ struct KakaoMapView: UIViewRepresentable {
 
         @objc private func handleWillResignActive() {
             mapController?.pauseEngine()
+            refreshDebug(event: "app.willResignActive")
         }
 
         @objc private func handleDidBecomeActive() {
             activateIfNeeded()
+            refreshDebug(event: "app.didBecomeActive")
         }
     }
 }

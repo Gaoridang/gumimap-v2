@@ -5,12 +5,13 @@ struct MapTabView: View {
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
     @Environment(TabRouter.self) private var router
     @State private var isMapActive = true
+    @State private var isDebugExpanded = true
     @State private var mapRuntimeState = KakaoMapRuntimeState()
 
     var body: some View {
         Group {
             if Secrets.isKakaoMapConfigured {
-                ZStack {
+                ZStack(alignment: .top) {
                     KakaoMapView(
                         isActive: isMapActive,
                         places: savedPlaces,
@@ -22,7 +23,20 @@ struct MapTabView: View {
                     .onAppear { isMapActive = true }
                     .onDisappear { isMapActive = false }
 
-                    mapStatusOverlay
+                    VStack(spacing: 10) {
+                        KakaoMapDebugPanel(
+                            snapshot: mapRuntimeState.debug,
+                            isExpanded: $isDebugExpanded
+                        )
+
+                        if case .loading = mapRuntimeState.phase {
+                            EmptyView()
+                        } else {
+                            mapStatusOverlay
+                        }
+
+                        Spacer(minLength: 0)
+                    }
                 }
             } else {
                 missingKeyState
@@ -36,9 +50,7 @@ struct MapTabView: View {
     @ViewBuilder
     private var mapStatusOverlay: some View {
         switch mapRuntimeState.phase {
-        case .loading:
-            EmptyView()
-        case .ready:
+        case .ready, .loading:
             EmptyView()
         case let .authFailed(code, message):
             mapErrorCard(
