@@ -17,7 +17,7 @@ Pick up from backlog below (map pins, list delete/move, etc.).
 
 ## Shipped on `feat/place-detail-sticky-header`
 
-- `PlaceDetailView` collapsing header — full header scrolls naturally; compact back + title bar fades in at top on scroll
+- `PlaceDetailView` uses native large navigation title collapse (system scroll-to-inline header)
 
 ## Shipped on `feat/place-enrichment-background`
 
