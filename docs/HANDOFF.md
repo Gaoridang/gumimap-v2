@@ -42,12 +42,9 @@ Last updated: 2026-06-20
   - Additional info (리뷰, 특징, 대기) appears only after Grok search completes
   - Staggered reveal for insight cards; no business hours or JSON shown to users
   - Fixed bottom "+ 등록하기" button (persistence TODO)
-- **Grok accuracy fix v2** — resolve → extract pipeline + Swift validation
-  - Phase 1: resolve exact map listing URL (Kakao URL when available, else Naver/Kakao search with name+address)
-  - Phase 2: extract structured facts from resolved URL only (no name-based search)
-  - `GrokMapListingValidator` checks name/address overlap and Kakao place ID
-  - Failed extraction retries once with stricter prompt; map failure still allows review-only partial result
-  - Review pass unchanged (blog/diningcode only, name+address query)
+- **Grok single-search JSON** — one web search per place (`{이름} 구미`, reasoning medium)
+  - No multi-phase resolve/extract; no domain locks
+  - Response: `{ fields: [{label, value}], reviews: [] }` shown as pretty JSON + field rows in UI
 - **xAI API key** added to secrets pipeline (`XAI_API_KEY` → `Secrets.xaiAPIKey`)
 
 ## What Is on the App Now
@@ -84,8 +81,7 @@ Last updated: 2026-06-20
 | `scripts/generate-secrets.sh` | Build-time secrets → `Generated/Secrets.generated.swift` |
 | `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
-| `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE place enrichment (resolve → extract) |
-| `gumimap-v2/Services/GrokMapListingValidator.swift` | Map listing URL/name/address validation |
+| `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE single search → JSON |
 | `gumimap-v2/Models/GrokSearchProgress.swift` | SSE progress message model |
 | `gumimap-v2/Models/GrokPlaceDetail.swift` | Grok JSON result model |
 | `gumimap-v2/Features/PlaceDetail/PlaceDetailView.swift` | Detail screen + animations |

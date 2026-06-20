@@ -202,7 +202,7 @@ struct PlaceDetailView: View {
     private func insightResult(_ detail: GrokPlaceDetail) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             if !detail.hasAnyInsight {
-                Text("커뮤니티에서 찾은 추가 정보가 없어요.")
+                Text("웹 검색 결과가 없어요.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -212,7 +212,12 @@ struct PlaceDetailView: View {
             }
 
             if viewModel.revealStep >= 1 {
-                structuredFeaturesCard(detail.features)
+                jsonResultCard(detail)
+                    .transition(resultTransition)
+            }
+
+            if viewModel.revealStep >= 2, !detail.displayFields.isEmpty {
+                fieldsCard(detail.displayFields)
                     .transition(resultTransition)
             }
 
@@ -335,18 +340,40 @@ struct PlaceDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func structuredFeaturesCard(_ features: PlaceFeatures) -> some View {
+    private func jsonResultCard(_ detail: GrokPlaceDetail) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("특징", systemImage: "sparkles")
+            Label("검색 결과 JSON", systemImage: "curlybraces")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .textCase(.uppercase)
+
+            Text("검색어: \(detail.searchQuery)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(detail.prettyJSON)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.primary)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func fieldsCard(_ fields: [GrokInsightField]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("필드", systemImage: "sparkles")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
 
             VStack(spacing: 0) {
-                ForEach(Array(features.rows.enumerated()), id: \.offset) { index, row in
-                    featureRow(label: row.label, value: row.value)
+                ForEach(Array(fields.enumerated()), id: \.element.id) { index, field in
+                    featureRow(label: field.label, value: field.value)
 
-                    if index < features.rows.count - 1 {
+                    if index < fields.count - 1 {
                         Divider()
                             .padding(.leading, 88)
                     }
@@ -367,7 +394,7 @@ struct PlaceDetailView: View {
 
             Text(value)
                 .font(.subheadline)
-                .foregroundStyle(value == "정보 없음" ? .tertiary : .primary)
+                .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
