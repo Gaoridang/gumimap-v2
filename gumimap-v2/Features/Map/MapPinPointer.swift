@@ -1,15 +1,17 @@
 import SwiftUI
 
-/// Round head + pointed tail; tip sits at the bottom center of the rect.
+/// Round head + short pointed tail; tip sits at the bottom center of the rect.
 struct MapPinPointer: Shape {
+    var tailHeightRatio: CGFloat = 0.2
+
     func path(in rect: CGRect) -> Path {
-        let headDiameter = min(rect.width * 0.78, rect.height * 0.58)
+        let headDiameter = rect.width * 0.72
         let headRadius = headDiameter / 2
         let centerX = rect.midX
-        let headCenterY = headRadius + 1
-        let tailHalfWidth = headRadius * 0.4
-        let tailTopY = headCenterY + headRadius - 1.5
-        let tipY = rect.maxY
+        let headCenterY = headRadius
+        let tailHalfWidth = headRadius * 0.38
+        let tailTopY = headCenterY + headRadius - 1
+        let tipY = min(rect.maxY, tailTopY + rect.height * tailHeightRatio)
 
         var path = Path()
         path.addEllipse(in: CGRect(
