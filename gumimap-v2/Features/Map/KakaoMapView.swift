@@ -14,12 +14,15 @@ struct KakaoMapView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> KMViewContainer {
         let container = KMViewContainer()
-        container.sizeToFit()
+        container.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        container.backgroundColor = .systemBackground
         context.coordinator.attach(to: container)
         return container
     }
 
     func updateUIView(_ uiView: KMViewContainer, context: Context) {
+        uiView.layoutIfNeeded()
+        context.coordinator.handleContainerResize(uiView.bounds.size)
         context.coordinator.updatePlaces(places)
 
         if isActive {
@@ -27,6 +30,10 @@ struct KakaoMapView: UIViewRepresentable {
         } else {
             context.coordinator.pause()
         }
+    }
+
+    static func dismantleUIView(_ uiView: KMViewContainer, coordinator: Coordinator) {
+        coordinator.tearDown()
     }
 
     final class Coordinator: NSObject, MapControllerDelegate, KakaoMapEventDelegate {
@@ -37,12 +44,16 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         private let onPinTap: (String) -> Void
+        private weak var viewContainer: KMViewContainer?
         private weak var mapController: KMController?
+        private var isAuthenticated = false
         private var isMapReady = false
         private var didSetInitialCamera = false
+        private var lastAppliedSize: CGSize = .zero
         private var pendingPlaces: [SavedPlace] = []
         private var displayedPlaceIDs: Set<String> = []
         private var registeredStyleIDs: Set<String> = []
+        private var observersInstalled = false
 
         init(onPinTap: @escaping (String) -> Void) {
             self.onPinTap = onPinTap
@@ -52,13 +63,21 @@ struct KakaoMapView: UIViewRepresentable {
         func attach(to container: KMViewContainer) {
             guard mapController == nil else { return }
 
+            viewContainer = container
             let controller = KMController(viewContainer: container)
             controller.delegate = self
             mapController = controller
+            installAppLifecycleObserversIfNeeded()
             controller.prepareEngine()
         }
 
+        func tearDown() {
+            removeAppLifecycleObservers()
+            mapController?.pauseEngine()
+        }
+
         func activateIfNeeded() {
+            guard isAuthenticated else { return }
             guard mapController?.isEngineActive == false else { return }
             mapController?.activateEngine()
         }
@@ -72,9 +91,21 @@ struct KakaoMapView: UIViewRepresentable {
             syncPinsIfReady()
         }
 
+        func handleContainerResize(_ size: CGSize) {
+            guard size.width > 0, size.height > 0 else { return }
+            guard size != lastAppliedSize else { return }
+
+            lastAppliedSize = size
+
+            guard let mapView = kakaoMap else { return }
+            mapView.viewRect = CGRect(origin: .zero, size: size)
+            setInitialCameraIfNeeded(on: mapView)
+        }
+
         // MARK: - MapControllerDelegate
 
         func authenticationSucceeded() {
+            isAuthenticated = true
             activateIfNeeded()
         }
 
@@ -91,14 +122,27 @@ struct KakaoMapView: UIViewRepresentable {
                 defaultPosition: defaultPosition,
                 defaultLevel: Constants.defaultLevel
             )
-            mapController?.addView(mapviewInfo)
+
+            let viewSize = resolvedContainerSize()
+            if viewSize.width > 0, viewSize.height > 0 {
+                mapController?.addView(mapviewInfo, viewSize: viewSize)
+            } else {
+                mapController?.addView(mapviewInfo)
+            }
         }
 
         func addViewSucceeded(_ viewName: String, viewInfoName: String) {
             guard viewName == Constants.mapViewName else { return }
+
             kakaoMap?.eventDelegate = self
             setupLabelLayer()
             isMapReady = true
+
+            let viewSize = resolvedContainerSize()
+            if viewSize.width > 0, viewSize.height > 0 {
+                handleContainerResize(viewSize)
+            }
+
             syncPinsIfReady()
         }
 
@@ -107,19 +151,7 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         func containerDidResized(_ size: CGSize) {
-            guard let mapView = kakaoMap else { return }
-            mapView.viewRect = CGRect(origin: .zero, size: size)
-
-            guard !didSetInitialCamera else { return }
-            let center = SearchRegion.gumiCenter
-            let target = MapPoint(longitude: center.longitude, latitude: center.latitude)
-            let cameraUpdate = CameraUpdate.make(
-                target: target,
-                zoomLevel: Constants.defaultLevel,
-                mapView: mapView
-            )
-            mapView.moveCamera(cameraUpdate)
-            didSetInitialCamera = true
+            handleContainerResize(size)
         }
 
         // MARK: - Pins
@@ -141,6 +173,35 @@ struct KakaoMapView: UIViewRepresentable {
 
         private var kakaoMap: KakaoMap? {
             mapController?.getView(Constants.mapViewName) as? KakaoMap
+        }
+
+        private func resolvedContainerSize() -> CGSize {
+            if let container = viewContainer {
+                let size = container.bounds.size
+                if size.width > 0, size.height > 0 {
+                    return size
+                }
+            }
+
+            if let screen = viewContainer?.window?.windowScene?.screen {
+                return screen.bounds.size
+            }
+
+            return CGSize(width: 393, height: 852)
+        }
+
+        private func setInitialCameraIfNeeded(on mapView: KakaoMap) {
+            guard !didSetInitialCamera else { return }
+
+            let center = SearchRegion.gumiCenter
+            let target = MapPoint(longitude: center.longitude, latitude: center.latitude)
+            let cameraUpdate = CameraUpdate.make(
+                target: target,
+                zoomLevel: Constants.defaultLevel,
+                mapView: mapView
+            )
+            mapView.moveCamera(cameraUpdate)
+            didSetInitialCamera = true
         }
 
         private func syncPinsIfReady() {
@@ -199,6 +260,40 @@ struct KakaoMapView: UIViewRepresentable {
         ) {
             guard layerID == Constants.layerID else { return }
             onPinTap(poiID)
+        }
+
+        // MARK: - App lifecycle
+
+        private func installAppLifecycleObserversIfNeeded() {
+            guard !observersInstalled else { return }
+            observersInstalled = true
+
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleWillResignActive),
+                name: UIApplication.willResignActiveNotification,
+                object: nil
+            )
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleDidBecomeActive),
+                name: UIApplication.didBecomeActiveNotification,
+                object: nil
+            )
+        }
+
+        private func removeAppLifecycleObservers() {
+            guard observersInstalled else { return }
+            observersInstalled = false
+            NotificationCenter.default.removeObserver(self)
+        }
+
+        @objc private func handleWillResignActive() {
+            mapController?.pauseEngine()
+        }
+
+        @objc private func handleDidBecomeActive() {
+            activateIfNeeded()
         }
     }
 }

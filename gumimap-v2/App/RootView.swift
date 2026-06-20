@@ -17,6 +17,7 @@ struct RootView: View {
                 switch router.selectedTab {
                 case .map:
                     MapTabView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case .list:
                     ListTabView(subTab: router.listSubTab)
                 }

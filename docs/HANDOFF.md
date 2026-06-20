@@ -19,7 +19,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
 - **KakaoMapsSDK-SPM** (2.9.4+) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
-- **`KakaoMapView`** — `UIViewRepresentable` wrapping `KMViewContainer` + `MapControllerDelegate`; 구미 center level 10
+- **`KakaoMapView`** — `UIViewRepresentable` wrapping `KMViewContainer` + `MapControllerDelegate`; 구미 center level 10; SwiftUI full-frame layout + manual `viewRect` sync (Auto Layout)
 - **`SavedPlaceMapPin`** — category-colored pin rendered to `UIImage` for Kakao `Poi` markers
 - All `SavedPlace` records as Kakao `Poi`; tap → `savedPlaceDetail` push (`KakaoMapEventDelegate.poiDidTapped`)
 - Floating toolbar unchanged (overlaid at bottom)

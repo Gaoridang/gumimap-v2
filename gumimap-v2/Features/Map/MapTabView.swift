@@ -4,7 +4,7 @@ import SwiftUI
 struct MapTabView: View {
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
     @Environment(TabRouter.self) private var router
-    @State private var isMapActive = false
+    @State private var isMapActive = true
 
     var body: some View {
         Group {
@@ -12,12 +12,14 @@ struct MapTabView: View {
                 KakaoMapView(isActive: isMapActive, places: savedPlaces) { placeID in
                     router.openSavedPlaceDetail(id: placeID)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onAppear { isMapActive = true }
                 .onDisappear { isMapActive = false }
             } else {
                 missingKeyState
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea()
         .toolbar(.hidden, for: .navigationBar)
     }
