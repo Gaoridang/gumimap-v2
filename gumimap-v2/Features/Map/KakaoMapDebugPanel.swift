@@ -32,6 +32,7 @@ struct KakaoMapDebugPanel: View {
                             boolRow("hasMapView", snapshot.hasMapView)
                             boolRow("viewRectApplied", snapshot.viewRectApplied)
                             boolRow("cameraSet", snapshot.cameraSet)
+                            row("hint", loadingHint(snapshot))
                         }
 
                         section("레이아웃") {
@@ -151,6 +152,15 @@ struct KakaoMapDebugPanel: View {
 
     private func boolRow(_ key: String, _ value: Bool) -> some View {
         row(key, value ? "true" : "false")
+    }
+
+    private func loadingHint(_ snapshot: KakaoMapDebugSnapshot) -> String {
+        if snapshot.phaseLabel == "ready" { return "ok" }
+        if !snapshot.isEnginePrepared { return "waiting prepareEngine" }
+        if !snapshot.isEngineActive { return "waiting activateEngine" }
+        if !snapshot.hasMapView { return "waiting addViews/addView" }
+        if !snapshot.viewRectApplied { return "waiting viewRect" }
+        return "waiting render"
     }
 }
 
