@@ -6,14 +6,26 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `feat/list-place-card-demo` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after merge |
+| Working tree | Uncommitted — list place card A/B demo |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
+
+## In Progress — List place card demo (`feat/list-place-card-demo`)
+
+- **A · 텍스트 카드** and **B · 아이콘 카드** demos in `SavedPlaceCard`
+- Empty list: scrollable side-by-side sample sections (3 mock places each)
+- Saved list: segmented picker toggles A/B on real `SavedPlace` data
+- Category → SF Symbol mapping in `PlaceCategoryIcon`
+- Enrichment teaser: 분위기 → 특징; 영업중 badge when `grokDetail.isCurrentlyOpen`
+
+**Key paths:** `SavedPlaceCard.swift`, `PlaceCategoryIcon.swift`, `ListTabView.swift`
+
+**Next:** User picks A or B (or hybrid) → remove demo banner/samples → commit final style
 
 ## Next Task — Backlog
 
-Pick up from backlog below (map pins, Kakao search gaps, etc.).
+Pick up from backlog below (map pins, Kakao search gaps, etc.) after card style is chosen.
 
 ## Merged / Shipped on `main`
 
