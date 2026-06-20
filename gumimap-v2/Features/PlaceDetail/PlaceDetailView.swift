@@ -212,12 +212,7 @@ struct PlaceDetailView: View {
             }
 
             if viewModel.revealStep >= 1 {
-                jsonResultCard(detail)
-                    .transition(resultTransition)
-            }
-
-            if viewModel.revealStep >= 2, !detail.displayFields.isEmpty {
-                fieldsCard(detail.displayFields)
+                fieldsCard(detail.visibleFieldRows)
                     .transition(resultTransition)
             }
 
@@ -340,42 +335,15 @@ struct PlaceDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func jsonResultCard(_ detail: GrokPlaceDetail) -> some View {
+    private func fieldsCard(_ rows: [GrokVisibleFieldRow]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("검색 결과 JSON", systemImage: "curlybraces")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .textCase(.uppercase)
-
-            Text("검색어: \(detail.searchQuery)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(detail.prettyJSON)
-                .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(.primary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func fieldsCard(_ fields: [GrokInsightField]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("필드", systemImage: "sparkles")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .textCase(.uppercase)
-
             VStack(spacing: 0) {
-                ForEach(Array(fields.enumerated()), id: \.element.id) { index, field in
-                    featureRow(label: field.label, value: field.value)
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                    featureRow(label: row.label, value: row.value)
 
-                    if index < fields.count - 1 {
+                    if index < rows.count - 1 {
                         Divider()
-                            .padding(.leading, 88)
+                            .padding(.leading, 96)
                     }
                 }
             }
@@ -390,11 +358,11 @@ struct PlaceDetailView: View {
             Text(label)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 88, alignment: .leading)
+                .frame(width: 96, alignment: .leading)
 
             Text(value)
                 .font(.subheadline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(value == "정보 없음" ? .tertiary : .primary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

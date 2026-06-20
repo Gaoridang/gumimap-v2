@@ -13,6 +13,52 @@ struct GrokPlaceSearchResponse: Codable, Sendable {
     let reviews: [String]
 }
 
+struct GrokVisibleFieldRow: Identifiable, Equatable {
+    let label: String
+    let value: String
+
+    var id: String { label }
+
+    var isMissing: Bool { value == "정보 없음" }
+}
+
+enum GrokVisibleField: CaseIterable {
+    case businessHours
+    case breakTime
+    case closedDay
+    case parking
+    case atmosphere
+    case features
+
+    var title: String {
+        switch self {
+        case .businessHours: "영업시간"
+        case .breakTime: "브레이크타임"
+        case .closedDay: "휴무일"
+        case .parking: "주차"
+        case .atmosphere: "분위기"
+        case .features: "특징"
+        }
+    }
+
+    var matchKeywords: [String] {
+        switch self {
+        case .businessHours:
+            ["영업시간", "영업 시간", "운영시간", "운영 시간"]
+        case .breakTime:
+            ["브레이크타임", "브레이크 타임", "브레이크"]
+        case .closedDay:
+            ["휴무일", "정기휴무", "정기 휴무", "휴무"]
+        case .parking:
+            ["주차"]
+        case .atmosphere:
+            ["분위기"]
+        case .features:
+            ["특징"]
+        }
+    }
+}
+
 struct GrokPlaceDetail: Codable, Sendable, Equatable {
     let name: String
     let address: String
@@ -31,35 +77,26 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
 
     var hasReviews: Bool { !reviewPoints.isEmpty }
 
+    var visibleFieldRows: [GrokVisibleFieldRow] {
+        GrokVisibleField.allCases.map { field in
+            let raw = value(for: field)
+            let value = Self.hasContent(raw) ? raw : "정보 없음"
+            return GrokVisibleFieldRow(label: field.title, value: value)
+        }
+    }
+
+    var hasVisibleFieldContent: Bool {
+        visibleFieldRows.contains { !$0.isMissing }
+    }
+
     var hasAnyInsight: Bool {
-        !displayFields.isEmpty || hasReviews
-    }
-
-    var displayFields: [GrokInsightField] {
-        fields.filter { field in
-            let value = field.value.trimmingCharacters(in: .whitespacesAndNewlines)
-            return !value.isEmpty && value != "정보 없음"
-        }
-    }
-
-    var jsonPayload: GrokPlaceSearchResponse {
-        GrokPlaceSearchResponse(fields: fields, reviews: reviews)
-    }
-
-    var prettyJSON: String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        guard let data = try? encoder.encode(jsonPayload),
-              let json = String(data: data, encoding: .utf8) else {
-            return "{}"
-        }
-        return json
+        hasVisibleFieldContent || hasReviews
     }
 
     var isCurrentlyOpen: Bool? {
         BusinessHoursParser.isOpenNow(
-            businessHours: fieldValue(matching: ["영업시간", "영업 시간", "운영시간"]),
-            breakTime: fieldValue(matching: ["브레이크", "브레이크타임", "브레이크 타임"])
+            businessHours: value(for: .businessHours),
+            breakTime: value(for: .breakTime)
         )
     }
 
@@ -76,16 +113,24 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
         )
     }
 
-    private func fieldValue(matching keywords: [String]) -> String {
-        for field in fields {
-            let normalizedLabel = field.label
-                .replacingOccurrences(of: " ", with: "")
-                .lowercased()
-
-            if keywords.contains(where: { normalizedLabel.contains($0.replacingOccurrences(of: " ", with: "").lowercased()) }) {
-                return field.value
+    private func value(for field: GrokVisibleField) -> String {
+        for insight in fields {
+            let normalizedLabel = normalize(insight.label)
+            if field.matchKeywords.contains(where: { normalize($0) == normalizedLabel || normalizedLabel.contains(normalize($0)) }) {
+                return insight.value
             }
         }
         return ""
+    }
+
+    private func normalize(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: " ", with: "")
+            .lowercased()
+    }
+
+    private static func hasContent(_ value: String) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed != "정보 없음"
     }
 }

@@ -301,7 +301,7 @@ struct GrokPlaceSearchService: Sendable {
             properties: [
                 "label": JSONSchemaProperty(
                     type: "string",
-                    description: "Korean field label, e.g. 영업시간, 인기 메뉴, 주차"
+                    description: "Korean field label. Prefer: 영업시간, 브레이크타임, 휴무일, 주차, 분위기, 특징. Extra labels allowed."
                 ),
                 "value": JSONSchemaProperty(
                     type: "string",
@@ -346,6 +346,10 @@ struct GrokPlaceSearchService: Sendable {
     Return JSON only:
     • fields: array of { label, value } in Korean
     • reviews: 2-4 short Korean bullet points with concrete details
+
+    Always try to include these field labels when available:
+    영업시간, 브레이크타임, 휴무일, 주차, 분위기, 특징
+    You may add extra fields (e.g. 인기 메뉴, 대기) for data collection.
 
     Prefer facts that clearly refer to the exact store in Gumi.
     Do not invent information. Omit uncertain items instead of guessing.
