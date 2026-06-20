@@ -6,6 +6,7 @@ struct RootView: View {
     @State private var router = TabRouter()
     @State private var search = SearchViewModel()
     @State private var placeStore: PlaceStore?
+    @State private var enrichmentService = PlaceEnrichmentService()
 
     var body: some View {
         @Bindable var router = router
@@ -39,6 +40,7 @@ struct RootView: View {
         }
         .environment(router)
         .environment(\.placeStore, placeStore)
+        .environment(\.placeEnrichmentService, enrichmentService)
         .onAppear {
             if placeStore == nil {
                 placeStore = PlaceStore(modelContext: modelContext)

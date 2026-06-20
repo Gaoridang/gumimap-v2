@@ -80,6 +80,15 @@ final class PlaceDetailViewModel {
         registrationState == .saving
     }
 
+    var canRegister: Bool {
+        isDiscoveryMode && !isLoading && !isSavingRegistration
+    }
+
+    var savedPlaceId: String? {
+        if case let .saved(id) = mode { return id }
+        return nil
+    }
+
     var enrichmentError: String? {
         if case let .failed(message) = enrichmentState { return message }
         return nil
@@ -151,9 +160,13 @@ final class PlaceDetailViewModel {
         cancelReveal()
     }
 
-    func register(listKind: ListSubTab, store: PlaceStore) async -> String? {
+    func register(
+        listKind: ListSubTab,
+        store: PlaceStore,
+        enrichmentService: PlaceEnrichmentService
+    ) async -> String? {
         guard isDiscoveryMode else { return nil }
-        guard registrationState != .saving else { return nil }
+        guard canRegister else { return nil }
 
         registrationState = .saving
 
@@ -163,12 +176,34 @@ final class PlaceDetailViewModel {
                 detail: detail,
                 listKind: listKind
             )
+
+            if detail == nil {
+                enrichmentService.schedule(
+                    savedPlaceId: savedPlaceId,
+                    place: place,
+                    store: store
+                )
+            }
+
             registrationState = .idle
             return savedPlaceId
         } catch {
             registrationState = .failed(error.localizedDescription)
             return nil
         }
+    }
+
+    func refreshFromStore(store: PlaceStore) {
+        guard let savedPlaceId else { return }
+        guard let saved = store.savedPlace(id: savedPlaceId) else { return }
+
+        place = saved.asPlace
+
+        guard let grokDetail = saved.grokDetail else { return }
+
+        detail = grokDetail
+        enrichmentState = .loaded
+        revealStep = 2
     }
 
     private func load() async {

@@ -29,7 +29,9 @@ final class PlaceStore {
             existing.kakaoMapURLString = place.kakaoMapURL?.absoluteString
             existing.latitude = place.coordinate.latitude
             existing.longitude = place.coordinate.longitude
-            existing.enrichmentData = enrichmentData
+            if let enrichmentData {
+                existing.enrichmentData = enrichmentData
+            }
             existing.updatedAt = now
         } else {
             let saved = SavedPlace(
@@ -52,6 +54,19 @@ final class PlaceStore {
 
         try modelContext.save()
         return id
+    }
+
+    func updateEnrichment(savedPlaceId: String, detail: GrokPlaceDetail) throws {
+        guard let saved = savedPlace(id: savedPlaceId) else { return }
+
+        saved.enrichmentData = try JSONEncoder().encode(detail)
+        saved.updatedAt = Date()
+        try modelContext.save()
+
+        NotificationCenter.default.post(
+            name: .savedPlaceEnrichmentUpdated,
+            object: savedPlaceId
+        )
     }
 
     func savedPlace(id: String) -> SavedPlace? {

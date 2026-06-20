@@ -5,6 +5,7 @@ struct PlaceDetailView: View {
     @State private var viewModel: PlaceDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.placeStore) private var placeStore
+    @Environment(\.placeEnrichmentService) private var enrichmentService
     @Environment(TabRouter.self) private var router
     @State private var showRegistrationSheet = false
 
@@ -53,6 +54,17 @@ struct PlaceDetailView: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfo)
         .onAppear { viewModel.loadIfNeeded() }
         .onDisappear { viewModel.cancelTasks() }
+        .onChange(of: viewModel.canRegister) { _, canRegister in
+            if !canRegister {
+                showRegistrationSheet = false
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .savedPlaceEnrichmentUpdated)) { notification in
+            guard let updatedId = notification.object as? String,
+                  updatedId == viewModel.savedPlaceId,
+                  let placeStore else { return }
+            viewModel.refreshFromStore(store: placeStore)
+        }
         .sheet(isPresented: $showRegistrationSheet) {
             PlaceRegistrationSheet(
                 placeName: viewModel.place.name,
@@ -274,21 +286,28 @@ struct PlaceDetailView: View {
     private var registerButton: some View {
         HStack(spacing: 10) {
             Button {
+                guard viewModel.canRegister else { return }
                 showRegistrationSheet = true
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.semibold))
-                    Text("등록하기")
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(Color(.systemBackground))
+                    } else {
+                        Image(systemName: "plus")
+                            .font(.body.weight(.semibold))
+                    }
+                    Text(viewModel.isLoading ? "추가 정보 확인 중" : "등록하기")
                         .font(.body.weight(.semibold))
                 }
                 .foregroundStyle(Color(.systemBackground))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color.primary, in: RoundedRectangle(cornerRadius: 14))
+                .background(viewModel.canRegister ? Color.primary : Color.primary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
-            .disabled(viewModel.isSavingRegistration)
+            .disabled(!viewModel.canRegister)
 
             if let isOpen = viewModel.isOpenNow, isOpen {
                 openStatusBadge
@@ -321,8 +340,12 @@ struct PlaceDetailView: View {
     }
 
     private func handleRegistration(listKind: ListSubTab) async {
-        guard let placeStore else { return }
-        guard let savedPlaceId = await viewModel.register(listKind: listKind, store: placeStore) else {
+        guard let placeStore, let enrichmentService else { return }
+        guard let savedPlaceId = await viewModel.register(
+            listKind: listKind,
+            store: placeStore,
+            enrichmentService: enrichmentService
+        ) else {
             return
         }
 

@@ -6,14 +6,20 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/place-register` |
+| Active branch | `feat/place-enrichment-background` |
 | Next branch | (create before first code change on next task) |
 | Working tree | Clean after commit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
-Pick up from backlog below (map pins, list delete/move, saved-detail re-enrichment, etc.).
+Pick up from backlog below (map pins, list delete/move, etc.).
+
+## Shipped on `feat/place-enrichment-background`
+
+- Register button disabled during Grok loading (`추가 정보 확인 중`) — prevents accidental sheet while enrichment runs
+- `PlaceEnrichmentService` schedules background Grok fetch when a place is saved without enrichment
+- Saved detail view auto-refreshes when background enrichment completes
 
 ## Shipped on `feat/place-register`
 
