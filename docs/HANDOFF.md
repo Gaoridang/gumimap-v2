@@ -8,7 +8,7 @@ Last updated: 2026-06-20
 |-------|-------|
 | Active branch | `feat/kakao-map-sdk` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after Kakao pin renderer crash fix |
+| Working tree | Clean after simplified map pin design |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -20,7 +20,7 @@ Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 - **KakaoMapsSDK-SPM** (2.12.14) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
 - **`KakaoMapView`** — `UIViewRepresentable` + inline `Coordinator`; 구미 center **level 12**; `viewRect` sync; saved-place `Poi` pins
-- **`SavedPlaceMapPin`** — white bubble + pointer pin (list-card icon style); `UIGraphicsImageRenderer` + PNG round-trip for Kakao markers
+- **`SavedPlaceMapPin`** — simple circle pin (tint fill + list-kind ring + pointer); `UIGraphicsImageRenderer` + PNG round-trip for Kakao markers
 - All `SavedPlace` records as Kakao `Poi`; tap → **`MapPlaceSheet`** (medium/large detents; no nav push)
 - Floating toolbar unchanged (overlaid at bottom)
 
@@ -110,7 +110,7 @@ Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); bubble-style saved pins; tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); circle-style saved pins (green/blue ring); tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
