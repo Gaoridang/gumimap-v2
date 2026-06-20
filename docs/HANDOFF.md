@@ -8,23 +8,24 @@ Last updated: 2026-06-20
 |-------|-------|
 | Active branch | `feat/kakao-map-sdk` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after Kakao map commit |
+| Working tree | Clean after minimal Kakao map rewrite |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
-Pick up from backlog below (map pins, Kakao search gaps, etc.).
+Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 
-### Kakao Map full-screen + saved pins (`feat/kakao-map-sdk`)
+### Kakao Map minimal full-screen (`feat/kakao-map-sdk`)
 
-- **KakaoMapsSDK-SPM** (2.9.4+) — replaces Apple MapKit on main map tab
+- **KakaoMapsSDK-SPM** (2.12.14) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
-- **`KakaoMapView`** — `UIViewRepresentable` wrapping `KMViewContainer` + `MapControllerDelegate`; 구미 center level 10; SwiftUI full-frame layout + manual `viewRect` sync (Auto Layout)
-- **`SavedPlaceMapPin`** — category-colored pin rendered to `UIImage` for Kakao `Poi` markers
-- All `SavedPlace` records as Kakao `Poi`; tap → `savedPlaceDetail` push (`KakaoMapEventDelegate.poiDidTapped`)
+- **`KakaoMapView`** — minimal `UIViewRepresentable` + inline `Coordinator`; 구미 center level 10; `viewRect` sync on resize; app lifecycle pause/activate
+- **`MapTabView`** — full-screen map only (no pins, no debug panel)
 - Floating toolbar unchanged (overlaid at bottom)
 
-**Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `KakaoMapPinImageRenderer.swift`, `MapTabView.swift`, `SavedPlaceMapPin.swift`, `Secrets.swift`, `gumimap_v2App.swift`
+**Removed (rewrite):** `KakaoMapCoordinator`, `KakaoMapDebugPanel`, `KakaoMapRuntimeState`, `KakaoMapPinImageRenderer`, `SavedPlaceMapPin`
+
+**Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `MapTabView.swift`, `Secrets.swift`, `gumimap_v2App.swift`
 
 ## Merged / Shipped on `main`
 
@@ -110,7 +111,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
-- **Map tab:** full-screen Kakao Map centered on 구미; saved place pins (category icon + list-kind badge); tap pin → saved detail
+- **Map tab:** full-screen Kakao Map centered on 구미 (no pins yet)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
