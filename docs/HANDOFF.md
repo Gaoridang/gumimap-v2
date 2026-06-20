@@ -24,7 +24,7 @@ Pick up from backlog below (map pins, list delete/move, saved-detail re-enrichme
 - Upsert by composite id `kakaoPlaceId-listKind`
 - After save: `TabRouter.completeRegistration` clears search stack → list tab + sub-tab → saved detail push
 - `PlaceDetailView` dual mode: `.discovery` (Grok fetch) / `.saved` (cached enrichment, no register button)
-- `ListTabView` shows saved places per sub-tab via `@Query`
+- `ListTabView` shows saved places per sub-tab via `@Query` (respects top safe area)
 
 **Key paths**
 
