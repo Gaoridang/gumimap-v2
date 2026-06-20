@@ -11,10 +11,6 @@ struct ListTabView: View {
         savedPlaces.filter { $0.listKind == subTab.rawValue }
     }
 
-    private var headerLoadKey: String {
-        "\(subTab.rawValue)-\(places.count)"
-    }
-
     var body: some View {
         Group {
             if places.isEmpty {
@@ -27,8 +23,11 @@ struct ListTabView: View {
         .background(Color(.systemGroupedBackground))
         .animation(.easeInOut(duration: 0.2), value: subTab)
         .animation(.easeInOut(duration: 0.2), value: places.count)
-        .task(id: headerLoadKey) {
-            listHeaderStore.loadIfNeeded(subTab: subTab, placeCount: places.count)
+        .onAppear {
+            listHeaderStore.refreshPrompt(for: subTab)
+        }
+        .onChange(of: subTab) { _, tab in
+            listHeaderStore.refreshPrompt(for: tab)
         }
     }
 
@@ -64,27 +63,16 @@ struct ListTabView: View {
         }
     }
 
-    @ViewBuilder
     private var listHeader: some View {
-        if let prompt = listHeaderStore.prompt(for: subTab) {
-            StyledListHeader(prompt: prompt)
-                .contentTransition(.opacity)
-                .animation(
-                    listHeaderStore.shouldAnimatePrompt ? .easeInOut(duration: 0.45) : nil,
-                    value: prompt.fullText
-                )
-                .accessibilityLabel(prompt.fullText)
-        } else if listHeaderStore.isLoading(subTab) {
-            headerPlaceholder
-        }
-    }
+        let prompt = listHeaderStore.prompt(for: subTab)
 
-    private var headerPlaceholder: some View {
-        RoundedRectangle(cornerRadius: 6)
-            .fill(Color.primary.opacity(0.06))
-            .frame(height: 28)
-            .frame(maxWidth: 260, alignment: .leading)
-            .accessibilityHidden(true)
+        return StyledListHeader(prompt: prompt)
+            .contentTransition(.opacity)
+            .animation(
+                listHeaderStore.shouldAnimatePrompt ? .easeInOut(duration: 0.35) : nil,
+                value: prompt.fullText
+            )
+            .accessibilityLabel(prompt.fullText)
     }
 }
 

@@ -21,8 +21,8 @@ struct StyledListHeader: View {
 
 #Preview {
     VStack(alignment: .leading, spacing: 16) {
-        StyledListHeader(prompt: ListHeaderPrompt.fallback(for: .visited))
-        StyledListHeader(prompt: ListHeaderPrompt.fallback(for: .wishlist))
+        StyledListHeader(prompt: ListHeaderPromptLibrary.visited[0])
+        StyledListHeader(prompt: ListHeaderPromptLibrary.wishlist[0])
     }
     .padding(20)
     .background(Color(.systemGroupedBackground))

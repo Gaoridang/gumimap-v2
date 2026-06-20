@@ -22,8 +22,8 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - `SavedPlaceCard` — category icon + name, category, address, enrichment teaser
 - `PlaceCategoryIcon` — Kakao category → SF Symbol + tint
 - `ListTabView` — Grok-generated header + `ScrollView` card rows
-- `GrokListHeaderService` + `ListHeaderStore` — cached per sub-tab; refresh on sub-tab or count change only
-- First load: placeholder → Grok (or fallback after 450ms); re-entry keeps last line without flash
+- `ListHeaderPromptLibrary` — 8 curated lines per sub-tab with emphasis segments; random rotation
+- `ListHeaderStore` — picks next line on list appear or sub-tab switch (no Grok API)
 - `StyledListHeader` — two-tone text (emphasis primary/semibold, fillers secondary)
 - 영업중 badge when `grokDetail.isCurrentlyOpen`; insight line: 분위기 → 특징
 
@@ -123,7 +123,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 | `gumimap-v2/Features/PlaceDetail/` | Detail screen, view model, list-kind sheet |
 | `gumimap-v2/Features/Search/` | Search UI + `Place` model |
 | `gumimap-v2/Features/List/ListTabView.swift` | Saved place list |
-| `gumimap-v2/Services/GrokListHeaderService.swift` | Grok list header copy |
+| `gumimap-v2/Models/ListHeaderPromptLibrary.swift` | Curated list header copy pool |
 | `gumimap-v2/Features/List/StyledListHeader.swift` | Two-tone header rendering |
 | `gumimap-v2/App/RootView.swift` | Navigation root |
 | `gumimap-v2/Navigation/` | Routes, toolbar, tab router |
