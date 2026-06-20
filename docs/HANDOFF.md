@@ -6,35 +6,43 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/saved-place-info-edit` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after saved place info edit |
+| Working tree | Clean after merge of Kakao map + saved place info edit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
-Pick up from backlog below (Kakao search gaps, map sheet edit parity, etc.).
+Pick up from backlog below.
 
-### Saved place info edit (`feat/saved-place-info-edit`)
+- Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
+- Saved detail Grok re-enrichment
+- Place detail map preview, business hours formatting
+- "Already saved" badge on discovery detail
+- Kakao REST API search gaps (e.g. 와일드차일드)
+- Fix `run-simulator.sh` UDID fallback edge cases
 
-- **`SavedPlaceEditSheet`** — saved detail `...` menu → "정보 수정"; edits name, address, category, phone, and all 6 enrichment fields + reviews
+## Merged / Shipped on `main`
+
+### Saved place info edit (`feat/saved-place-info-edit` → merged 2026-06-20)
+
+- **Saved detail `...` menu:** "정보 수정" (alongside 리스트 변경 / 삭제)
+- **`SavedPlaceEditSheet`** — edits name, address, category, phone, 6 enrichment fields, reviews
 - **`PlaceStore.update(savedPlaceId:draft:)`** — persists baseline + enrichment; posts `savedPlaceInfoUpdated`
 - List/map auto-refresh via SwiftData `@Query`
 
 **Key paths:** `SavedPlaceEditSheet.swift`, `PlaceStore.swift`, `PlaceDetailView.swift`, `GrokPlaceDetail.swift`
 
-### Kakao Map full-screen + saved pins (`feat/kakao-map-sdk`)
+### Kakao Map + saved pins (`feat/kakao-map-sdk` → merged 2026-06-20)
 
 - **KakaoMapsSDK-SPM** (2.12.14) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
 - **`KakaoMapView`** — `UIViewRepresentable` + inline `Coordinator`; 구미 center **level 12**; `viewRect` sync; saved-place `Poi` pins
-- **`SavedPlaceMapPin`** — simple circle pin (tint fill + list-kind ring + pointer); `UIGraphicsImageRenderer` + PNG round-trip for Kakao markers
+- **`SavedPlaceMapPin`** — simple circle pin (tint fill + list-kind ring + pointer); `KakaoMapPinImageRenderer` + PNG round-trip for Kakao markers
 - All `SavedPlace` records as Kakao `Poi`; tap → **`MapPlaceSheet`** (medium/large detents; no nav push)
 - Floating toolbar unchanged (overlaid at bottom)
 
 **Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `KakaoMapPinImageRenderer.swift`, `MapPlaceSheet.swift`, `MapTabView.swift`, `SavedPlaceMapPin.swift`, `MapPinPointer.swift`, `Secrets.swift`, `gumimap_v2App.swift`
-
-## Merged / Shipped on `main`
 
 ### List place cards & header (`feat/list-place-card-demo` → merged 2026-06-20)
 
@@ -121,14 +129,6 @@ Pick up from backlog below (Kakao search gaps, map sheet edit parity, etc.).
 - **Map tab:** full-screen Kakao Map centered on 구미 (level 12); circle-style saved pins (green/blue ring); tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
-## Other Backlog
-
-- Saved detail Grok re-enrichment
-- Place detail map preview, business hours formatting
-- "Already saved" badge on discovery detail
-- Kakao REST API search gaps (e.g. 와일드차일드)
-- Fix `run-simulator.sh` UDID fallback edge cases
-
 ## Key Paths
 
 | Path | Purpose |
@@ -138,7 +138,7 @@ Pick up from backlog below (Kakao search gaps, map sheet edit parity, etc.).
 | `scripts/generate-secrets.sh` | Build-time secrets generation |
 | `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
 | `gumimap-v2/Models/SavedPlace.swift` | SwiftData saved place model |
-| `gumimap-v2/Services/PlaceStore.swift` | Register, delete, move, enrichment update |
+| `gumimap-v2/Services/PlaceStore.swift` | Register, update, delete, move, enrichment update |
 | `gumimap-v2/Services/PlaceEnrichmentService.swift` | Background Grok enrichment |
 | `gumimap-v2/Services/ListHeaderStore.swift` | List header prompt rotation |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
@@ -146,7 +146,8 @@ Pick up from backlog below (Kakao search gaps, map sheet edit parity, etc.).
 | `gumimap-v2/Models/GrokPlaceDetail.swift` | Enrichment model + visible field mapping |
 | `gumimap-v2/Models/ListHeaderPromptLibrary.swift` | Curated list header copy pool |
 | `gumimap-v2/Services/BusinessHoursParser.swift` | Open-now from hours + break time |
-| `gumimap-v2/Features/PlaceDetail/` | Detail screen, view model, list-kind sheet |
+| `gumimap-v2/Features/PlaceDetail/` | Detail screen, edit sheet, view model, list-kind sheet |
+| `gumimap-v2/Features/Map/` | Kakao map tab, pins, place sheet |
 | `gumimap-v2/Features/Search/` | Search UI + `Place` model |
 | `gumimap-v2/Features/List/` | List tab, cards, styled header |
 | `gumimap-v2/App/RootView.swift` | Navigation root |
