@@ -1,15 +1,20 @@
+import SwiftData
 import SwiftUI
 
 struct MapTabView: View {
+    @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
+    @Environment(TabRouter.self) private var router
     @State private var isMapActive = false
 
     var body: some View {
         Group {
             if Secrets.isKakaoMapConfigured {
-                KakaoMapView(isActive: isMapActive)
-                    .ignoresSafeArea()
-                    .onAppear { isMapActive = true }
-                    .onDisappear { isMapActive = false }
+                KakaoMapView(isActive: isMapActive, places: savedPlaces) { placeID in
+                    router.openSavedPlaceDetail(id: placeID)
+                }
+                .ignoresSafeArea()
+                .onAppear { isMapActive = true }
+                .onDisappear { isMapActive = false }
             } else {
                 missingKeyState
             }
@@ -39,4 +44,5 @@ struct MapTabView: View {
 #Preview {
     MapTabView()
         .environment(TabRouter())
+        .modelContainer(for: SavedPlace.self, inMemory: true)
 }
