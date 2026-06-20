@@ -6,10 +6,11 @@ import UIKit
 struct KakaoMapView: UIViewRepresentable {
     let isActive: Bool
     let places: [SavedPlace]
+    let runtimeState: KakaoMapRuntimeState
     let onPinTap: (String) -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onPinTap: onPinTap)
+        Coordinator(runtimeState: runtimeState, onPinTap: onPinTap)
     }
 
     func makeUIView(context: Context) -> KMViewContainer {
@@ -43,19 +44,21 @@ struct KakaoMapView: UIViewRepresentable {
             static let defaultLevel: Int = 10
         }
 
+        private let runtimeState: KakaoMapRuntimeState
         private let onPinTap: (String) -> Void
         private weak var viewContainer: KMViewContainer?
         private weak var mapController: KMController?
-        private var isAuthenticated = false
         private var isMapReady = false
         private var didSetInitialCamera = false
         private var lastAppliedSize: CGSize = .zero
+        private var pendingContainerSize: CGSize = .zero
         private var pendingPlaces: [SavedPlace] = []
         private var displayedPlaceIDs: Set<String> = []
         private var registeredStyleIDs: Set<String> = []
         private var observersInstalled = false
 
-        init(onPinTap: @escaping (String) -> Void) {
+        init(runtimeState: KakaoMapRuntimeState, onPinTap: @escaping (String) -> Void) {
+            self.runtimeState = runtimeState
             self.onPinTap = onPinTap
             super.init()
         }
@@ -63,6 +66,7 @@ struct KakaoMapView: UIViewRepresentable {
         func attach(to container: KMViewContainer) {
             guard mapController == nil else { return }
 
+            runtimeState.phase = .loading
             viewContainer = container
             let controller = KMController(viewContainer: container)
             controller.delegate = self
@@ -77,7 +81,6 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         func activateIfNeeded() {
-            guard isAuthenticated else { return }
             guard mapController?.isEngineActive == false else { return }
             mapController?.activateEngine()
         }
@@ -93,11 +96,18 @@ struct KakaoMapView: UIViewRepresentable {
 
         func handleContainerResize(_ size: CGSize) {
             guard size.width > 0, size.height > 0 else { return }
-            guard size != lastAppliedSize else { return }
+
+            pendingContainerSize = size
+            applyLayoutIfPossible()
+        }
+
+        private func applyLayoutIfPossible(force: Bool = false) {
+            let size = pendingContainerSize
+            guard size.width > 0, size.height > 0 else { return }
+            guard let mapView = kakaoMap else { return }
+            guard force || size != lastAppliedSize else { return }
 
             lastAppliedSize = size
-
-            guard let mapView = kakaoMap else { return }
             mapView.viewRect = CGRect(origin: .zero, size: size)
             setInitialCameraIfNeeded(on: mapView)
         }
@@ -105,11 +115,11 @@ struct KakaoMapView: UIViewRepresentable {
         // MARK: - MapControllerDelegate
 
         func authenticationSucceeded() {
-            isAuthenticated = true
             activateIfNeeded()
         }
 
         func authenticationFailed(_ errorCode: Int, desc: String) {
+            runtimeState.phase = .authFailed(code: errorCode, message: desc)
             print("Kakao Maps authentication failed (\(errorCode)): \(desc)")
         }
 
@@ -125,6 +135,7 @@ struct KakaoMapView: UIViewRepresentable {
 
             let viewSize = resolvedContainerSize()
             if viewSize.width > 0, viewSize.height > 0 {
+                pendingContainerSize = viewSize
                 mapController?.addView(mapviewInfo, viewSize: viewSize)
             } else {
                 mapController?.addView(mapviewInfo)
@@ -137,16 +148,14 @@ struct KakaoMapView: UIViewRepresentable {
             kakaoMap?.eventDelegate = self
             setupLabelLayer()
             isMapReady = true
+            runtimeState.phase = .ready
 
-            let viewSize = resolvedContainerSize()
-            if viewSize.width > 0, viewSize.height > 0 {
-                handleContainerResize(viewSize)
-            }
-
+            applyLayoutIfPossible(force: true)
             syncPinsIfReady()
         }
 
         func addViewFailed(_ viewName: String, viewInfoName: String) {
+            runtimeState.phase = .addViewFailed
             print("Kakao Maps addView failed: \(viewName) / \(viewInfoName)")
         }
 
@@ -176,6 +185,10 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         private func resolvedContainerSize() -> CGSize {
+            if pendingContainerSize.width > 0, pendingContainerSize.height > 0 {
+                return pendingContainerSize
+            }
+
             if let container = viewContainer {
                 let size = container.bounds.size
                 if size.width > 0, size.height > 0 {
