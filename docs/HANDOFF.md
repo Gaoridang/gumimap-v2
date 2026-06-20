@@ -6,7 +6,7 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/place-enrichment-background` |
+| Active branch | `feat/place-detail-sticky-header` |
 | Next branch | (create before first code change on next task) |
 | Working tree | Clean after commit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
@@ -14,6 +14,10 @@ Last updated: 2026-06-20
 ## Next Task — Backlog
 
 Pick up from backlog below (map pins, list delete/move, etc.).
+
+## Shipped on `feat/place-detail-sticky-header`
+
+- `PlaceDetailView` sticky top bar — back button + place name stay fixed while scrolling; subtitle scrolls with content
 
 ## Shipped on `feat/place-enrichment-background`
 

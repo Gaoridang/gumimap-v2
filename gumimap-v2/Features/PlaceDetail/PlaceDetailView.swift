@@ -20,7 +20,7 @@ struct PlaceDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                headerSection
+                headerSubtitle
                 kakaoBaselineSection
 
                 if viewModel.showProgress {
@@ -43,6 +43,9 @@ struct PlaceDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbarBackground(.hidden, for: .navigationBar)
         .enableInteractivePopGesture()
+        .safeAreaInset(edge: .top, spacing: 0) {
+            stickyHeaderBar
+        }
         .safeAreaInset(edge: .bottom) {
             if viewModel.isDiscoveryMode {
                 registerButton
@@ -79,29 +82,38 @@ struct PlaceDetailView: View {
 
     // MARK: - Header
 
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Button {
-                    dismiss()
-                } label: {
-                    ToolbarIcon(asset: .back, isSelected: true, size: 20)
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(.plain)
-
-                Text(viewModel.place.name)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+    private var stickyHeaderBar: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Button {
+                dismiss()
+            } label: {
+                ToolbarIcon(asset: .back, isSelected: true, size: 20)
+                    .frame(width: 36, height: 36)
             }
+            .buttonStyle(.plain)
 
-            Text(viewModel.headerSubtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .contentTransition(.opacity)
-                .animation(.snappy, value: viewModel.headerSubtitle)
+            Text(viewModel.place.name)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .background {
+            Color(.systemGroupedBackground)
+                .shadow(color: .black.opacity(0.06), radius: 6, y: 3)
+        }
+    }
+
+    private var headerSubtitle: some View {
+        Text(viewModel.headerSubtitle)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentTransition(.opacity)
+            .animation(.snappy, value: viewModel.headerSubtitle)
     }
 
     // MARK: - Kakao Baseline
