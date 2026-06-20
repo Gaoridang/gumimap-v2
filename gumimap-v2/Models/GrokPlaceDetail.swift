@@ -1,6 +1,18 @@
 import CoreLocation
 import Foundation
 
+struct GrokMapResolveResponse: Codable, Sendable {
+    let sourceURL: String
+    let pageName: String
+    let pageAddress: String
+    let confidence: String
+}
+
+struct GrokMapListingExtractionResponse: Codable, Sendable {
+    let sourceURL: String
+    let listing: GrokMapListing
+}
+
 struct GrokMapListingResponse: Codable, Sendable {
     let listing: GrokMapListing
 }

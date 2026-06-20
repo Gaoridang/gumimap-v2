@@ -5,6 +5,7 @@ enum GrokPlaceSearchError: LocalizedError {
     case missingAPIKey
     case emptyQuery
     case invalidResponse
+    case placeMismatch
     case apiError(statusCode: Int, message: String)
     case decodingFailed
 
@@ -16,6 +17,8 @@ enum GrokPlaceSearchError: LocalizedError {
             "검색할 장소 이름을 입력해 주세요."
         case .invalidResponse:
             "Grok API 응답을 해석할 수 없습니다."
+        case .placeMismatch:
+            "지도에서 정확한 장소 페이지를 찾지 못했어요."
         case let .apiError(statusCode, message):
             "Grok API 오류 (\(statusCode)): \(message)"
         case .decodingFailed:
@@ -31,6 +34,8 @@ struct GrokPlaceSearchService: Sendable {
         configuration.timeoutIntervalForResource = 300
         return URLSession(configuration: configuration)
     }()
+
+    private static let kakaoMapDomain = ["place.map.kakao.com"]
 
     private static let mapSearchDomains = [
         "map.naver.com",
@@ -71,10 +76,9 @@ struct GrokPlaceSearchService: Sendable {
             detail: trimmed
         ))
 
-        async let mapListing = fetchMapListing(place: place, onProgress: onProgress)
         async let reviews = fetchCommunityReviews(place: place, onProgress: onProgress)
 
-        let listing = try? await mapListing
+        let listing = try? await fetchMapListing(place: place, onProgress: onProgress)
         let reviewPoints = (try? await reviews) ?? []
 
         guard listing != nil || !reviewPoints.isEmpty else {
@@ -94,24 +98,87 @@ struct GrokPlaceSearchService: Sendable {
         place: Place,
         onProgress: (@Sendable (GrokSearchProgress) -> Void)?
     ) async throws -> GrokMapListing? {
+        let sourceURL = try await resolveListingURL(for: place, onProgress: onProgress)
+
         onProgress?(GrokSearchProgress(
-            message: "네이버·카카오 지도에서 영업정보 확인 중",
+            message: "지도 페이지에서 영업정보 추출 중",
             detail: place.name
         ))
 
-        let response: GrokMapListingResponse = try await executeSearch(
-            query: place.name,
-            systemPrompt: Self.mapListingSystemPrompt,
-            userPrompt: buildMapUserPrompt(place: place),
+        for attempt in 1 ... 2 {
+            let response: GrokMapListingExtractionResponse = try await executeSearch(
+                query: sourceURL,
+                systemPrompt: attempt == 1 ? Self.mapExtractSystemPrompt : Self.mapExtractRetrySystemPrompt,
+                userPrompt: buildMapExtractUserPrompt(place: place, sourceURL: sourceURL),
+                onProgress: onProgress,
+                responseSchema: mapListingExtractionJSONSchema,
+                schemaName: "gumi_map_listing_extract",
+                allowedDomains: listingDomains(for: sourceURL),
+                reasoningEffort: "high",
+                searchProgressMessage: "지도 페이지 탭별 정보 수집 중"
+            )
+
+            if GrokMapListingValidator.validateExtraction(
+                response,
+                expectedSourceURL: sourceURL,
+                place: place
+            ) {
+                return response.listing
+            }
+        }
+
+        throw GrokPlaceSearchError.placeMismatch
+    }
+
+    private func resolveListingURL(
+        for place: Place,
+        onProgress: (@Sendable (GrokSearchProgress) -> Void)?
+    ) async throws -> String {
+        if let kakaoMapURL = place.kakaoMapURL?.absoluteString, !kakaoMapURL.isEmpty {
+            onProgress?(GrokSearchProgress(
+                message: "카카오맵 페이지 확인 중",
+                detail: place.name
+            ))
+            return kakaoMapURL
+        }
+
+        onProgress?(GrokSearchProgress(
+            message: "네이버·카카오 지도에서 정확한 페이지 찾는 중",
+            detail: place.name
+        ))
+
+        let response: GrokMapResolveResponse = try await executeSearch(
+            query: "\(place.name) \(place.address)",
+            systemPrompt: Self.mapResolveSystemPrompt,
+            userPrompt: buildMapResolveUserPrompt(place: place),
             onProgress: onProgress,
-            responseSchema: mapListingJSONSchema,
-            schemaName: "gumi_map_listing",
+            responseSchema: mapResolveJSONSchema,
+            schemaName: "gumi_map_resolve",
             allowedDomains: Self.mapSearchDomains,
             reasoningEffort: "medium",
-            searchProgressMessage: "지도 페이지에서 영업정보 수집 중"
+            searchProgressMessage: "지도에서 장소 페이지 검색 중"
         )
 
-        return response.listing
+        guard GrokMapListingValidator.validateResolution(response, for: place) else {
+            throw GrokPlaceSearchError.placeMismatch
+        }
+
+        return response.sourceURL
+    }
+
+    private func listingDomains(for sourceURL: String) -> [String] {
+        guard let host = URL(string: sourceURL)?.host?.lowercased() else {
+            return Self.mapSearchDomains
+        }
+
+        if host.contains("kakao.com") {
+            return Self.kakaoMapDomain
+        }
+        if host.contains("naver.com") {
+            return ["map.naver.com", "pcmap.place.naver.com"]
+        }
+
+        return Self.mapSearchDomains
     }
 
     private func fetchCommunityReviews(
@@ -138,9 +205,9 @@ struct GrokPlaceSearchService: Sendable {
         return response.reviews.filter { PlaceFeatures.hasContent($0) }
     }
 
-    private func buildMapUserPrompt(place: Place) -> String {
+    private func buildMapResolveUserPrompt(place: Place) -> String {
         var lines = [
-            "Extract structured info for this exact store in Gumi (구미), Gyeongsangbuk-do.",
+            "Find the exact map listing page for this store in Gumi (구미), Gyeongsangbuk-do.",
             "Place name: \(place.name)",
             "Address: \(place.address)",
             "Coordinates: \(place.coordinate.latitude), \(place.coordinate.longitude)"
@@ -152,16 +219,38 @@ struct GrokPlaceSearchService: Sendable {
         if let phone = place.phone, !phone.isEmpty {
             lines.append("Phone: \(phone)")
         }
-        if let kakaoMapURL = place.kakaoMapURL {
-            lines.append("PRIMARY SOURCE — open this Kakao Map listing first: \(kakaoMapURL.absoluteString)")
-        } else {
-            lines.append("Search \"\(place.name) 구미\" on map.naver.com or place.map.kakao.com and open the exact detail page.")
+
+        lines.append("""
+        
+        Search map.naver.com and place.map.kakao.com using name + address.
+        Open candidate pages and verify BOTH name and street/road address match.
+        Return confidence \"high\" only when the page clearly matches this exact store.
+        Do NOT extract hours, menu, parking, or reviews — only resolve the listing URL.
+        """)
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func buildMapExtractUserPrompt(place: Place, sourceURL: String) -> String {
+        var lines = [
+            "Extract structured info from ONE map listing page only.",
+            "Open ONLY this exact URL — do NOT search by store name:",
+            sourceURL,
+            "",
+            "Expected store:",
+            "Name: \(place.name)",
+            "Address: \(place.address)"
+        ]
+
+        if let phone = place.phone, !phone.isEmpty {
+            lines.append("Phone: \(phone)")
         }
 
         lines.append("""
         
-        Read every tab on the map page: 홈, 정보, 메뉴, 영업정보, 편의시설.
-        Copy breakTime, parking, businessHours verbatim from the map listing only.
+        If the page is NOT this exact store, return sourceURL as given and set every feature field to \"정보 없음\" with businessHours \"\".
+        Otherwise read every tab: 홈, 정보, 메뉴, 영업정보, 편의시설.
+        Copy breakTime, parking, and businessHours verbatim from the map listing only.
         """)
 
         return lines.joined(separator: "\n")
@@ -173,7 +262,7 @@ struct GrokPlaceSearchService: Sendable {
         Name: \(place.name)
         Address: \(place.address)
 
-        Search blog.naver.com and www.diningcode.com for "\(place.name) 구미 후기".
+        Search blog.naver.com and www.diningcode.com for "\(place.name) \(place.address) 후기".
         Read 2-3 recent posts. Return only review bullet points — no hours, parking, or menu facts.
         """
     }
@@ -396,30 +485,65 @@ struct GrokPlaceSearchService: Sendable {
         )
     }
 
-    private var mapListingJSONSchema: JSONSchema {
+    private var mapListingBodySchema: JSONSchema {
         JSONSchema(
             type: "object",
             properties: [
-                "listing": JSONSchemaProperty(
+                "features": JSONSchemaProperty(
                     type: "object",
-                    nestedSchema: JSONSchema(
-                        type: "object",
-                        properties: [
-                            "features": JSONSchemaProperty(
-                                type: "object",
-                                nestedSchema: placeFeaturesSchema
-                            ),
-                            "businessHours": JSONSchemaProperty(
-                                type: "string",
-                                description: "All 7 weekdays verbatim from map 영업시간, e.g. 월 11:00-22:00, 화 휴무, ..."
-                            )
-                        ],
-                        required: ["features", "businessHours"],
-                        additionalProperties: false
-                    )
+                    nestedSchema: placeFeaturesSchema
+                ),
+                "businessHours": JSONSchemaProperty(
+                    type: "string",
+                    description: "All 7 weekdays verbatim from map 영업시간, e.g. 월 11:00-22:00, 화 휴무, ..."
                 )
             ],
-            required: ["listing"],
+            required: ["features", "businessHours"],
+            additionalProperties: false
+        )
+    }
+
+    private var mapResolveJSONSchema: JSONSchema {
+        JSONSchema(
+            type: "object",
+            properties: [
+                "sourceURL": JSONSchemaProperty(
+                    type: "string",
+                    description: "Exact Naver Place or Kakao Map detail page URL"
+                ),
+                "pageName": JSONSchemaProperty(
+                    type: "string",
+                    description: "Store name shown on the resolved map page"
+                ),
+                "pageAddress": JSONSchemaProperty(
+                    type: "string",
+                    description: "Address shown on the resolved map page"
+                ),
+                "confidence": JSONSchemaProperty(
+                    type: "string",
+                    description: "high only when name and address both match the expected store",
+                    enumValues: ["high", "medium", "low"]
+                )
+            ],
+            required: ["sourceURL", "pageName", "pageAddress", "confidence"],
+            additionalProperties: false
+        )
+    }
+
+    private var mapListingExtractionJSONSchema: JSONSchema {
+        JSONSchema(
+            type: "object",
+            properties: [
+                "sourceURL": JSONSchemaProperty(
+                    type: "string",
+                    description: "The exact map listing URL that was opened"
+                ),
+                "listing": JSONSchemaProperty(
+                    type: "object",
+                    nestedSchema: mapListingBodySchema
+                )
+            ],
+            required: ["sourceURL", "listing"],
             additionalProperties: false
         )
     }
@@ -441,25 +565,54 @@ struct GrokPlaceSearchService: Sendable {
         )
     }
 
-    private static let mapListingSystemPrompt = """
-    You extract structured facts from ONE Naver Place or Kakao Map listing in Gumi, South Korea.
+    private static let mapResolveSystemPrompt = """
+    You resolve the exact map listing URL for ONE store in Gumi, South Korea.
 
-    SOURCE OF TRUTH: only map.naver.com, pcmap.place.naver.com, or place.map.kakao.com detail pages.
-    NEVER use blogs, reviews, or inference for any field.
+    Search only map.naver.com, pcmap.place.naver.com, or place.map.kakao.com.
+    NEVER extract hours, menu, parking, or reviews in this step.
 
     Rules:
-    1. Open the provided Kakao Map URL first when given; otherwise find the exact store on Naver/Kakao map.
-    2. Read ALL tabs: 홈, 정보, 메뉴, 영업정보, 편의시설.
-    3. COPY text verbatim from the map page — do not paraphrase, guess, or invert facts.
+    1. Search using store name AND address together — never name alone.
+    2. Open candidate detail pages and verify the page name and street/road address match.
+    3. Return confidence \"high\" only when both name and address clearly match.
+    4. Return confidence \"low\" for ambiguous chains, homonyms, or partial address matches.
+    5. sourceURL must be the final detail page URL, not a search results page.
+
+    Max 2 web_search calls.
+    """
+
+    private static let mapExtractSystemPrompt = """
+    You extract structured facts from ONE already-resolved map listing URL in Gumi, South Korea.
+
+    SOURCE OF TRUTH: only the exact URL provided in the user message.
+    NEVER search by store name. NEVER use blogs, reviews, or inference.
+
+    Rules:
+    1. Open ONLY the provided URL. Do not run additional name-based searches.
+    2. If the page is not the expected store, return empty/정보 없음 values — do not guess.
+    3. Read ALL tabs: 홈, 정보, 메뉴, 영업정보, 편의시설.
+    4. COPY text verbatim — do not paraphrase, guess, or invert facts.
        • If the page says 주차가능 or 주차 있음 → never write 불가능 or 불가.
        • breakTime: copy the exact time range shown (e.g. "15:00-17:00").
-       • parking: copy exactly as shown (e.g. "주차 가능 (매장 앞)", "건물 지하 주차장").
-    4. Use "정보 없음" ONLY when the map page truly does not show that field after checking all tabs.
-    5. Use "없음" for breakTime ONLY when the map page explicitly states no break time.
+       • parking: copy exactly as shown.
+    5. Use "정보 없음" ONLY when the map page truly does not show that field after checking all tabs.
 
-    Return listing.features (5 fields) and listing.businessHours (all 7 weekdays).
+    Return sourceURL and listing.features + listing.businessHours.
     Format hours: "월 HH:MM-HH:MM, 화 ..., 수 ..., 목 ..., 금 ..., 토 ..., 일 ...", use "휴무" for closed days.
-    Max 2 web_search calls.
+    Max 1 web_search call — open the provided URL only.
+    """
+
+    private static let mapExtractRetrySystemPrompt = """
+    You extract structured facts from ONE map listing URL in Gumi, South Korea.
+
+    The previous extraction failed validation. Be stricter:
+    1. Open ONLY the provided URL — no name-based search.
+    2. If the page does not clearly match the expected store name and address, return all feature fields as \"정보 없음\" and businessHours as \"\".
+    3. Otherwise copy map page text verbatim from 홈, 정보, 메뉴, 영업정보, 편의시설 tabs.
+    4. Never invent or invert parking, break time, or hours.
+
+    Return sourceURL and listing.features + listing.businessHours.
+    Max 1 web_search call.
     """
 
     private static let reviewsSystemPrompt = """
