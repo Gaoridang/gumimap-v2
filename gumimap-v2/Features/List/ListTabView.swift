@@ -5,9 +5,15 @@ struct ListTabView: View {
     let subTab: ListSubTab
 
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
+    @State private var headerViewModel = ListHeaderViewModel()
+    @State private var appearCount = 0
 
     private var places: [SavedPlace] {
         savedPlaces.filter { $0.listKind == subTab.rawValue }
+    }
+
+    private var headerLoadKey: String {
+        "\(subTab.rawValue)-\(places.count)-\(appearCount)"
     }
 
     var body: some View {
@@ -22,6 +28,15 @@ struct ListTabView: View {
         .background(Color(.systemGroupedBackground))
         .animation(.easeInOut(duration: 0.2), value: subTab)
         .animation(.easeInOut(duration: 0.2), value: places.count)
+        .onAppear {
+            appearCount += 1
+        }
+        .task(id: headerLoadKey) {
+            headerViewModel.load(subTab: subTab, placeCount: places.count)
+        }
+        .onDisappear {
+            headerViewModel.cancel()
+        }
     }
 
     private var emptyState: some View {
@@ -57,12 +72,10 @@ struct ListTabView: View {
     }
 
     private var listHeader: some View {
-        Text(subTab.listHeaderPrompt)
-            .font(.title2.weight(.semibold))
-            .foregroundStyle(.primary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        StyledListHeader(prompt: headerViewModel.prompt)
             .contentTransition(.opacity)
-            .animation(.easeInOut(duration: 0.2), value: subTab)
+            .animation(.easeInOut(duration: 0.25), value: headerViewModel.prompt)
+            .accessibilityLabel(headerViewModel.prompt.fullText)
     }
 }
 
