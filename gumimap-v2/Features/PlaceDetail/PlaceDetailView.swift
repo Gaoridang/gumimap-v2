@@ -1,6 +1,11 @@
 import CoreLocation
 import SwiftUI
 
+private enum PlaceDetailScrollMetrics {
+    static let collapseStart: CGFloat = 36
+    static let collapseDistance: CGFloat = 44
+}
+
 struct PlaceDetailView: View {
     @State private var viewModel: PlaceDetailViewModel
     @Environment(\.dismiss) private var dismiss
@@ -8,6 +13,7 @@ struct PlaceDetailView: View {
     @Environment(\.placeEnrichmentService) private var enrichmentService
     @Environment(TabRouter.self) private var router
     @State private var showRegistrationSheet = false
+    @State private var scrollOffset: CGFloat = 0
 
     init(place: Place) {
         _viewModel = State(initialValue: PlaceDetailViewModel(place: place))
@@ -17,10 +23,15 @@ struct PlaceDetailView: View {
         _viewModel = State(initialValue: PlaceDetailViewModel(savedPlaceId: savedPlaceId, store: store))
     }
 
+    private var collapseProgress: CGFloat {
+        let offset = scrollOffset - PlaceDetailScrollMetrics.collapseStart
+        return min(1, max(0, offset / PlaceDetailScrollMetrics.collapseDistance))
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                headerSubtitle
+                headerSection
                 kakaoBaselineSection
 
                 if viewModel.showProgress {
@@ -37,15 +48,20 @@ struct PlaceDetailView: View {
             .padding(.vertical, 16)
             .padding(.bottom, viewModel.isDiscoveryMode ? 24 : 0)
         }
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y
+        } action: { _, offset in
+            scrollOffset = max(0, offset)
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+        .overlay(alignment: .top) {
+            collapsingHeaderBar
+        }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbarBackground(.hidden, for: .navigationBar)
         .enableInteractivePopGesture()
-        .safeAreaInset(edge: .top, spacing: 0) {
-            stickyHeaderBar
-        }
         .safeAreaInset(edge: .bottom) {
             if viewModel.isDiscoveryMode {
                 registerButton
@@ -82,38 +98,61 @@ struct PlaceDetailView: View {
 
     // MARK: - Header
 
-    private var stickyHeaderBar: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Button {
-                dismiss()
-            } label: {
-                ToolbarIcon(asset: .back, isSelected: true, size: 20)
-                    .frame(width: 36, height: 36)
-            }
-            .buttonStyle(.plain)
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 12) {
+                backButton
 
-            Text(viewModel.place.name)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(2)
+                Text(viewModel.place.name)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Text(viewModel.headerSubtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
-        .background {
-            Color(.systemGroupedBackground)
-                .shadow(color: .black.opacity(0.06), radius: 6, y: 3)
+                .contentTransition(.opacity)
+                .animation(.snappy, value: viewModel.headerSubtitle)
         }
     }
 
-    private var headerSubtitle: some View {
-        Text(viewModel.headerSubtitle)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentTransition(.opacity)
-            .animation(.snappy, value: viewModel.headerSubtitle)
+    private var collapsingHeaderBar: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 12) {
+                backButton
+
+                Text(viewModel.place.name)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
+        }
+        .frame(maxWidth: .infinity)
+        .background {
+            Color(.systemGroupedBackground)
+                .shadow(color: .black.opacity(0.06 * collapseProgress), radius: 6, y: 3)
+        }
+        .opacity(collapseProgress)
+        .offset(y: (1 - collapseProgress) * -14)
+        .allowsHitTesting(collapseProgress > 0.55)
+        .accessibilityHidden(collapseProgress < 0.1)
+    }
+
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            ToolbarIcon(asset: .back, isSelected: true, size: 20)
+                .frame(width: 36, height: 36)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Kakao Baseline

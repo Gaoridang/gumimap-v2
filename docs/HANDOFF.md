@@ -17,7 +17,7 @@ Pick up from backlog below (map pins, list delete/move, etc.).
 
 ## Shipped on `feat/place-detail-sticky-header`
 
-- `PlaceDetailView` sticky top bar — back button + place name stay fixed while scrolling; subtitle scrolls with content
+- `PlaceDetailView` collapsing header — full header scrolls naturally; compact back + title bar fades in at top on scroll
 
 ## Shipped on `feat/place-enrichment-background`
 
