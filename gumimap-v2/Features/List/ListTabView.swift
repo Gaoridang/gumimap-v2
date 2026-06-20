@@ -11,17 +11,17 @@ struct ListTabView: View {
     }
 
     var body: some View {
-        Color(.systemGroupedBackground)
-            .overlay {
-                if places.isEmpty {
-                    emptyState
-                } else {
-                    listContent
-                }
+        Group {
+            if places.isEmpty {
+                emptyState
+            } else {
+                listContent
             }
-            .ignoresSafeArea()
-            .animation(.easeInOut(duration: 0.2), value: subTab)
-            .animation(.easeInOut(duration: 0.2), value: places.count)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemGroupedBackground))
+        .animation(.easeInOut(duration: 0.2), value: subTab)
+        .animation(.easeInOut(duration: 0.2), value: places.count)
     }
 
     private var emptyState: some View {
