@@ -26,7 +26,7 @@ Pick up from backlog below.
 ### Teardrop map pins (2026-06-20)
 
 - **`MapPinPointer`** — single teardrop silhouette; tip anchors at bottom center (`anchorPoint` 0.5, 1.0)
-- **`KakaoMapPinImageRenderer`** — category tint fill + list-kind stroke + white SF Symbol; style id `v4-teardrop`
+- **`KakaoMapPinImageRenderer`** — borderless solid teardrop; green (가본 곳) / blue (가고 싶은 곳) only; style id `v5-solid`
 - **`SavedPlaceMapPin`** — SwiftUI preview matches map marker
 
 **Key paths:** `MapPinPointer.swift`, `KakaoMapPinImageRenderer.swift`, `SavedPlaceMapPin.swift`
@@ -157,7 +157,7 @@ Pick up from backlog below.
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + pin focus + sheet
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle); already-saved banner + disabled register row when place exists in either list; formatted business hours in enrichment card
 - **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); teardrop saved pins (category fill, list-kind ring, pointed tip on coordinate); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); solid teardrop pins (green/blue by list, no border/icon); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Key Paths
