@@ -8,7 +8,7 @@ Last updated: 2026-06-20
 |-------|-------|
 | Active branch | `feat/kakao-map-sdk` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after map pins + zoom level |
+| Working tree | Clean after map pin redesign + sheet |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -20,11 +20,11 @@ Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 - **KakaoMapsSDK-SPM** (2.12.14) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
 - **`KakaoMapView`** — `UIViewRepresentable` + inline `Coordinator`; 구미 center **level 12**; `viewRect` sync; saved-place `Poi` pins
-- **`SavedPlaceMapPin`** — category-colored pin rendered to `UIImage` for Kakao markers
-- All `SavedPlace` records as Kakao `Poi`; tap → `savedPlaceDetail` push
+- **`SavedPlaceMapPin`** — white bubble + pointer pin (list-card icon style); `ImageRenderer` → `UIImage` for Kakao markers
+- All `SavedPlace` records as Kakao `Poi`; tap → **`MapPlaceSheet`** (medium/large detents; no nav push)
 - Floating toolbar unchanged (overlaid at bottom)
 
-**Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `KakaoMapPinImageRenderer.swift`, `MapTabView.swift`, `SavedPlaceMapPin.swift`, `Secrets.swift`, `gumimap_v2App.swift`
+**Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `KakaoMapPinImageRenderer.swift`, `MapPlaceSheet.swift`, `MapTabView.swift`, `SavedPlaceMapPin.swift`, `MapPinPointer.swift`, `Secrets.swift`, `gumimap_v2App.swift`
 
 ## Merged / Shipped on `main`
 
@@ -110,7 +110,7 @@ Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); saved place pins; tap pin → saved detail
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); bubble-style saved pins; tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog

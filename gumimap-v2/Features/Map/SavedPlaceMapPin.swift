@@ -13,21 +13,36 @@ struct SavedPlaceMapPin: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Image(systemName: categorySymbol)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 34, height: 34)
-                .background(categoryTint.gradient, in: Circle())
-                .overlay {
-                    Circle()
-                        .strokeBorder(.white, lineWidth: 2.5)
-                }
-                .shadow(color: .black.opacity(0.22), radius: 4, y: 2)
+        VStack(spacing: 0) {
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(.white)
+                    .frame(width: 38, height: 38)
+                    .shadow(color: .black.opacity(0.16), radius: 5, y: 2)
 
-            listKindBadge
-                .offset(x: 5, y: -5)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .strokeBorder(categoryTint.opacity(0.4), lineWidth: 1.5)
+                    .frame(width: 38, height: 38)
+
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(categoryTint.opacity(0.14))
+                    .frame(width: 28, height: 28)
+
+                Image(systemName: categorySymbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(categoryTint)
+
+                listKindBadge
+                    .offset(x: 7, y: -7)
+            }
+
+            MapPinPointer()
+                .fill(.white)
+                .frame(width: 14, height: 8)
+                .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                .offset(y: -1)
         }
+        .frame(width: 44, height: 50)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }
@@ -37,16 +52,16 @@ struct SavedPlaceMapPin: View {
         switch listKind {
         case .visited:
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(.white, Color.green)
-                .background(Circle().fill(.white).padding(-1))
+                .background(Circle().fill(.white).padding(-1.5))
         case .wishlist:
             Image(systemName: "bookmark.fill")
-                .font(.system(size: 11, weight: .bold))
+                .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(.white)
-                .frame(width: 18, height: 18)
-                .background(Color.blue.gradient, in: RoundedRectangle(cornerRadius: 4))
+                .frame(width: 17, height: 17)
+                .background(Color.blue.gradient, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
         }
     }
 
@@ -56,9 +71,11 @@ struct SavedPlaceMapPin: View {
 }
 
 #Preview {
-    HStack(spacing: 24) {
+    HStack(spacing: 28) {
         SavedPlaceMapPin(listKind: .visited, category: "음식점 > 카페")
         SavedPlaceMapPin(listKind: .wishlist, category: "음식점 > 한식")
+        SavedPlaceMapPin(listKind: .visited, category: "쇼핑 > 마트")
     }
-    .padding()
+    .padding(32)
+    .background(Color(.systemGroupedBackground))
 }
