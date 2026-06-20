@@ -23,12 +23,6 @@ struct ListTabView: View {
         .background(Color(.systemGroupedBackground))
         .animation(.easeInOut(duration: 0.2), value: subTab)
         .animation(.easeInOut(duration: 0.2), value: places.count)
-        .onAppear {
-            listHeaderStore.refreshPrompt(for: subTab)
-        }
-        .onChange(of: subTab) { _, tab in
-            listHeaderStore.refreshPrompt(for: tab)
-        }
     }
 
     private var emptyState: some View {
@@ -63,16 +57,17 @@ struct ListTabView: View {
         }
     }
 
+    @ViewBuilder
     private var listHeader: some View {
-        let prompt = listHeaderStore.prompt(for: subTab)
-
-        return StyledListHeader(prompt: prompt)
-            .contentTransition(.opacity)
-            .animation(
-                listHeaderStore.shouldAnimatePrompt ? .easeInOut(duration: 0.35) : nil,
-                value: prompt.fullText
-            )
-            .accessibilityLabel(prompt.fullText)
+        if let prompt = listHeaderStore.prompt(for: subTab) {
+            StyledListHeader(prompt: prompt)
+                .contentTransition(.opacity)
+                .animation(
+                    listHeaderStore.shouldAnimatePrompt ? .easeInOut(duration: 0.35) : nil,
+                    value: prompt.fullText
+                )
+                .accessibilityLabel(prompt.fullText)
+        }
     }
 }
 

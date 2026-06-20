@@ -48,6 +48,15 @@ struct RootView: View {
                 placeStore = PlaceStore(modelContext: modelContext)
             }
         }
+        .onChange(of: router.selectedTab) { oldTab, newTab in
+            guard newTab == .list else { return }
+            let enteringFromMap = oldTab != .list
+            listHeaderStore.displayPrompt(for: router.listSubTab, rotate: enteringFromMap)
+        }
+        .onChange(of: router.listSubTab) { _, subTab in
+            guard router.selectedTab == .list else { return }
+            listHeaderStore.displayPrompt(for: subTab)
+        }
     }
 }
 
