@@ -10,6 +10,10 @@ import SwiftData
 
 @main
 struct gumimap_v2App: App {
+    init() {
+        KakaoMapSDKBootstrap.registerIfNeeded()
+    }
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             SavedPlace.self,

@@ -1,37 +1,42 @@
-import MapKit
 import SwiftData
 import SwiftUI
 
 struct MapTabView: View {
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
     @Environment(TabRouter.self) private var router
-
-    @State private var position: MapCameraPosition = .region(
-        MKCoordinateRegion(
-            center: SearchRegion.gumiCenter,
-            latitudinalMeters: 12_000,
-            longitudinalMeters: 12_000
-        )
-    )
+    @State private var isMapActive = false
 
     var body: some View {
-        Map(position: $position) {
-            ForEach(savedPlaces, id: \.id) { savedPlace in
-                if let listKind = savedPlace.listSubTab {
-                    Annotation(savedPlace.name, coordinate: savedPlace.asPlace.coordinate) {
-                        Button {
-                            router.openSavedPlaceDetail(id: savedPlace.id)
-                        } label: {
-                            SavedPlaceMapPin(listKind: listKind, category: savedPlace.category)
-                        }
-                        .buttonStyle(.plain)
-                    }
+        Group {
+            if Secrets.isKakaoMapConfigured {
+                KakaoMapView(isActive: isMapActive, places: savedPlaces) { placeID in
+                    router.openSavedPlaceDetail(id: placeID)
                 }
+                .onAppear { isMapActive = true }
+                .onDisappear { isMapActive = false }
+            } else {
+                missingKeyState
             }
         }
-        .mapStyle(.standard(elevation: .realistic))
         .ignoresSafeArea()
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var missingKeyState: some View {
+        Color(.systemGroupedBackground)
+            .overlay {
+                VStack(spacing: 8) {
+                    Text("카카오맵 키가 필요해요")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text("Config/secrets.local.env에 KAKAO_NATIVE_APP_KEY를 추가해 주세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+            }
     }
 }
 

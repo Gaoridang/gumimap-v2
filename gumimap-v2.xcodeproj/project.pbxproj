@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D00476872FE6560E004CC39A /* KakaoMapsSDK-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = D00B00032FE59000004CC39A /* KakaoMapsSDK-SPM */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D004755D2FE575D6004CC39A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D00476872FE6560E004CC39A /* KakaoMapsSDK-SPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +118,7 @@
 			);
 			name = "gumimap-v2";
 			packageProductDependencies = (
+				D00B00032FE59000004CC39A /* KakaoMapsSDK-SPM */,
 			);
 			productName = "gumimap-v2";
 			productReference = D004754D2FE575D5004CC39A /* gumimap-v2.app */;
@@ -196,6 +202,9 @@
 			);
 			mainGroup = D00475442FE575D5004CC39A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D00B00012FE59000004CC39A /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D004754E2FE575D5004CC39A /* Products */;
 			projectDirPath = "";
@@ -604,6 +613,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D00B00012FE59000004CC39A /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kakao-mapsSDK/KakaoMapsSDK-SPM.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D00B00032FE59000004CC39A /* KakaoMapsSDK-SPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D00B00012FE59000004CC39A /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
+			productName = "KakaoMapsSDK-SPM";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D00475452FE575D5004CC39A /* Project object */;
 }

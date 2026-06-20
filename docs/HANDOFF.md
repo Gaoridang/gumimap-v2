@@ -6,23 +6,25 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/map-fullscreen` |
+| Active branch | `feat/kakao-map-sdk` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after map commit |
+| Working tree | Clean after Kakao map commit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
 Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
-### Full-screen map + saved pins (`feat/map-fullscreen`)
+### Kakao Map full-screen + saved pins (`feat/kakao-map-sdk`)
 
-- **`MapTabView`** — MapKit `Map` fills the screen; 구미 중심 12km region; nav bar hidden on map root
-- **`SavedPlaceMapPin`** — category-colored pin; 가본 곳 (checkmark) / 가고 싶은 곳 (bookmark) badge
-- All `SavedPlace` records shown as `Annotation`; tap → `savedPlaceDetail` push
+- **KakaoMapsSDK-SPM** (2.9.4+) — replaces Apple MapKit on main map tab
+- **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
+- **`KakaoMapView`** — `UIViewRepresentable` wrapping `KMViewContainer` + `MapControllerDelegate`; 구미 center level 10
+- **`SavedPlaceMapPin`** — category-colored pin rendered to `UIImage` for Kakao `Poi` markers
+- All `SavedPlace` records as Kakao `Poi`; tap → `savedPlaceDetail` push (`KakaoMapEventDelegate.poiDidTapped`)
 - Floating toolbar unchanged (overlaid at bottom)
 
-**Key paths:** `MapTabView.swift`, `SavedPlaceMapPin.swift`, `TabRouter.swift`, `SearchRegion.swift`
+**Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `KakaoMapPinImageRenderer.swift`, `MapTabView.swift`, `SavedPlaceMapPin.swift`, `Secrets.swift`, `gumimap_v2App.swift`
 
 ## Merged / Shipped on `main`
 
@@ -108,7 +110,7 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
-- **Map tab:** full-screen MapKit map centered on 구미; saved place pins (category icon + list-kind badge); tap pin → saved detail
+- **Map tab:** full-screen Kakao Map centered on 구미; saved place pins (category icon + list-kind badge); tap pin → saved detail
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
