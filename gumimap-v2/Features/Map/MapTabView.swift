@@ -11,6 +11,7 @@ struct MapTabView: View {
     @State private var isMapActive = false
     @State private var selectedPlace: SelectedMapPlace?
     @State private var focusPlaceId: String?
+    @State private var animatedFocus = false
 
     var body: some View {
         Group {
@@ -18,22 +19,29 @@ struct MapTabView: View {
                 KakaoMapView(
                     isActive: isMapActive,
                     places: savedPlaces,
-                    focusPlaceId: focusPlaceId
-                ) { placeID in
-                    selectedPlace = SelectedMapPlace(id: placeID)
-                }
+                    focusPlaceId: focusPlaceId,
+                    animatedFocus: animatedFocus,
+                    onPinTap: { placeID in
+                        selectedPlace = SelectedMapPlace(id: placeID)
+                    },
+                    onFocusCompleted: { placeId in
+                        guard animatedFocus else { return }
+                        presentSheet(for: placeId)
+                    }
+                )
                 .ignoresSafeArea()
                 .onAppear { isMapActive = true }
                 .onDisappear { isMapActive = false }
                 .onChange(of: router.pendingMapFocusPlaceId) { _, placeId in
                     guard let placeId else { return }
+                    animatedFocus = true
                     focusPlaceId = placeId
-                    selectedPlace = SelectedMapPlace(id: placeId)
                     router.pendingMapFocusPlaceId = nil
 
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(400))
-                        focusPlaceId = nil
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(380))
+                        guard animatedFocus, focusPlaceId == placeId else { return }
+                        presentSheet(for: placeId)
                     }
                 }
             } else {
@@ -46,6 +54,19 @@ struct MapTabView: View {
             if let savedPlace = savedPlaces.first(where: { $0.id == selection.id }) {
                 MapPlaceSheet(savedPlace: savedPlace)
             }
+        }
+    }
+
+    private func presentSheet(for placeId: String) {
+        animatedFocus = false
+
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+            selectedPlace = SelectedMapPlace(id: placeId)
+        }
+
+        Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            focusPlaceId = nil
         }
     }
 

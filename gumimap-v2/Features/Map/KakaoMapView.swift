@@ -7,10 +7,12 @@ struct KakaoMapView: UIViewRepresentable {
     var isActive: Bool
     let places: [SavedPlace]
     var focusPlaceId: String?
+    var animatedFocus = false
     let onPinTap: (String) -> Void
+    var onFocusCompleted: ((String) -> Void)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onPinTap: onPinTap)
+        Coordinator(onPinTap: onPinTap, onFocusCompleted: onFocusCompleted)
     }
 
     func makeUIView(context: Context) -> KMViewContainer {
@@ -28,7 +30,12 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         context.coordinator.updatePlaces(places)
-        context.coordinator.applyFocus(placeId: focusPlaceId, in: places)
+        context.coordinator.onFocusCompleted = onFocusCompleted
+        context.coordinator.applyFocus(
+            placeId: focusPlaceId,
+            in: places,
+            animated: animatedFocus
+        )
 
         if isActive {
             context.coordinator.activate()
@@ -51,9 +58,11 @@ extension KakaoMapView {
             static let layerID = "saved-places"
             static let defaultLevel = 12
             static let focusLevel = 15
+            static let focusAnimationMillis: UInt = 700
         }
 
         private let onPinTap: (String) -> Void
+        var onFocusCompleted: ((String) -> Void)?
         private weak var container: KMViewContainer?
         private var controller: KMController?
         private var isMapReady = false
@@ -61,13 +70,18 @@ extension KakaoMapView {
         private var lastAppliedSize: CGSize = .zero
         private var pendingPlaces: [SavedPlace] = []
         private var pendingFocusPlaceId: String?
+        private var pendingFocusAnimated = false
         private var appliedFocusPlaceId: String?
         private var displayedPlaceIDs: Set<String> = []
         private var registeredStyleIDs: Set<String> = []
         private var observersInstalled = false
 
-        init(onPinTap: @escaping (String) -> Void) {
+        init(
+            onPinTap: @escaping (String) -> Void,
+            onFocusCompleted: ((String) -> Void)?
+        ) {
             self.onPinTap = onPinTap
+            self.onFocusCompleted = onFocusCompleted
             super.init()
         }
 
@@ -106,25 +120,34 @@ extension KakaoMapView {
             syncPinsIfReady()
         }
 
-        func applyFocus(placeId: String?, in places: [SavedPlace]) {
+        func applyFocus(placeId: String?, in places: [SavedPlace], animated: Bool) {
             guard let placeId else {
                 appliedFocusPlaceId = nil
                 pendingFocusPlaceId = nil
+                pendingFocusAnimated = false
                 return
             }
             guard placeId != appliedFocusPlaceId else { return }
 
             guard isMapReady, let mapView = kakaoMap else {
                 pendingFocusPlaceId = placeId
+                pendingFocusAnimated = animated
                 return
             }
 
-            guard focusCamera(on: placeId, in: places, mapView: mapView) else {
+            guard focusCamera(
+                on: placeId,
+                in: places,
+                mapView: mapView,
+                animated: animated
+            ) else {
                 pendingFocusPlaceId = placeId
+                pendingFocusAnimated = animated
                 return
             }
 
             pendingFocusPlaceId = nil
+            pendingFocusAnimated = false
             appliedFocusPlaceId = placeId
         }
 
@@ -279,14 +302,19 @@ extension KakaoMapView {
 
         private func applyPendingFocusIfNeeded() {
             guard let pendingFocusPlaceId else { return }
-            applyFocus(placeId: pendingFocusPlaceId, in: pendingPlaces)
+            applyFocus(
+                placeId: pendingFocusPlaceId,
+                in: pendingPlaces,
+                animated: pendingFocusAnimated
+            )
         }
 
         @discardableResult
         private func focusCamera(
             on placeId: String,
             in places: [SavedPlace],
-            mapView: KakaoMap
+            mapView: KakaoMap,
+            animated: Bool
         ) -> Bool {
             guard let place = places.first(where: { $0.id == placeId }) else { return false }
 
@@ -300,7 +328,20 @@ extension KakaoMapView {
                 zoomLevel: Constants.focusLevel,
                 mapView: mapView
             )
-            mapView.moveCamera(cameraUpdate)
+
+            if animated {
+                let options = CameraAnimationOptions(
+                    autoElevation: true,
+                    consecutive: false,
+                    durationInMillis: Constants.focusAnimationMillis
+                )
+                mapView.animateCamera(cameraUpdate: cameraUpdate, options: options) { [weak self] in
+                    self?.onFocusCompleted?(placeId)
+                }
+            } else {
+                mapView.moveCamera(cameraUpdate)
+            }
+
             return true
         }
 
