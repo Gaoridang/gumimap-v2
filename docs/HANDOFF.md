@@ -15,12 +15,14 @@ Last updated: 2026-06-20
 
 Pick up from backlog below (map pins, Kakao search gaps, etc.).
 
-### Full-screen map (`feat/map-fullscreen` — in progress)
+### Full-screen map + saved pins (`feat/map-fullscreen`)
 
 - **`MapTabView`** — MapKit `Map` fills the screen; 구미 중심 12km region; nav bar hidden on map root
+- **`SavedPlaceMapPin`** — category-colored pin; 가본 곳 (checkmark) / 가고 싶은 곳 (bookmark) badge
+- All `SavedPlace` records shown as `Annotation`; tap → `savedPlaceDetail` push
 - Floating toolbar unchanged (overlaid at bottom)
 
-**Key paths:** `MapTabView.swift`, `SearchRegion.swift`
+**Key paths:** `MapTabView.swift`, `SavedPlaceMapPin.swift`, `TabRouter.swift`, `SearchRegion.swift`
 
 ## Merged / Shipped on `main`
 
@@ -106,12 +108,11 @@ Pick up from backlog below (map pins, Kakao search gaps, etc.).
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
 - **Saved detail:** `...` menu → 리스트 변경 or 삭제
-- **Map tab:** full-screen MapKit map centered on 구미
+- **Map tab:** full-screen MapKit map centered on 구미; saved place pins (category icon + list-kind badge); tap pin → saved detail
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Other Backlog
 
-- Map pins for saved places
 - Saved detail Grok re-enrichment
 - Place detail map preview, business hours formatting
 - "Already saved" badge on discovery detail

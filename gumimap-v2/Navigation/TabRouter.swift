@@ -29,6 +29,10 @@ final class TabRouter {
         path.append(.search)
     }
 
+    func openSavedPlaceDetail(id: String) {
+        path.append(.savedPlaceDetail(id: id))
+    }
+
     func selectListSubTab(_ subTab: ListSubTab) {
         withAnimation(.easeInOut(duration: 0.2)) {
             listSubTab = subTab
