@@ -11,39 +11,37 @@ struct MapTabView: View {
     var body: some View {
         Group {
             if Secrets.isKakaoMapConfigured {
-                ZStack(alignment: .top) {
+                GeometryReader { geometry in
                     KakaoMapView(
                         isActive: isMapActive,
+                        availableSize: geometry.size,
                         places: savedPlaces,
                         runtimeState: mapRuntimeState
                     ) { placeID in
                         router.openSavedPlaceDetail(id: placeID)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onAppear { isMapActive = true }
-                    .onDisappear { isMapActive = false }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .overlay(alignment: .top) {
+                        VStack(spacing: 10) {
+                            KakaoMapDebugPanel(
+                                snapshot: mapRuntimeState.debug,
+                                isExpanded: $isDebugExpanded
+                            )
 
-                    VStack(spacing: 10) {
-                        KakaoMapDebugPanel(
-                            snapshot: mapRuntimeState.debug,
-                            isExpanded: $isDebugExpanded
-                        )
-
-                        if case .loading = mapRuntimeState.phase {
-                            EmptyView()
-                        } else {
                             mapStatusOverlay
                         }
-
-                        Spacer(minLength: 0)
+                        .padding(.top, 4)
                     }
                 }
+                .onAppear { isMapActive = true }
+                .onDisappear { isMapActive = false }
             } else {
                 missingKeyState
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea()
+        .background(Color(.systemGroupedBackground))
         .toolbar(.hidden, for: .navigationBar)
     }
 

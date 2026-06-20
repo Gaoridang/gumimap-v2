@@ -21,7 +21,11 @@ struct FloatingToolbar: View {
         .background {
             Capsule()
                 .fill(.white)
-                .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
+                .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+        }
+        .overlay {
+            Capsule()
+                .strokeBorder(Color.black.opacity(0.08), lineWidth: 1)
         }
         .animation(.spring(response: 0.38, dampingFraction: 0.78), value: router.isListMode)
         .animation(.easeInOut(duration: 0.2), value: router.listSubTab)

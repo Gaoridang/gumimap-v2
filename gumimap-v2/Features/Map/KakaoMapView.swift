@@ -5,6 +5,7 @@ import UIKit
 
 struct KakaoMapView: UIViewRepresentable {
     let isActive: Bool
+    let availableSize: CGSize
     let places: [SavedPlace]
     let runtimeState: KakaoMapRuntimeState
     let onPinTap: (String) -> Void
@@ -14,16 +15,18 @@ struct KakaoMapView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> KMViewContainer {
-        let container = KMViewContainer()
+        let container = KMViewContainer(frame: CGRect(origin: .zero, size: availableSize))
         container.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        container.backgroundColor = .systemBackground
+        container.clipsToBounds = true
+        container.backgroundColor = UIColor.secondarySystemBackground
         context.coordinator.attach(to: container)
         return container
     }
 
     func updateUIView(_ uiView: KMViewContainer, context: Context) {
+        let layoutSize = resolvedLayoutSize(for: uiView)
         uiView.layoutIfNeeded()
-        context.coordinator.handleContainerResize(uiView.bounds.size)
+        context.coordinator.handleContainerResize(layoutSize)
         context.coordinator.updatePlaces(places)
 
         if isActive {
@@ -33,6 +36,17 @@ struct KakaoMapView: UIViewRepresentable {
         }
 
         context.coordinator.refreshDebug(isMapTabActive: isActive)
+    }
+
+    private func resolvedLayoutSize(for uiView: KMViewContainer) -> CGSize {
+        let boundsSize = uiView.bounds.size
+        if boundsSize.width > 0, boundsSize.height > 0 {
+            return boundsSize
+        }
+        if availableSize.width > 0, availableSize.height > 0 {
+            return availableSize
+        }
+        return boundsSize
     }
 
     static func dismantleUIView(_ uiView: KMViewContainer, coordinator: Coordinator) {
@@ -122,8 +136,14 @@ struct KakaoMapView: UIViewRepresentable {
             refreshDebug(event: "applyViewRect \(KakaoMapDebugSnapshot.format(size))")
         }
 
-        @MainActor
         func refreshDebug(event: String? = nil, isMapTabActive: Bool? = nil) {
+            Task { @MainActor in
+                refreshDebugOnMain(event: event, isMapTabActive: isMapTabActive)
+            }
+        }
+
+        @MainActor
+        private func refreshDebugOnMain(event: String? = nil, isMapTabActive: Bool? = nil) {
             if let event {
                 runtimeState.record(event: event)
             }

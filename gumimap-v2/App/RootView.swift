@@ -13,17 +13,19 @@ struct RootView: View {
         @Bindable var router = router
 
         NavigationStack(path: $router.path) {
-            ZStack(alignment: .bottom) {
+            Group {
                 switch router.selectedTab {
                 case .map:
                     MapTabView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case .list:
                     ListTabView(subTab: router.listSubTab)
                 }
-
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 FloatingToolbar(router: router)
                     .padding(.bottom, 12)
+                    .padding(.top, 8)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)

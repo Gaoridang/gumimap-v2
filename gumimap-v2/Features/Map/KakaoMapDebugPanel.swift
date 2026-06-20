@@ -67,11 +67,12 @@ struct KakaoMapDebugPanel: View {
                 .frame(maxHeight: 280)
             }
         }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 14))
         .overlay {
             RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color.orange.opacity(0.5), lineWidth: 1)
+                .strokeBorder(Color.orange.opacity(0.8), lineWidth: 1)
         }
+        .foregroundStyle(.white)
         .padding(.horizontal, 12)
         .padding(.top, 8)
     }
@@ -127,7 +128,7 @@ struct KakaoMapDebugPanel: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.orange)
 
             content()
         }
@@ -137,12 +138,12 @@ struct KakaoMapDebugPanel: View {
         HStack(alignment: .top, spacing: 8) {
             Text(key)
                 .font(.caption2.monospaced())
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.white.opacity(0.55))
                 .frame(width: 92, alignment: .leading)
 
             Text(value)
                 .font(.caption.monospaced())
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white.opacity(0.92))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
