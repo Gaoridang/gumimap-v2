@@ -33,6 +33,7 @@ Last updated: 2026-06-20
 
 ## Shipped on `feat/place-detail-sheet`
 
+- **Floating toolbar size bump** — icons 20→24pt, tap targets 32→40pt, pill padding increased
 - **Place detail via NavigationStack push** (`AppRoute.placeDetail(Place)`)
   - Search result tap → `PlaceDetailView`
   - Grok SSE enrichment via `GrokPlaceSearchService` (xAI Responses API stream)

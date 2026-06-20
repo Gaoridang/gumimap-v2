@@ -3,8 +3,12 @@ import SwiftUI
 struct FloatingToolbar: View {
     @Bindable var router: TabRouter
 
-    private let itemSpacing: CGFloat = 10
-    private let tabGroupSpacing: CGFloat = 6
+    private let iconSize: CGFloat = 24
+    private let tapTargetSize: CGFloat = 40
+    private let backCircleSize: CGFloat = 36
+    private let dividerHeight: CGFloat = 20
+    private let itemSpacing: CGFloat = 12
+    private let tabGroupSpacing: CGFloat = 8
 
     var body: some View {
         HStack(spacing: itemSpacing) {
@@ -12,8 +16,8 @@ struct FloatingToolbar: View {
             toolbarDivider
             searchButton
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 9)
         .background {
             Capsule()
                 .fill(.white)
@@ -58,9 +62,9 @@ struct FloatingToolbar: View {
             ZStack {
                 Circle()
                     .fill(Color.black.opacity(0.08))
-                    .frame(width: 28, height: 28)
+                    .frame(width: backCircleSize, height: backCircleSize)
 
-                ToolbarIcon(asset: .back, isSelected: true, size: 17)
+                ToolbarIcon(asset: .back, isSelected: true, size: 20)
             }
         }
         .buttonStyle(.plain)
@@ -83,14 +87,14 @@ struct FloatingToolbar: View {
     private var toolbarDivider: some View {
         Rectangle()
             .fill(Color.black.opacity(0.15))
-            .frame(width: 1, height: 16)
+            .frame(width: 1, height: dividerHeight)
     }
 
     private var searchButton: some View {
         Button {
             router.openSearch()
         } label: {
-            ToolbarIcon(asset: .search, isSelected: false)
+            ToolbarIcon(asset: .search, isSelected: false, size: iconSize)
         }
         .buttonStyle(.plain)
         .toolbarTapTarget()
@@ -102,7 +106,7 @@ struct FloatingToolbar: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            ToolbarIcon(asset: asset, isSelected: isSelected)
+            ToolbarIcon(asset: asset, isSelected: isSelected, size: iconSize)
         }
         .buttonStyle(.plain)
     }
@@ -130,8 +134,8 @@ struct FloatingToolbar: View {
 }
 
 private extension View {
-    func toolbarTapTarget() -> some View {
-        frame(width: 32, height: 32)
+    func toolbarTapTarget(size: CGFloat = 40) -> some View {
+        frame(width: size, height: size)
             .contentShape(Rectangle())
     }
 }
