@@ -6,71 +6,71 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/place-detail-sheet` |
-| Working tree | Grok enrichment: parallel map + review searches |
+| Active branch | `main` |
+| Next branch | `feat/place-register` (create before first code change) |
+| Working tree | Clean; `feat/place-detail-sheet` merged into `main` |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
-## Merged / Shipped
+## Next Task — 등록하기
 
-- Agent workflow rules: `AGENTS.md`, `docs/agent-workflow.md`, `.cursor/rules/`, `scripts/run-simulator.sh`
-- Floating pill toolbar (Lucide icons, map/list modes, list sub-tabs)
-- Search flow (`feat/search-overlay` → `main`):
-  - `NavigationStack` push to `SearchTabView`
-  - Edge swipe-back via `InteractivePopEnabler`
-  - Flat `systemGroupedBackground` UI (no overlay, no white cards)
+Wire the fixed bottom **등록하기** button in `PlaceDetailView`:
 
-## Shipped on `feat/kakao-search-api` (pending merge)
+- `PlaceDetailViewModel.register()` is a TODO stub
+- Persist `Place` + optional `GrokPlaceDetail` (enrichment fields/reviews)
+- Surface saved places in `ListTabView` sub-tabs (`visited` / `wishlist`) — currently placeholders
+- Decide storage: SwiftData (project already has `Item.swift` scaffold) vs new model
 
-- **Kakao Local API keyword search** replaces mock data
-  - `KakaoLocalService` → `GET /v2/local/search/keyword.json`
-  - `Place` model (name, address, category, lat/lng)
-  - `SearchViewModel`: 350ms debounce, loading/error states
-  - `SearchTabView`: progress spinner, error message, category label
-- **Secrets pipeline**
-  - `scripts/generate-secrets.sh` reads `Config/secrets.local.env`
-  - Build phase generates `gumimap-v2/Generated/Secrets.generated.swift` (gitignored)
-  - `Secrets.swift` exposes `kakaoRestAPIKey`
+**Key entry points**
 
-## Shipped on `feat/place-detail-sheet`
+| Path | Notes |
+|------|-------|
+| `gumimap-v2/Features/PlaceDetail/PlaceDetailViewModel.swift` | `register()` |
+| `gumimap-v2/Features/PlaceDetail/PlaceDetailView.swift` | `registerButton` |
+| `gumimap-v2/Features/List/ListTabView.swift` | List sub-tab UI |
+| `gumimap-v2/Navigation/ListSubTab.swift` | `.visited` / `.wishlist` |
+| `gumimap-v2/Features/Search/Place.swift` | Search result model to persist |
 
-- **Floating toolbar size bump** — icons 20→24pt, tap targets 32→40pt, pill padding increased
-- **Place detail via NavigationStack push** (`AppRoute.placeDetail(Place)`)
-  - Search result tap → `PlaceDetailView`
-  - Grok SSE enrichment via `GrokPlaceSearchService` (xAI Responses API stream)
-  - Kakao baseline (address, category, phone, map link) shown immediately on open
-  - Live SSE progress checklist unchanged (v1 pattern)
-  - Additional info (리뷰, 특징, 대기) appears only after Grok search completes
-  - Staggered reveal for insight cards; no business hours or JSON shown to users
-  - Fixed bottom "+ 등록하기" button (persistence TODO)
-- **Grok single-search JSON** — one web search per place (`{이름} 구미`, reasoning medium)
-  - No multi-phase resolve/extract; no domain locks
-  - Response: `{ fields: [{label, value}], reviews: [] }` shown as pretty JSON + field rows in UI
-- **xAI API key** added to secrets pipeline (`XAI_API_KEY` → `Secrets.xaiAPIKey`)
+## Merged / Shipped on `main`
+
+### App shell & navigation
+
+- `RootView` entry; floating pill toolbar (Lucide icons, map/list modes, list sub-tabs)
+- `NavigationStack` search push + `InteractivePopEnabler` swipe-back
+- Toolbar size bump (icons 24pt, tap targets 40pt)
+
+### Search (`feat/search-overlay` + `feat/kakao-search-api`)
+
+- `SearchTabView` + `SearchViewModel` with 350ms debounce
+- **Kakao Local API** keyword search (`KakaoLocalService`)
+- `Place` model; 구미 지역 한정 (center + 20km radius, `SearchRegion`)
+- Secrets pipeline: `Config/secrets.local.env` → `scripts/generate-secrets.sh` → `Secrets.generated.swift`
+
+### Place detail (`feat/place-detail-sheet` → merged 2026-06-20)
+
+- `AppRoute.placeDetail(Place)` push from search results
+- **Kakao baseline** shown immediately (address, category, phone, 카카오맵 링크)
+- **Grok enrichment** — single web search per place (`{이름} 구미`, reasoning `medium`)
+  - `GrokPlaceSearchService` → xAI Responses API SSE
+  - Production-friendly progress copy (no Grok/JSON jargon)
+  - UI shows 6 curated fields: 영업시간, 브레이크타임, 휴무일, 주차, 분위기, 특징
+  - Extra fields + reviews stored in model; reviews shown as bullet card
+  - `businessHours` used for **영업중** badge on register row (not shown as its own row)
+- Staggered reveal after SSE completes; **등록하기** button UI ready (no persistence yet)
+- xAI key: `XAI_API_KEY` → `Secrets.xaiAPIKey`
 
 ## What Is on the App Now
 
-- Entry: `RootView` (replaces `ContentView` at app launch)
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
-- **Search:** toolbar search button → `AppRoute.search` push → `SearchTabView`
-  - Custom back button + interactive swipe-back
-  - Auto keyboard focus on enter; query reset on leave
-  - Live Kakao keyword search with debounce (구미 지역 한정: center + 20km radius)
-  - Result tap → `PlaceDetailView` with Grok SSE enrichment + animated JSON reveal
-- Placeholder `MapTabView` / `ListTabView`
+- **Search:** Kakao live search → tap result → `PlaceDetailView` with Grok enrichment
+- Placeholder `MapTabView` / `ListTabView` (no saved data yet)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
-
-## Next Task
-
-- Polish place detail UI (map preview, business hours formatting, open/closed badge)
-- Merge `feat/kakao-search-api` → `main` when ready
-- Merge `feat/place-detail-sheet` → `main` when ready
 
 ## Other Backlog
 
 - Wire MapKit into `MapTabView`
-- Wire list data into `ListTabView`
-- Fix `run-simulator.sh` to target iOS 26.5 simulator by default (avoid 26.2 UDID mismatch)
+- Place detail polish (map preview, business hours formatting)
+- Fix `run-simulator.sh` UDID fallback edge cases
 
 ## Key Paths
 
@@ -78,22 +78,17 @@ Last updated: 2026-06-20
 |------|---------|
 | `Config/secrets.local.env` | Local API keys (gitignored) |
 | `Config/secrets.example.env` | Key name template |
-| `scripts/generate-secrets.sh` | Build-time secrets → `Generated/Secrets.generated.swift` |
+| `scripts/generate-secrets.sh` | Build-time secrets generation |
 | `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
-| `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE single search → JSON |
-| `gumimap-v2/Models/GrokSearchProgress.swift` | SSE progress message model |
-| `gumimap-v2/Models/GrokPlaceDetail.swift` | Grok JSON result model |
-| `gumimap-v2/Features/PlaceDetail/PlaceDetailView.swift` | Detail screen + animations |
-| `gumimap-v2/Features/PlaceDetail/PlaceDetailViewModel.swift` | Loading/progress/reveal state |
-| `gumimap-v2/Features/Search/Place.swift` | Search result model |
-| `gumimap-v2/App/RootView.swift` | `NavigationStack` root + toolbar |
-| `gumimap-v2/Navigation/TabRouter.swift` | Tab state + `path: [AppRoute]` |
-| `gumimap-v2/Navigation/AppRoute.swift` | `.search`, `.placeDetail(Place)` |
-| `gumimap-v2/Navigation/InteractivePopEnabler.swift` | Swipe-back gesture fix |
-| `gumimap-v2/Navigation/FloatingToolbar.swift` | Pill toolbar; search → `openSearch()` |
-| `gumimap-v2/Features/Search/SearchTabView.swift` | Search screen UI |
-| `gumimap-v2/Features/Search/SearchViewModel.swift` | Query + Kakao API results |
-| `scripts/run-simulator.sh` | Build, install, launch (prefer iOS 26.5 UDID) |
+| `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE single search |
+| `gumimap-v2/Models/GrokPlaceDetail.swift` | Enrichment model + visible field mapping |
+| `gumimap-v2/Models/GrokSearchProgress.swift` | SSE progress messages |
+| `gumimap-v2/Services/BusinessHoursParser.swift` | Open-now from hours + break time |
+| `gumimap-v2/Features/PlaceDetail/` | Detail screen + view model |
+| `gumimap-v2/Features/Search/` | Search UI + `Place` model |
+| `gumimap-v2/App/RootView.swift` | Navigation root |
+| `gumimap-v2/Navigation/` | Routes, toolbar, tab router |
+| `scripts/run-simulator.sh` | Build, install, launch |
 | `AGENTS.md` | Agent index and hard rules |
 | `docs/HANDOFF.md` | This file |
