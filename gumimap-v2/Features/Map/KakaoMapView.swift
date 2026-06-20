@@ -205,7 +205,6 @@ extension KakaoMapView {
             _ = manager.addLabelLayer(option: layerOption)
         }
 
-        @MainActor
         private func syncPinsIfReady() {
             guard isMapReady, let mapView = kakaoMap else { return }
             let manager = mapView.getLabelManager()
@@ -249,7 +248,6 @@ extension KakaoMapView {
             displayedPlaceIDs = nextIDs
         }
 
-        @MainActor
         private func ensureStyleRegistered(
             styleID: String,
             listKind: ListSubTab,

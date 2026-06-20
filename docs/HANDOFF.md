@@ -8,7 +8,7 @@ Last updated: 2026-06-20
 |-------|-------|
 | Active branch | `feat/kakao-map-sdk` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after map pin redesign + sheet |
+| Working tree | Clean after Kakao pin renderer crash fix |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -20,7 +20,7 @@ Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 - **KakaoMapsSDK-SPM** (2.12.14) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
 - **`KakaoMapView`** — `UIViewRepresentable` + inline `Coordinator`; 구미 center **level 12**; `viewRect` sync; saved-place `Poi` pins
-- **`SavedPlaceMapPin`** — white bubble + pointer pin (list-card icon style); `ImageRenderer` → `UIImage` for Kakao markers
+- **`SavedPlaceMapPin`** — white bubble + pointer pin (list-card icon style); `UIGraphicsImageRenderer` + PNG round-trip for Kakao markers
 - All `SavedPlace` records as Kakao `Poi`; tap → **`MapPlaceSheet`** (medium/large detents; no nav push)
 - Floating toolbar unchanged (overlaid at bottom)
 
