@@ -6,9 +6,9 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/map-teardrop-pin` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after list ↔ map linking |
+| Working tree | Clean after merge of saved badge, list↔map link, and map pins |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
@@ -21,39 +21,33 @@ Pick up from backlog below.
 - Kakao REST API search gaps (e.g. 와일드차일드)
 - Fix `run-simulator.sh` UDID fallback edge cases
 
-## Shipped on `feat/map-teardrop-pin` (pending merge)
+## Merged / Shipped on `main`
 
-### Teardrop map pins (2026-06-20)
+### Map pins — round head + short tail (`feat/map-teardrop-pin` → merged 2026-06-20)
 
-- **`MapPinPointer`** — single teardrop silhouette; tip anchors at bottom center (`anchorPoint` 0.5, 1.0)
-- **`KakaoMapPinImageRenderer`** — borderless solid teardrop; green (가본 곳) / blue (가고 싶은 곳) only; style id `v5-solid`
-- **`SavedPlaceMapPin`** — SwiftUI preview matches map marker
+- **`MapPinPointer`** — filled circle head + short pointed tail; tip anchors at bottom center (`anchorPoint` 0.5, 1.0)
+- **`KakaoMapPinImageRenderer`** — borderless solid fill; green (가본 곳) / blue (가고 싶은 곳); no category icon; style id `v7-short`
+- **`SavedPlaceMapPin`** — SwiftUI preview matches Kakao marker (28×26pt)
 
 **Key paths:** `MapPinPointer.swift`, `KakaoMapPinImageRenderer.swift`, `SavedPlaceMapPin.swift`
 
-## Shipped on `feat/list-map-link` (pending merge)
+### List ↔ map linking (`feat/list-map-link` → merged 2026-06-20)
 
-### List ↔ map linking (2026-06-20)
-
-- **List card map button** — trailing `map` icon switches to map tab, animated zoom to pin (level 17, 700ms), sheet after zoom completes; `onAppear` consumes pending focus when `MapTabView` remounts from list tab
-- **Saved detail** — "지도에서 보기" row pops nav and focuses map + sheet
-- **Map sheet** — "상세 보기" dismisses sheet and pushes `PlaceDetailView` saved detail
+- **List card map button** — trailing `map` icon → map tab, animated zoom to pin (level 17, 700ms), sheet after zoom completes
+- **`MapTabView.onAppear`** — consumes `pendingMapFocusPlaceId` when remounting from list tab (fixes missed `onChange`)
+- **Saved detail** — "지도에서 보기" pops nav and focuses map + sheet
+- **Map sheet** — "상세 보기" dismisses sheet and pushes saved `PlaceDetailView`
 - **`TabRouter.openSavedPlaceOnMap(id:)`** — clears nav path, sets `pendingMapFocusPlaceId`
-- **`KakaoMapView.focusPlaceId`** — camera focus with pending-until-ready retry
 
 **Key paths:** `TabRouter.swift`, `KakaoMapView.swift`, `MapTabView.swift`, `ListTabView.swift`, `MapPlaceSheet.swift`, `PlaceDetailView.swift`
 
-## Shipped on `feat/saved-badge-hours-format` (pending merge)
+### Discovery saved badge + business hours (`feat/saved-badge-hours-format` → merged 2026-06-20)
 
-### Discovery "already saved" badge + business hours formatting (2026-06-20)
-
-- **Discovery detail:** green/blue "가본 곳/가고 싶은 곳에 저장됨" banner when place already registered; register button shows checkmark + list name and stays disabled
-- **`PlaceStore.savedListKind(forKakaoPlaceId:)`** — lookup by Kakao place id across both lists
-- **`BusinessHoursParser.formatDisplay`** — weekday grouping (e.g. `월–금  10:00 – 22:00`), `매일` shortcut, normalized en-dash times; applied via `GrokPlaceDetail.visibleFieldRows`
+- **Discovery detail:** "가본 곳/가고 싶은 곳에 저장됨" banner; register row disabled with checkmark when already saved
+- **`PlaceStore.savedListKind(forKakaoPlaceId:)`** — lookup across both lists
+- **`BusinessHoursParser.formatDisplay`** — weekday grouping (`월–금  10:00 – 22:00`), `매일` shortcut; applied in `GrokPlaceDetail.visibleFieldRows`
 
 **Key paths:** `PlaceStore.swift`, `BusinessHoursParser.swift`, `GrokPlaceDetail.swift`, `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
-
-## Merged / Shipped on `main`
 
 ### Saved place info edit (`feat/saved-place-info-edit` → merged 2026-06-20)
 
@@ -68,9 +62,8 @@ Pick up from backlog below.
 
 - **KakaoMapsSDK-SPM** (2.12.14) — replaces Apple MapKit on main map tab
 - **`KAKAO_NATIVE_APP_KEY`** — `SDKInitializer.InitSDK(appKey:)` at app launch via `KakaoMapSDKBootstrap`
-- **`KakaoMapView`** — `UIViewRepresentable` + inline `Coordinator`; 구미 center **level 12**; `viewRect` sync; saved-place `Poi` pins
-- **`SavedPlaceMapPin`** — simple circle pin (tint fill + list-kind ring + pointer); `KakaoMapPinImageRenderer` + PNG round-trip for Kakao markers
-- All `SavedPlace` records as Kakao `Poi`; tap → **`MapPlaceSheet`** (medium/large detents; no nav push)
+- **`KakaoMapView`** — `UIViewRepresentable` + inline `Coordinator`; 구미 center **level 12**; `viewRect` sync; saved-place `Poi` pins with animated focus
+- All `SavedPlace` records as Kakao `Poi`; tap → **`MapPlaceSheet`** (medium/large detents)
 - Floating toolbar unchanged (overlaid at bottom)
 
 **Key paths:** `KakaoMapView.swift`, `KakaoMapSDKBootstrap.swift`, `KakaoMapPinImageRenderer.swift`, `MapPlaceSheet.swift`, `MapTabView.swift`, `SavedPlaceMapPin.swift`, `MapPinPointer.swift`, `Secrets.swift`, `gumimap_v2App.swift`
@@ -154,10 +147,10 @@ Pick up from backlog below.
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + pin focus + sheet
-- **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle); already-saved banner + disabled register row when place exists in either list; formatted business hours in enrichment card
-- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); solid teardrop pins (green/blue by list, no border/icon); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
+- **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
+- **Discovery detail:** large title + Kakao baseline cards → additional info; already-saved banner + disabled register row; formatted business hours
+- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; "지도에서 보기" → map focus + sheet
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); round-head pins with short tail (green = 가본 곳, blue = 가고 싶은 곳); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Key Paths
@@ -176,7 +169,7 @@ Pick up from backlog below.
 | `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE single search |
 | `gumimap-v2/Models/GrokPlaceDetail.swift` | Enrichment model + visible field mapping |
 | `gumimap-v2/Models/ListHeaderPromptLibrary.swift` | Curated list header copy pool |
-| `gumimap-v2/Services/BusinessHoursParser.swift` | Open-now from hours + break time |
+| `gumimap-v2/Services/BusinessHoursParser.swift` | Open-now + hours display formatting |
 | `gumimap-v2/Features/PlaceDetail/` | Detail screen, edit sheet, view model, list-kind sheet |
 | `gumimap-v2/Features/Map/` | Kakao map tab, pins, place sheet |
 | `gumimap-v2/Features/Search/` | Search UI + `Place` model |
