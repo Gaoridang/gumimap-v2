@@ -3,6 +3,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let savedPlaceEnrichmentUpdated = Notification.Name("savedPlaceEnrichmentUpdated")
+    static let savedPlaceInfoUpdated = Notification.Name("savedPlaceInfoUpdated")
 }
 
 @MainActor

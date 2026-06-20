@@ -8,7 +8,8 @@ struct PlaceDetailView: View {
     @Environment(\.placeEnrichmentService) private var enrichmentService
     @Environment(TabRouter.self) private var router
     @State private var showRegistrationSheet = false
-    @State private var showEditSheet = false
+    @State private var showMoveSheet = false
+    @State private var showInfoEditSheet = false
     @State private var showDeleteConfirmation = false
     @State private var isManagingSavedPlace = false
 
@@ -68,10 +69,10 @@ struct PlaceDetailView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .savedPlaceEnrichmentUpdated)) { notification in
-            guard let updatedId = notification.object as? String,
-                  updatedId == viewModel.savedPlaceId,
-                  let placeStore else { return }
-            viewModel.refreshFromStore(store: placeStore)
+            refreshSavedPlaceIfNeeded(notification)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .savedPlaceInfoUpdated)) { notification in
+            refreshSavedPlaceIfNeeded(notification)
         }
         .sheet(isPresented: $showRegistrationSheet) {
             PlaceListKindSheet(
@@ -86,7 +87,7 @@ struct PlaceDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showEditSheet) {
+        .sheet(isPresented: $showMoveSheet) {
             PlaceListKindSheet(
                 placeName: viewModel.place.name,
                 title: "어디로 옮길까요?",
@@ -96,6 +97,17 @@ struct PlaceDetailView: View {
             ) { listKind in
                 Task {
                     await handleMove(listKind: listKind)
+                }
+            }
+        }
+        .sheet(isPresented: $showInfoEditSheet) {
+            SavedPlaceEditSheet(
+                place: viewModel.place,
+                detail: viewModel.detail,
+                isProcessing: isManagingSavedPlace
+            ) { draft in
+                Task {
+                    await handleInfoEdit(draft)
                 }
             }
         }
@@ -128,7 +140,13 @@ struct PlaceDetailView: View {
     private var savedPlaceMenu: some View {
         Menu {
             Button {
-                showEditSheet = true
+                showInfoEditSheet = true
+            } label: {
+                Label("정보 수정", systemImage: "pencil")
+            }
+
+            Button {
+                showMoveSheet = true
             } label: {
                 Label("리스트 변경", systemImage: "arrow.left.arrow.right")
             }
@@ -142,6 +160,13 @@ struct PlaceDetailView: View {
             Image(systemName: "ellipsis")
                 .font(.body.weight(.medium))
         }
+    }
+
+    private func refreshSavedPlaceIfNeeded(_ notification: Notification) {
+        guard let updatedId = notification.object as? String,
+              updatedId == viewModel.savedPlaceId,
+              let placeStore else { return }
+        viewModel.refreshFromStore(store: placeStore)
     }
 
     // MARK: - Kakao Baseline
@@ -335,7 +360,7 @@ struct PlaceDetailView: View {
         isManagingSavedPlace = true
         defer {
             isManagingSavedPlace = false
-            showEditSheet = false
+            showMoveSheet = false
         }
 
         do {
@@ -344,6 +369,23 @@ struct PlaceDetailView: View {
                 to: listKind
             )
             router.replaceSavedPlaceDetail(savedPlaceId: newSavedPlaceId, listKind: listKind)
+        } catch {
+            return
+        }
+    }
+
+    private func handleInfoEdit(_ draft: SavedPlaceEditDraft) async {
+        guard let placeStore, let savedPlaceId = viewModel.savedPlaceId else { return }
+
+        isManagingSavedPlace = true
+        defer {
+            isManagingSavedPlace = false
+            showInfoEditSheet = false
+        }
+
+        do {
+            try placeStore.update(savedPlaceId: savedPlaceId, draft: draft)
+            viewModel.refreshFromStore(store: placeStore)
         } catch {
             return
         }

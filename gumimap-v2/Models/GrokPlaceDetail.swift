@@ -113,6 +113,10 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
         )
     }
 
+    func editableValue(for field: GrokVisibleField) -> String {
+        value(for: field)
+    }
+
     private func value(for field: GrokVisibleField) -> String {
         for insight in fields {
             let normalizedLabel = normalize(insight.label)

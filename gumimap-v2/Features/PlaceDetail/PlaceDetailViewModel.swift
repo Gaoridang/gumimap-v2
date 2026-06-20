@@ -177,11 +177,15 @@ final class PlaceDetailViewModel {
 
         place = saved.asPlace
 
-        guard let grokDetail = saved.grokDetail else { return }
-
-        detail = grokDetail
-        enrichmentState = .loaded
-        revealStep = 2
+        if let grokDetail = saved.grokDetail {
+            detail = grokDetail
+            enrichmentState = .loaded
+            revealStep = 2
+        } else {
+            detail = nil
+            enrichmentState = .idle
+            revealStep = 0
+        }
     }
 
     private func load() async {

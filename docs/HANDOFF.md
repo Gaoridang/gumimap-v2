@@ -6,14 +6,22 @@ Last updated: 2026-06-20
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/kakao-map-sdk` |
+| Active branch | `feat/saved-place-info-edit` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after simplified map pin design |
+| Working tree | Clean after saved place info edit |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
 
 ## Next Task — Backlog
 
-Pick up from backlog below (saved pins, Kakao search gaps, etc.).
+Pick up from backlog below (Kakao search gaps, map sheet edit parity, etc.).
+
+### Saved place info edit (`feat/saved-place-info-edit`)
+
+- **`SavedPlaceEditSheet`** — saved detail `...` menu → "정보 수정"; edits name, address, category, phone, and all 6 enrichment fields + reviews
+- **`PlaceStore.update(savedPlaceId:draft:)`** — persists baseline + enrichment; posts `savedPlaceInfoUpdated`
+- List/map auto-refresh via SwiftData `@Query`
+
+**Key paths:** `SavedPlaceEditSheet.swift`, `PlaceStore.swift`, `PlaceDetailView.swift`, `GrokPlaceDetail.swift`
 
 ### Kakao Map full-screen + saved pins (`feat/kakao-map-sdk`)
 
@@ -109,7 +117,7 @@ Pick up from backlog below (saved pins, Kakao search gaps, etc.).
 - **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail
 - **Discovery detail:** large title + Kakao baseline cards → additional info (no progress log, no subtitle)
-- **Saved detail:** `...` menu → 리스트 변경 or 삭제
+- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제
 - **Map tab:** full-screen Kakao Map centered on 구미 (level 12); circle-style saved pins (green/blue ring); tap pin → bottom sheet (주소·추가정보·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 

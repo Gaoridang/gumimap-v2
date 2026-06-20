@@ -56,6 +56,40 @@ final class PlaceStore {
         return id
     }
 
+    func update(savedPlaceId: String, draft: SavedPlaceEditDraft) throws {
+        guard let saved = savedPlace(id: savedPlaceId) else {
+            throw PlaceStoreError.savedPlaceNotFound
+        }
+
+        let trimmedName = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedAddress = draft.address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCategory = draft.category.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPhone = draft.phone.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        saved.name = trimmedName
+        saved.address = trimmedAddress
+        saved.category = trimmedCategory
+        saved.phone = trimmedPhone.isEmpty ? nil : trimmedPhone
+        saved.updatedAt = Date()
+
+        if let detail = draft.makeGrokDetail(
+            latitude: saved.latitude,
+            longitude: saved.longitude,
+            existingSearchQuery: saved.grokDetail?.searchQuery
+        ) {
+            saved.enrichmentData = try JSONEncoder().encode(detail)
+        } else {
+            saved.enrichmentData = nil
+        }
+
+        try modelContext.save()
+
+        NotificationCenter.default.post(
+            name: .savedPlaceInfoUpdated,
+            object: savedPlaceId
+        )
+    }
+
     func updateEnrichment(savedPlaceId: String, detail: GrokPlaceDetail) throws {
         guard let saved = savedPlace(id: savedPlaceId) else { return }
 
