@@ -45,7 +45,7 @@ struct RootView: View {
         .environment(router)
         .environment(listHeaderStore)
         .environment(\.placeStore, placeStore)
-        .environment(\.placeEnrichmentService, enrichmentService)
+        .environment(enrichmentService)
         .onAppear {
             if placeStore == nil {
                 placeStore = PlaceStore(modelContext: modelContext)

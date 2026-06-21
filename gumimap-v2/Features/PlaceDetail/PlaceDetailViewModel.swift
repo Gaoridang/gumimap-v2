@@ -26,6 +26,8 @@ final class PlaceDetailViewModel {
 
     private(set) var place: Place
     private(set) var enrichmentState: EnrichmentState = .idle
+    private(set) var progressLog: [GrokSearchProgress] = []
+    private(set) var currentProgress: GrokSearchProgress?
     private(set) var detail: GrokPlaceDetail?
     private(set) var revealStep = 0
     private(set) var registrationState: RegistrationState = .idle
@@ -104,6 +106,10 @@ final class PlaceDetailViewModel {
         return detail.isCurrentlyOpen
     }
 
+    var showProgress: Bool {
+        isDiscoveryMode && (isLoading || (revealStep == 0 && !progressLog.isEmpty))
+    }
+
     var showAdditionalInfo: Bool {
         switch enrichmentState {
         case .loaded, .failed:
@@ -138,6 +144,8 @@ final class PlaceDetailViewModel {
         cancelReveal()
         enrichmentState = .idle
         detail = nil
+        progressLog = []
+        currentProgress = nil
         revealStep = 0
         loadTask = Task { await load() }
     }
@@ -201,6 +209,8 @@ final class PlaceDetailViewModel {
     private func load() async {
         cancelReveal()
         detail = nil
+        progressLog = []
+        currentProgress = nil
         revealStep = 0
 
         withAnimation(.easeInOut(duration: 0.3)) {
@@ -212,9 +222,13 @@ final class PlaceDetailViewModel {
 
         do {
             let service = try GrokPlaceSearchService.makeFromSecrets()
-            let result = try await service.enrichPlace(place)
+            let result = try await service.enrichPlace(
+                place,
+                onProgress: handleProgress
+            )
             guard !Task.isCancelled else { return }
             detail = result
+            currentProgress = nil
             withAnimation(.easeInOut(duration: 0.3)) {
                 enrichmentState = .loaded
             }
@@ -226,9 +240,18 @@ final class PlaceDetailViewModel {
             return
         } catch {
             guard !Task.isCancelled else { return }
+            currentProgress = nil
             withAnimation(.easeInOut(duration: 0.3)) {
                 enrichmentState = .failed(error.localizedDescription)
             }
+        }
+    }
+
+    private func handleProgress(_ progress: GrokSearchProgress) {
+        currentProgress = progress
+        guard progressLog.last?.message != progress.message else { return }
+        withAnimation(.snappy) {
+            progressLog.append(progress)
         }
     }
 

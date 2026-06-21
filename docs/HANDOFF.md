@@ -1,15 +1,26 @@
 # Session Handoff — gumimap-v2
 
-Last updated: 2026-06-20
+Last updated: 2026-06-22
 
 ## Resume Here
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `fix/grok-sse-live-activity` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after merge of saved badge, list↔map link, and map pins |
-| Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-20) |
+| Working tree | Clean after Grok SSE live activity restore |
+| Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-22) |
+
+## Shipped on `fix/grok-sse-live-activity` (pending merge)
+
+### Grok SSE live activity restore (`fix/grok-sse-live-activity`)
+
+- **Discovery detail** — SSE progress checklist visible again while Grok enrichment runs (before 등록하기 unlocks)
+- **`PlaceDetailViewModel`** — `progressLog`, `currentProgress`, `showProgress`; wires `onProgress` from `GrokPlaceSearchService`
+- **Post-registration background enrichment** — `PlaceEnrichmentService` tracks per-saved-place SSE progress; saved detail shows same checklist while enrichment completes
+- **`PlaceEnrichmentService`** — `@Observable`; uses `.environment(PlaceEnrichmentService.self)` for live UI updates
+
+**Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`, `PlaceEnrichmentService.swift`, `RootView.swift`
 
 ## Next Task — Backlog
 
@@ -81,9 +92,9 @@ Pick up from backlog below.
 
 ### Place detail polish (`feat/list-place-card-demo` → merged 2026-06-20)
 
-- Removed SSE **progress checklist** area entirely
 - Removed **header subtitle** under navigation title (address no longer duplicated)
 - Grok enrichment still runs; additional info cards appear with staggered reveal when ready
+- SSE progress checklist was removed here, then restored on `fix/grok-sse-live-activity`
 - Register row still shows **영업중** badge and disables during load
 
 **Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`, `GrokPlaceSearchService.swift`
