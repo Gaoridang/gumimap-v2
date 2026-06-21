@@ -2,7 +2,14 @@ import UIKit
 
 enum KakaoMapPinImageRenderer {
     private static let renderScale: CGFloat = 2
-    private static let canvasSize = CGSize(width: 28, height: 26)
+    private static let pinContentSize = CGSize(width: 28, height: 26)
+    private static let canvasPadding = UIEdgeInsets(top: 3, left: 2, bottom: 2, right: 2)
+    private static var canvasSize: CGSize {
+        CGSize(
+            width: pinContentSize.width + canvasPadding.left + canvasPadding.right,
+            height: pinContentSize.height + canvasPadding.top + canvasPadding.bottom
+        )
+    }
     private static let headDiameter: CGFloat = 20
     private static let tailHeight: CGFloat = 5
     private static let tailHalfWidth: CGFloat = 4
@@ -17,7 +24,13 @@ enum KakaoMapPinImageRenderer {
 
         let rendered = UIGraphicsImageRenderer(size: canvasSize, format: format).image { context in
             let cgContext = context.cgContext
-            let pinPath = pinPath(in: CGRect(origin: .zero, size: canvasSize))
+            let contentRect = CGRect(
+                x: canvasPadding.left,
+                y: canvasPadding.top,
+                width: pinContentSize.width,
+                height: pinContentSize.height
+            )
+            let pinPath = pinPath(in: contentRect)
 
             cgContext.setShadow(
                 offset: CGSize(width: 0, height: 1),
@@ -32,7 +45,7 @@ enum KakaoMapPinImageRenderer {
     }
 
     static func styleID(listKind: ListSubTab, category: String) -> String {
-        "saved-pin-v7-short-\(listKind.rawValue)"
+        "saved-pin-v8-padded-\(listKind.rawValue)"
     }
 
     private static func pinPath(in rect: CGRect) -> UIBezierPath {

@@ -16,6 +16,7 @@ struct SavedPlaceMapPin: View {
             .fill(pinColor)
             .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
             .frame(width: 28, height: 26)
+            .padding(EdgeInsets(top: 3, leading: 2, bottom: 2, trailing: 2))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityLabel)
     }
