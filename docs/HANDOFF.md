@@ -17,7 +17,8 @@ Last updated: 2026-06-22
 
 - **`MapPinLayout`** — shared geometry: 6pt internal head inset + 4pt canvas padding so the round head is never flush with the bitmap edge
 - **`MapPinStyle`** — warm yellow fill (`#FAE37A`) + soft blue border (`#4A85C7`), 2pt stroke
-- **`KakaoMapPinImageRenderer`** — fill + stroke rendering at 3× scale; style id `v10-yellow`
+- **`MapPinLayout`** — single closed path (circle arc + tail) so border does not double-stroke at the junction
+- **`KakaoMapPinImageRenderer`** — fill + stroke rendering at 3× scale; style id `v11-unified`
 - **`MapPinPointer` / `SavedPlaceMapPin`** — same layout and colors for map + SwiftUI preview parity
 
 **Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `MapPinPointer.swift`, `SavedPlaceMapPin.swift`

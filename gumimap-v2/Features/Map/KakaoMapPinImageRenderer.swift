@@ -18,6 +18,7 @@ enum KakaoMapPinImageRenderer {
             colors.border.setStroke()
             pinPath.lineWidth = MapPinStyle.borderWidth
             pinPath.lineJoinStyle = .round
+            pinPath.lineCapStyle = .round
             pinPath.stroke()
         }
 
@@ -25,7 +26,7 @@ enum KakaoMapPinImageRenderer {
     }
 
     static func styleID(listKind: ListSubTab, category: String) -> String {
-        "saved-pin-v10-yellow-\(listKind.rawValue)"
+        "saved-pin-v11-unified-\(listKind.rawValue)"
     }
 
     /// KakaoMapsSDK reads PNG bytes internally; round-tripping avoids unsupported bitmap layouts.

@@ -49,22 +49,26 @@ enum MapPinLayout {
         let centerX = rect.midX
         let headRadius = headDiameter / 2
         let headCenterY = rect.minY + headTopMargin + headRadius
-        let headRect = CGRect(
-            x: centerX - headRadius,
-            y: headCenterY - headRadius,
-            width: headDiameter,
-            height: headDiameter
-        )
-        let tailTopY = headRect.maxY - 1
         let tipY = rect.maxY
 
-        let path = UIBezierPath(ovalIn: headRect)
-        let tail = UIBezierPath()
-        tail.move(to: CGPoint(x: centerX - tailHalfWidth, y: tailTopY))
-        tail.addLine(to: CGPoint(x: centerX + tailHalfWidth, y: tailTopY))
-        tail.addLine(to: CGPoint(x: centerX, y: tipY))
-        tail.close()
-        path.append(tail)
+        let joinY = headCenterY + sqrt(headRadius * headRadius - tailHalfWidth * tailHalfWidth)
+        let leftJoin = CGPoint(x: centerX - tailHalfWidth, y: joinY)
+        let tip = CGPoint(x: centerX, y: tipY)
+
+        let leftAngle = CGFloat.pi - acos(tailHalfWidth / headRadius)
+        let rightAngle = acos(tailHalfWidth / headRadius)
+
+        let path = UIBezierPath()
+        path.move(to: leftJoin)
+        path.addArc(
+            withCenter: CGPoint(x: centerX, y: headCenterY),
+            radius: headRadius,
+            startAngle: leftAngle,
+            endAngle: rightAngle,
+            clockwise: false
+        )
+        path.addLine(to: tip)
+        path.close()
         return path
     }
 }

@@ -13,7 +13,11 @@ struct SavedPlaceMapPin: View {
             .fill(colors.fill)
             .overlay {
                 MapPinPointer()
-                    .stroke(colors.border, lineWidth: MapPinStyle.borderWidth)
+                    .stroke(colors.border, style: StrokeStyle(
+                        lineWidth: MapPinStyle.borderWidth,
+                        lineCap: .round,
+                        lineJoin: .round
+                    ))
             }
             .frame(width: MapPinLayout.contentSize.width, height: MapPinLayout.contentSize.height)
             .padding(EdgeInsets(
