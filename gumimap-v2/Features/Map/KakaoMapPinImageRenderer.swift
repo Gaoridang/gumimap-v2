@@ -1,18 +1,7 @@
 import UIKit
 
 enum KakaoMapPinImageRenderer {
-    private static let renderScale: CGFloat = 2
-    private static let pinContentSize = CGSize(width: 28, height: 26)
-    private static let canvasPadding = UIEdgeInsets(top: 3, left: 2, bottom: 2, right: 2)
-    private static var canvasSize: CGSize {
-        CGSize(
-            width: pinContentSize.width + canvasPadding.left + canvasPadding.right,
-            height: pinContentSize.height + canvasPadding.top + canvasPadding.bottom
-        )
-    }
-    private static let headDiameter: CGFloat = 20
-    private static let tailHeight: CGFloat = 5
-    private static let tailHalfWidth: CGFloat = 4
+    private static let renderScale: CGFloat = 3
 
     static func image(listKind: ListSubTab, category: String) -> UIImage {
         let fillColor = listKindColor(for: listKind)
@@ -22,21 +11,8 @@ enum KakaoMapPinImageRenderer {
         format.opaque = false
         format.preferredRange = .standard
 
-        let rendered = UIGraphicsImageRenderer(size: canvasSize, format: format).image { context in
-            let cgContext = context.cgContext
-            let contentRect = CGRect(
-                x: canvasPadding.left,
-                y: canvasPadding.top,
-                width: pinContentSize.width,
-                height: pinContentSize.height
-            )
-            let pinPath = pinPath(in: contentRect)
-
-            cgContext.setShadow(
-                offset: CGSize(width: 0, height: 1),
-                blur: 2,
-                color: UIColor.black.withAlphaComponent(0.16).cgColor
-            )
+        let rendered = UIGraphicsImageRenderer(size: MapPinLayout.canvasSize, format: format).image { _ in
+            let pinPath = MapPinLayout.uiBezierPath(in: MapPinLayout.contentRect)
             fillColor.setFill()
             pinPath.fill()
         }
@@ -45,30 +21,7 @@ enum KakaoMapPinImageRenderer {
     }
 
     static func styleID(listKind: ListSubTab, category: String) -> String {
-        "saved-pin-v8-padded-\(listKind.rawValue)"
-    }
-
-    private static func pinPath(in rect: CGRect) -> UIBezierPath {
-        let centerX = rect.midX
-        let headRadius = headDiameter / 2
-        let headCenterY = headRadius
-        let headRect = CGRect(
-            x: centerX - headRadius,
-            y: headCenterY - headRadius,
-            width: headDiameter,
-            height: headDiameter
-        )
-        let tailTopY = headRect.maxY - 1
-        let tipY = tailTopY + tailHeight
-
-        let path = UIBezierPath(ovalIn: headRect)
-        let tail = UIBezierPath()
-        tail.move(to: CGPoint(x: centerX - tailHalfWidth, y: tailTopY))
-        tail.addLine(to: CGPoint(x: centerX + tailHalfWidth, y: tailTopY))
-        tail.addLine(to: CGPoint(x: centerX, y: tipY))
-        tail.close()
-        path.append(tail)
-        return path
+        "saved-pin-v9-inset-\(listKind.rawValue)"
     }
 
     private static func listKindColor(for listKind: ListSubTab) -> UIColor {

@@ -14,9 +14,13 @@ struct SavedPlaceMapPin: View {
     var body: some View {
         MapPinPointer()
             .fill(pinColor)
-            .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
-            .frame(width: 28, height: 26)
-            .padding(EdgeInsets(top: 3, leading: 2, bottom: 2, trailing: 2))
+            .frame(width: MapPinLayout.contentSize.width, height: MapPinLayout.contentSize.height)
+            .padding(EdgeInsets(
+                top: MapPinLayout.canvasPadding.top,
+                leading: MapPinLayout.canvasPadding.left,
+                bottom: MapPinLayout.canvasPadding.bottom,
+                trailing: MapPinLayout.canvasPadding.right
+            ))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityLabel)
     }

@@ -15,11 +15,11 @@ Last updated: 2026-06-22
 
 ### Map pin top clipping fix (`fix/map-pin-top-clip`)
 
-- **`KakaoMapPinImageRenderer`** — transparent canvas padding (top 3pt, sides 2pt, bottom 2pt) so round pin head + shadow are not clipped by the square bitmap
-- **`SavedPlaceMapPin`** — matching padding for SwiftUI preview parity
-- Style id bumped to `v8-padded` so Kakao map reloads pin assets
+- **`MapPinLayout`** — shared geometry: 6pt internal head inset + 4pt canvas padding so the round head is never flush with the bitmap edge
+- **`KakaoMapPinImageRenderer`** — drops shadow (was clipped by square bitmap); renders at 3× scale; style id `v9-inset`
+- **`MapPinPointer` / `SavedPlaceMapPin`** — use the same layout for map + SwiftUI preview parity
 
-**Key paths:** `KakaoMapPinImageRenderer.swift`, `SavedPlaceMapPin.swift`
+**Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `MapPinPointer.swift`, `SavedPlaceMapPin.swift`
 
 ## Shipped on `fix/grok-sse-live-activity` (pending merge)
 
