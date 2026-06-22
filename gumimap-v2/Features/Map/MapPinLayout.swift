@@ -1,5 +1,25 @@
 import CoreGraphics
+import SwiftUI
 import UIKit
+
+enum MapPinStyle {
+    static let borderWidth: CGFloat = 2
+
+    static let fillUIColor = UIColor(red: 0.98, green: 0.89, blue: 0.48, alpha: 1)
+    static let borderUIColor = UIColor(red: 0.29, green: 0.52, blue: 0.78, alpha: 1)
+    static let fillColor = Color(red: 0.98, green: 0.89, blue: 0.48)
+    static let borderColor = Color(red: 0.29, green: 0.52, blue: 0.78)
+
+    static func colors(for listKind: ListSubTab) -> (fill: UIColor, border: UIColor) {
+        _ = listKind
+        return (fillUIColor, borderUIColor)
+    }
+
+    static func swiftUIColors(for listKind: ListSubTab) -> (fill: Color, border: Color) {
+        _ = listKind
+        return (fillColor, borderColor)
+    }
+}
 
 enum MapPinLayout {
     static let contentSize = CGSize(width: 28, height: 32)

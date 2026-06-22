@@ -4,16 +4,17 @@ struct SavedPlaceMapPin: View {
     let listKind: ListSubTab
     let category: String
 
-    private var pinColor: Color {
-        switch listKind {
-        case .visited: .green
-        case .wishlist: .blue
-        }
+    private var colors: (fill: Color, border: Color) {
+        MapPinStyle.swiftUIColors(for: listKind)
     }
 
     var body: some View {
         MapPinPointer()
-            .fill(pinColor)
+            .fill(colors.fill)
+            .overlay {
+                MapPinPointer()
+                    .stroke(colors.border, lineWidth: MapPinStyle.borderWidth)
+            }
             .frame(width: MapPinLayout.contentSize.width, height: MapPinLayout.contentSize.height)
             .padding(EdgeInsets(
                 top: MapPinLayout.canvasPadding.top,
