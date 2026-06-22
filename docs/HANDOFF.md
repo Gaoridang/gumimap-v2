@@ -6,33 +6,10 @@ Last updated: 2026-06-22
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/map-pin-top-clip` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after map pin arc-direction fix |
+| Working tree | Clean after merge of map pin + Grok SSE fixes |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-22) |
-
-## Shipped on `fix/map-pin-top-clip` (pending merge)
-
-### Map pin top clipping fix (`fix/map-pin-top-clip`)
-
-- **`MapPinLayout`** — shared geometry: 6pt internal head inset + 4pt canvas padding so the round head is never flush with the bitmap edge
-- **`MapPinStyle`** — warm yellow fill (`#FAE37A`) + soft blue border (`#4A85C7`), 2pt stroke
-- **`MapPinLayout`** — single closed path (circle arc + tail) so border does not double-stroke at the junction; arc uses `clockwise: true` (UIKit y-down coords) so the full round head renders instead of only the tail
-- **`KakaoMapPinImageRenderer`** — fill + stroke rendering at 3× scale; style id `v12-unified`
-- **`MapPinPointer` / `SavedPlaceMapPin`** — same layout and colors for map + SwiftUI preview parity
-
-**Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `MapPinPointer.swift`, `SavedPlaceMapPin.swift`
-
-## Shipped on `fix/grok-sse-live-activity` (pending merge)
-
-### Grok SSE live activity restore (`fix/grok-sse-live-activity`)
-
-- **Discovery detail** — SSE progress checklist visible again while Grok enrichment runs (before 등록하기 unlocks)
-- **`PlaceDetailViewModel`** — `progressLog`, `currentProgress`, `showProgress`; wires `onProgress` from `GrokPlaceSearchService`
-- **Post-registration background enrichment** — `PlaceEnrichmentService` tracks per-saved-place SSE progress; saved detail shows same checklist while enrichment completes
-- **`PlaceEnrichmentService`** — `@Observable`; uses `.environment(PlaceEnrichmentService.self)` for live UI updates
-
-**Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`, `PlaceEnrichmentService.swift`, `RootView.swift`
 
 ## Next Task — Backlog
 
@@ -46,7 +23,26 @@ Pick up from backlog below.
 
 ## Merged / Shipped on `main`
 
-### Map pins — round head + short tail (`feat/map-teardrop-pin` → merged 2026-06-20)
+### Map pin unified teardrop (`fix/map-pin-top-clip` → merged 2026-06-22)
+
+- **`MapPinLayout`** — shared geometry: 6pt internal head inset + 4pt canvas padding so the round head is never flush with the bitmap edge
+- **`MapPinStyle`** — warm yellow fill (`#FAE37A`) + soft blue border (`#4A85C7`), 2pt stroke
+- **`MapPinLayout`** — single closed path (circle arc + tail); arc uses `clockwise: true` (UIKit y-down coords) so the full round head renders instead of only the tail
+- **`KakaoMapPinImageRenderer`** — fill + stroke rendering at 3× scale; style id `v12-unified`
+- **`MapPinPointer` / `SavedPlaceMapPin`** — same layout and colors for map + SwiftUI preview parity
+
+**Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `MapPinPointer.swift`, `SavedPlaceMapPin.swift`
+
+### Grok SSE live activity restore (`fix/grok-sse-live-activity` → merged 2026-06-22)
+
+- **Discovery detail** — SSE progress checklist visible again while Grok enrichment runs (before 등록하기 unlocks)
+- **`PlaceDetailViewModel`** — `progressLog`, `currentProgress`, `showProgress`; wires `onProgress` from `GrokPlaceSearchService`
+- **Post-registration background enrichment** — `PlaceEnrichmentService` tracks per-saved-place SSE progress; saved detail shows same checklist while enrichment completes
+- **`PlaceEnrichmentService`** — `@Observable`; uses `.environment(PlaceEnrichmentService.self)` for live UI updates
+
+**Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`, `PlaceEnrichmentService.swift`, `RootView.swift`
+
+### Map pins — round head + short tail (`feat/map-teardrop-pin` → merged 2026-06-20, superseded by pin fix above)
 
 - **`MapPinPointer`** — filled circle head + short pointed tail; tip anchors at bottom center (`anchorPoint` 0.5, 1.0)
 - **`KakaoMapPinImageRenderer`** — borderless solid fill; green (가본 곳) / blue (가고 싶은 곳); no category icon; style id `v7-short`
@@ -106,7 +102,6 @@ Pick up from backlog below.
 
 - Removed **header subtitle** under navigation title (address no longer duplicated)
 - Grok enrichment still runs; additional info cards appear with staggered reveal when ready
-- SSE progress checklist was removed here, then restored on `fix/grok-sse-live-activity`
 - Register row still shows **영업중** badge and disables during load
 
 **Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`, `GrokPlaceSearchService.swift`
@@ -159,7 +154,7 @@ Pick up from backlog below.
 - `AppRoute.placeDetail(Place)` push from search results
 - **Kakao baseline** shown immediately (address, category, phone, 카카오맵 링크)
 - **Grok enrichment** — single web search per place (`{이름} 구미`, reasoning `medium`)
-  - `GrokPlaceSearchService` → xAI Responses API SSE (no UI progress log)
+  - `GrokPlaceSearchService` → xAI Responses API SSE with live progress checklist
   - UI shows 6 curated fields: 영업시간, 브레이크타임, 휴무일, 주차, 분위기, 특징
   - Extra fields + reviews stored in model; reviews shown as bullet card
   - `businessHours` used for **영업중** badge on register row
@@ -169,11 +164,11 @@ Pick up from backlog below.
 
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
-- **Search:** Kakao live search → tap result → discovery detail with Grok enrichment → 등록하기 → list tab saved detail
+- **Search:** Kakao live search → tap result → discovery detail with Grok enrichment + SSE progress → 등록하기 → list tab saved detail
 - **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
-- **Discovery detail:** large title + Kakao baseline cards → additional info; already-saved banner + disabled register row; formatted business hours
-- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; "지도에서 보기" → map focus + sheet
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); round-head pins with short tail (green = 가본 곳, blue = 가고 싶은 곳); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
+- **Discovery detail:** large title + Kakao baseline cards → SSE progress checklist → additional info; already-saved banner + disabled register row; formatted business hours
+- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; background enrichment progress when applicable; "지도에서 보기" → map focus + sheet
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); unified teardrop pins (warm yellow fill, soft blue border); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Key Paths
@@ -186,7 +181,7 @@ Pick up from backlog below.
 | `gumimap-v2/Config/Secrets.swift` | Runtime secrets accessor |
 | `gumimap-v2/Models/SavedPlace.swift` | SwiftData saved place model |
 | `gumimap-v2/Services/PlaceStore.swift` | Register, update, delete, move, enrichment update |
-| `gumimap-v2/Services/PlaceEnrichmentService.swift` | Background Grok enrichment |
+| `gumimap-v2/Services/PlaceEnrichmentService.swift` | Background Grok enrichment + SSE progress |
 | `gumimap-v2/Services/ListHeaderStore.swift` | List header prompt rotation |
 | `gumimap-v2/Services/KakaoLocalService.swift` | Kakao Local API client |
 | `gumimap-v2/Services/GrokPlaceSearchService.swift` | Grok SSE single search |
