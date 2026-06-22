@@ -60,12 +60,13 @@ enum MapPinLayout {
 
         let path = UIBezierPath()
         path.move(to: leftJoin)
+        // UIKit angles increase clockwise (y-down); `true` arcs over the head, not the short bottom chord.
         path.addArc(
             withCenter: CGPoint(x: centerX, y: headCenterY),
             radius: headRadius,
             startAngle: leftAngle,
             endAngle: rightAngle,
-            clockwise: false
+            clockwise: true
         )
         path.addLine(to: tip)
         path.close()

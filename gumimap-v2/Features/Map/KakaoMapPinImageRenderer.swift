@@ -26,7 +26,7 @@ enum KakaoMapPinImageRenderer {
     }
 
     static func styleID(listKind: ListSubTab, category: String) -> String {
-        "saved-pin-v11-unified-\(listKind.rawValue)"
+        "saved-pin-v12-unified-\(listKind.rawValue)"
     }
 
     /// KakaoMapsSDK reads PNG bytes internally; round-tripping avoids unsupported bitmap layouts.

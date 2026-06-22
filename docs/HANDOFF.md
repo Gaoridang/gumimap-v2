@@ -8,7 +8,7 @@ Last updated: 2026-06-22
 |-------|-------|
 | Active branch | `fix/map-pin-top-clip` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after map pin top-clip fix |
+| Working tree | Clean after map pin arc-direction fix |
 | Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-22) |
 
 ## Shipped on `fix/map-pin-top-clip` (pending merge)
@@ -17,8 +17,8 @@ Last updated: 2026-06-22
 
 - **`MapPinLayout`** — shared geometry: 6pt internal head inset + 4pt canvas padding so the round head is never flush with the bitmap edge
 - **`MapPinStyle`** — warm yellow fill (`#FAE37A`) + soft blue border (`#4A85C7`), 2pt stroke
-- **`MapPinLayout`** — single closed path (circle arc + tail) so border does not double-stroke at the junction
-- **`KakaoMapPinImageRenderer`** — fill + stroke rendering at 3× scale; style id `v11-unified`
+- **`MapPinLayout`** — single closed path (circle arc + tail) so border does not double-stroke at the junction; arc uses `clockwise: true` (UIKit y-down coords) so the full round head renders instead of only the tail
+- **`KakaoMapPinImageRenderer`** — fill + stroke rendering at 3× scale; style id `v12-unified`
 - **`MapPinPointer` / `SavedPlaceMapPin`** — same layout and colors for map + SwiftUI preview parity
 
 **Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `MapPinPointer.swift`, `SavedPlaceMapPin.swift`
