@@ -6,23 +6,11 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/list-map-button-style` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | List card map action button restyled |
+| Working tree | List default tab + map button styling (merged) |
 | Last verified | iOS 26.5 simulator launch (2026-06-24) |
-
-## Shipped on `feat/list-map-button-style` (2026-06-24)
-
-- **`ListPlaceMapButton`** — toolbar-pin icon on soft blue tile; matches category icon sizing on list cards
-
-**Key paths:** `ListPlaceMapButton.swift`, `ListTabView.swift`
-
-## Shipped on `feat/list-default-wishlist` (2026-06-24)
-
-- **`TabRouter`** — default `listSubTab` is `.wishlist`; `openList()` resets to 가고 싶은 곳 when entering from map
-
-**Key paths:** `TabRouter.swift`
 
 ## Shipped on `feat/random-restaurant-picker` (2026-06-24)
 
@@ -78,6 +66,13 @@ Pick up from backlog below.
 - Fix `run-simulator.sh` UDID fallback edge cases
 
 ## Merged / Shipped on `main`
+
+### List UX polish (`feat/list-default-wishlist` + `feat/list-map-button-style` → merged 2026-06-24)
+
+- **`TabRouter`** — default `listSubTab` is `.wishlist`; `openList()` resets to 가고 싶은 곳 when entering from map
+- **`ListPlaceMapButton`** — toolbar-pin icon on soft blue tile; matches category icon sizing on list cards
+
+**Key paths:** `TabRouter.swift`, `ListPlaceMapButton.swift`, `ListTabView.swift`
 
 ### Optional additional info (`feat/optional-additional-info` → merged 2026-06-24)
 
