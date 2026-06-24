@@ -23,10 +23,15 @@ platform :ios do
     api_key = options[:api_key]
 
     unless ENV["PROVISIONING_PROFILE_NAME"]
-      cert(
+      cert_options = {
         api_key: api_key,
         output_path: "./build/certs"
-      )
+      }
+      if ENV["CI"]
+        cert_options[:keychain_path] = ENV.fetch("KEYCHAIN_PATH")
+        cert_options[:keychain_password] = ENV.fetch("KEYCHAIN_PASSWORD")
+      end
+      cert(cert_options)
 
       sigh(
         api_key: api_key,
