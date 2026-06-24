@@ -30,6 +30,10 @@ final class TabRouter {
         path.append(.search)
     }
 
+    func openPlaceDetail(_ place: Place) {
+        path.append(.placeDetail(place))
+    }
+
     func openSavedPlaceDetail(id: String) {
         path.append(.savedPlaceDetail(id: id))
     }

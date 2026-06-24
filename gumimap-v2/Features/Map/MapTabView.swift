@@ -8,6 +8,7 @@ private struct SelectedMapPlace: Identifiable, Equatable {
 struct MapTabView: View {
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
     @Environment(TabRouter.self) private var router
+    @Environment(\.placeStore) private var placeStore
     @State private var isMapActive = false
     @State private var selectedPlace: SelectedMapPlace?
     @State private var focusPlaceId: String?
@@ -35,6 +36,12 @@ struct MapTabView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .top) {
+            if router.path.isEmpty, placeStore != nil {
+                RandomRestaurantButton()
+                    .padding(.top, 8)
+            }
+        }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             isMapActive = true
