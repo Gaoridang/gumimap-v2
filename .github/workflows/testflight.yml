@@ -26,15 +26,6 @@ jobs:
         with:
           xcode-version: "26.5"
 
-      - name: Configure App Store Connect API key
-        run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8"
-          printf '%s' "${{ secrets.ASC_KEY_CONTENT }}" > "$KEY_PATH"
-          echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-
       - name: Generate app secrets
         run: |
           cat > Config/secrets.local.env <<EOF
@@ -56,4 +47,5 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
