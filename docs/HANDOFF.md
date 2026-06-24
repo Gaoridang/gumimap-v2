@@ -1,19 +1,31 @@
 # Session Handoff — gumimap-v2
 
-Last updated: 2026-06-22
+Last updated: 2026-06-24
 
 ## Resume Here
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `fix/app-store-upload-icons` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Clean after merge of map pin + Grok SSE fixes |
-| Last verified | xcodebuild + iOS 26.5 simulator launch (2026-06-22) |
+| Working tree | App icon assets + Info.plist icon key for TestFlight upload |
+| Last verified | Release archive (icons 120/152 + CFBundleIconName) + iOS 26.5 simulator (2026-06-24) |
+
+## Shipped on `fix/app-store-upload-icons` (2026-06-24)
+
+- **App icons** — `AppIcon-1024.png` (+ dark/tinted) in `AppIcon.appiconset`; map-pin styling matches `MapPinStyle`
+- **`INFOPLIST_KEY_CFBundleIconName = AppIcon`** — fixes App Store Connect 90713
+- **`ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES`** — ensures 120×120 / 152×152 compiled into bundle
+- **`scripts/generate-app-icon.py`** — regenerates icon PNGs when design changes
+- **KakaoMapsSDK dSYM** — vendor binary ships without dSYMs; "Upload Symbols Failed" is a warning only and does not block TestFlight upload
+
+**Key paths:** `AppIcon.appiconset/`, `scripts/generate-app-icon.py`, `project.pbxproj`
 
 ## Next Task — Backlog
 
 Pick up from backlog below.
+
+- First TestFlight upload — re-Archive in Xcode and Distribute to App Store Connect
 
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
