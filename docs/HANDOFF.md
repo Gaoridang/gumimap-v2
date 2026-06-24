@@ -6,11 +6,19 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `feat/random-restaurant-picker` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | CI TestFlight deploy verified on GitHub Actions |
-| Last verified | GitHub Actions TestFlight upload success run 28105292718 (2026-06-24) |
+| Working tree | Random restaurant picker on map main screen |
+| Last verified | iOS 26.5 simulator launch (2026-06-24) |
+
+## Shipped on `feat/random-restaurant-picker` (2026-06-24)
+
+- **`RandomRestaurantButton`** — map main screen pill button "오늘 뭐 먹지?"; Kakao keyword search → random restaurant → discovery detail
+- **`RandomRestaurantPicker`** — shuffled 구미 restaurant keywords, filters food categories
+- **`TabRouter.openPlaceDetail(_:)`** — navigation helper for discovery detail push
+
+**Key paths:** `RandomRestaurantButton.swift`, `RandomRestaurantPicker.swift`, `MapTabView.swift`, `TabRouter.swift`
 
 ## Shipped on `feat/testflight-ci` (2026-06-24)
 
@@ -49,7 +57,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 Pick up from backlog below.
 
-- Check App Store Connect → TestFlight for CI build from run 28105292718; future `main` pushes auto-deploy
+- Merge `feat/random-restaurant-picker` → `main` to trigger TestFlight build for reinstall verification
 
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
