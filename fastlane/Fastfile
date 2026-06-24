@@ -19,39 +19,26 @@ platform :ios do
     sh("cd .. && ./scripts/generate-secrets.sh")
   end
 
-  private_lane :ensure_distribution_signing do |options|
-    api_key = options[:api_key]
-
-    unless ENV["PROVISIONING_PROFILE_NAME"]
-      cert_options = {
-        api_key: api_key,
-        output_path: "./build/certs",
-        force: false
-      }
-      if ENV["CI"]
-        keychain_name = ENV.fetch("MATCH_KEYCHAIN_NAME")
-        cert_options[:keychain_path] = File.expand_path("~/Library/Keychains/#{keychain_name}-db")
-        cert_options[:keychain_password] = ENV.fetch("MATCH_KEYCHAIN_PASSWORD")
-      end
-      cert(cert_options)
-
-      ENV.delete("MATCH_READONLY")
-      sigh(
-        api_key: api_key,
-        app_identifier: "com.ijaejun.gumimap-v2",
-        readonly: false,
-        output_path: "./build/profiles"
+  private_lane :configure_signing do
+    if ENV["PROVISIONING_PROFILE_NAME"]
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "gumimap-v2.xcodeproj",
+        targets: ["gumimap-v2"],
+        team_id: "T5CBR768BM",
+        bundle_identifier: "com.ijaejun.gumimap-v2",
+        profile_name: ENV.fetch("PROVISIONING_PROFILE_NAME"),
+        code_sign_identity: "Apple Distribution"
       )
+      return
     end
 
     update_code_signing_settings(
-      use_automatic_signing: false,
+      use_automatic_signing: true,
       path: "gumimap-v2.xcodeproj",
       targets: ["gumimap-v2"],
       team_id: "T5CBR768BM",
-      bundle_identifier: "com.ijaejun.gumimap-v2",
-      profile_name: ENV.fetch("PROVISIONING_PROFILE_NAME", ENV.fetch("SIGH_NAME")),
-      code_sign_identity: "Apple Distribution"
+      bundle_identifier: "com.ijaejun.gumimap-v2"
     )
   end
 
@@ -70,29 +57,39 @@ platform :ios do
   lane :beta do
     api_key = asc_api_key
     prepare_app_secrets
-    ensure_distribution_signing(api_key: api_key)
-
-    profile_name = ENV.fetch("PROVISIONING_PROFILE_NAME", ENV.fetch("SIGH_NAME"))
+    configure_signing
 
     increment_build_number(
       build_number: next_build_number(api_key: api_key).to_s,
       xcodeproj: "gumimap-v2.xcodeproj"
     )
 
-    build_app(
+    build_options = {
       scheme: "gumimap-v2",
       project: "gumimap-v2.xcodeproj",
       configuration: "Release",
       export_method: "app-store",
-      export_options: {
-        provisioningProfiles: {
-          "com.ijaejun.gumimap-v2" => profile_name
-        }
-      },
       output_directory: "./build",
       output_name: "gumimap-v2.ipa",
-      include_bitcode: false
-    )
+      include_bitcode: false,
+      api_key: api_key,
+      xcargs: "-allowProvisioningUpdates"
+    }
+
+    if ENV["PROVISIONING_PROFILE_NAME"]
+      build_options[:export_options] = {
+        provisioningProfiles: {
+          "com.ijaejun.gumimap-v2" => ENV.fetch("PROVISIONING_PROFILE_NAME")
+        }
+      }
+    else
+      build_options[:export_options] = {
+        signingStyle: "automatic",
+        teamID: "T5CBR768BM"
+      }
+    end
+
+    build_app(build_options)
 
     upload_to_testflight(
       api_key: api_key,
