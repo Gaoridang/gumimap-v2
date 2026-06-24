@@ -31,3 +31,21 @@ Carthage/Build/
 # Local secrets (never commit)
 Config/secrets.local.env
 gumimap-v2/Generated/Secrets.generated.swift
+
+# Signing export helper output
+.ci-signing-export/
+
+# Ruby / fastlane
+.bundle/
+vendor/bundle/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+build/
+
+# App Store / signing (never commit real keys)
+*.p12
+*.p8
+AuthKey_*.p8
+*.mobileprovision

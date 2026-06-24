@@ -6,10 +6,34 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/app-store-upload-icons` |
+| Active branch | `feat/testflight-ci` |
 | Next branch | (create before first code change on next task) |
-| Working tree | App icon assets + Info.plist icon key for TestFlight upload |
-| Last verified | Release archive (icons 120/152 + CFBundleIconName) + iOS 26.5 simulator (2026-06-24) |
+| Working tree | Fastlane + GitHub Actions TestFlight automation |
+| Last verified | iOS 26.5 simulator launch (2026-06-24) |
+
+## Shipped on `feat/testflight-ci` (2026-06-24)
+
+- **Fastlane `beta` lane** — `cert` + `sigh` via App Store Connect API key, build number auto-increment, TestFlight upload
+- **`.github/workflows/testflight.yml`** — `main` push + manual dispatch on `macos-26` / Xcode 26.5
+- **Optional manual signing** — `scripts/ci-install-signing.sh` when `BUILD_CERTIFICATE_BASE64` secret is set
+- **`scripts/export-signing-for-ci.sh`** — optional helper to export p12/profile for manual signing path
+- **`ITSAppUsesNonExemptEncryption = NO`** — skips export-compliance prompt on upload
+
+### GitHub Secrets to configure
+
+| Secret | Required | Source |
+|--------|----------|--------|
+| `ASC_KEY_ID` | Yes | App Store Connect API key |
+| `ASC_ISSUER_ID` | Yes | App Store Connect → Users and Access |
+| `ASC_KEY_CONTENT` | Yes | `.p8` file full text |
+| `KAKAO_NATIVE_APP_KEY` | Yes | `Config/secrets.local.env` |
+| `KAKAO_REST_API_KEY` | Yes | `Config/secrets.local.env` |
+| `XAI_API_KEY` | Yes | `Config/secrets.local.env` |
+| `BUILD_CERTIFICATE_BASE64` | No | Only for manual signing override |
+| `P12_PASSWORD` | No | With manual signing |
+| `PROVISIONING_PROFILE_BASE64` | No | With manual signing |
+
+**Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `Gemfile`, `scripts/ci-install-signing.sh`
 
 ## Shipped on `fix/app-store-upload-icons` (2026-06-24)
 
@@ -25,7 +49,7 @@ Last updated: 2026-06-24
 
 Pick up from backlog below.
 
-- First TestFlight upload — re-Archive in Xcode and Distribute to App Store Connect
+- Merge `feat/testflight-ci` → `main`, configure GitHub Secrets, push to trigger first CI TestFlight build
 
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment

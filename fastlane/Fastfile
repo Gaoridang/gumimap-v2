@@ -1,0 +1,95 @@
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    setup_ci if ENV["CI"]
+  end
+
+  private_lane :asc_api_key do
+    app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_PATH"),
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  private_lane :prepare_app_secrets do
+    sh("cd .. && ./scripts/generate-secrets.sh")
+  end
+
+  private_lane :ensure_distribution_signing do |options|
+    api_key = options[:api_key]
+
+    unless ENV["PROVISIONING_PROFILE_NAME"]
+      cert(
+        api_key: api_key,
+        output_path: "./build/certs"
+      )
+
+      sigh(
+        api_key: api_key,
+        app_identifier: "com.ijaejun.gumimap-v2",
+        readonly: true,
+        output_path: "./build/profiles"
+      )
+    end
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "gumimap-v2.xcodeproj",
+      targets: ["gumimap-v2"],
+      team_id: "T5CBR768BM",
+      bundle_identifier: "com.ijaejun.gumimap-v2",
+      profile_name: ENV.fetch("PROVISIONING_PROFILE_NAME", ENV.fetch("SIGH_NAME")),
+      code_sign_identity: "Apple Distribution"
+    )
+  end
+
+  private_lane :next_build_number do |options|
+    api_key = options[:api_key]
+    run_number = ENV.fetch("GITHUB_RUN_NUMBER", "0").to_i
+    latest = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: "com.ijaejun.gumimap-v2",
+      initial_build_number: 0
+    )
+    [run_number, latest + 1].max
+  end
+
+  desc "Build and upload a beta build to TestFlight"
+  lane :beta do
+    api_key = asc_api_key
+    prepare_app_secrets
+    ensure_distribution_signing(api_key: api_key)
+
+    profile_name = ENV.fetch("PROVISIONING_PROFILE_NAME", ENV.fetch("SIGH_NAME"))
+
+    increment_build_number(
+      build_number: next_build_number(api_key: api_key).to_s,
+      xcodeproj: "gumimap-v2.xcodeproj"
+    )
+
+    build_app(
+      scheme: "gumimap-v2",
+      project: "gumimap-v2.xcodeproj",
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.ijaejun.gumimap-v2" => profile_name
+        }
+      },
+      output_directory: "./build",
+      output_name: "gumimap-v2.ipa",
+      include_bitcode: false
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+  end
+end
