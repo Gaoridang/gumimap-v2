@@ -28,8 +28,9 @@ platform :ios do
         output_path: "./build/certs"
       }
       if ENV["CI"]
-        cert_options[:keychain_path] = ENV.fetch("KEYCHAIN_PATH")
-        cert_options[:keychain_password] = ENV.fetch("KEYCHAIN_PASSWORD")
+        keychain_name = ENV.fetch("MATCH_KEYCHAIN_NAME")
+        cert_options[:keychain_path] = File.expand_path("~/Library/Keychains/#{keychain_name}-db")
+        cert_options[:keychain_password] = ENV.fetch("MATCH_KEYCHAIN_PASSWORD")
       end
       cert(cert_options)
 
