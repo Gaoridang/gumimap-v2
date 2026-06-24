@@ -64,6 +64,13 @@ platform :ios do
       xcodeproj: "gumimap-v2.xcodeproj"
     )
 
+    xcode_auth_args = [
+      "-allowProvisioningUpdates",
+      "-authenticationKeyPath", ENV.fetch("ASC_KEY_PATH"),
+      "-authenticationKeyID", ENV.fetch("ASC_KEY_ID"),
+      "-authenticationKeyIssuerID", ENV.fetch("ASC_ISSUER_ID")
+    ].join(" ")
+
     build_options = {
       scheme: "gumimap-v2",
       project: "gumimap-v2.xcodeproj",
@@ -72,8 +79,7 @@ platform :ios do
       output_directory: "./build",
       output_name: "gumimap-v2.ipa",
       include_bitcode: false,
-      api_key: api_key,
-      xcargs: "-allowProvisioningUpdates"
+      xcargs: xcode_auth_args
     }
 
     if ENV["PROVISIONING_PROFILE_NAME"]
