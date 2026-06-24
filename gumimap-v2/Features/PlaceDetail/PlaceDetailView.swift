@@ -26,6 +26,11 @@ struct PlaceDetailView: View {
             VStack(alignment: .leading, spacing: 20) {
                 kakaoBaselineSection
 
+                if showsAdditionalInfoButton {
+                    additionalInfoButton
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
                 if showsEnrichmentProgress {
                     progressSection
                         .transition(.opacity.combined(with: .move(edge: .top)))
@@ -67,8 +72,8 @@ struct PlaceDetailView: View {
         .animation(.snappy, value: activeProgressLog.count)
         .animation(.snappy, value: viewModel.revealStep)
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfo)
+        .animation(.spring(response: 0.45, dampingFraction: 0.82), value: viewModel.showAdditionalInfoButton)
         .onAppear {
-            viewModel.loadIfNeeded()
             if let placeStore {
                 viewModel.refreshSavedStatus(store: placeStore)
             }
@@ -241,6 +246,13 @@ struct PlaceDetailView: View {
 
     // MARK: - SSE Progress
 
+    private var showsAdditionalInfoButton: Bool {
+        guard viewModel.showAdditionalInfoButton else { return false }
+        if viewModel.isDiscoveryMode { return true }
+        guard let savedPlaceId = viewModel.savedPlaceId else { return false }
+        return !enrichmentService.isRunning(for: savedPlaceId)
+    }
+
     private var showsEnrichmentProgress: Bool {
         if viewModel.showProgress {
             return true
@@ -337,6 +349,30 @@ struct PlaceDetailView: View {
 
     // MARK: - Additional Info
 
+    private var additionalInfoButton: some View {
+        Button {
+            guard let placeStore else { return }
+            viewModel.requestAdditionalInfo(
+                enrichmentService: enrichmentService,
+                store: placeStore
+            )
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.subheadline.weight(.medium))
+                Text("추가정보 확인")
+                    .font(.subheadline.weight(.medium))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(.tint)
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
     @ViewBuilder
     private var additionalInfoSection: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -421,7 +457,7 @@ struct PlaceDetailView: View {
                 showRegistrationSheet = true
             } label: {
                 HStack(spacing: 8) {
-                    if viewModel.isLoading {
+                    if viewModel.isSavingRegistration {
                         ProgressView()
                             .controlSize(.small)
                             .tint(Color(.systemBackground))
@@ -457,8 +493,8 @@ struct PlaceDetailView: View {
     }
 
     private var registerButtonTitle: String {
-        if viewModel.isLoading {
-            return "추가 정보 확인 중"
+        if viewModel.isSavingRegistration {
+            return "저장하고 있어요"
         }
         if viewModel.isAlreadySaved, let listKind = viewModel.existingSavedListKind {
             return "\(listKind.title)에 저장됨"

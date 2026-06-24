@@ -33,6 +33,7 @@ final class PlaceDetailViewModel {
     private(set) var registrationState: RegistrationState = .idle
     private(set) var savedListKind: ListSubTab?
     private(set) var existingSavedListKind: ListSubTab?
+    private(set) var requestedAdditionalInfo = false
 
     private var revealTask: Task<Void, Never>?
     private var loadTask: Task<Void, Never>?
@@ -88,7 +89,7 @@ final class PlaceDetailViewModel {
     }
 
     var canRegister: Bool {
-        isDiscoveryMode && !isLoading && !isSavingRegistration && !isAlreadySaved
+        isDiscoveryMode && !isSavingRegistration && !isAlreadySaved
     }
 
     var savedPlaceId: String? {
@@ -107,16 +108,30 @@ final class PlaceDetailViewModel {
     }
 
     var showProgress: Bool {
-        isDiscoveryMode && (isLoading || (revealStep == 0 && !progressLog.isEmpty))
+        if isDiscoveryMode {
+            return requestedAdditionalInfo && (isLoading || (revealStep == 0 && !progressLog.isEmpty))
+        }
+        return false
     }
 
     var showAdditionalInfo: Bool {
+        if isDiscoveryMode {
+            guard requestedAdditionalInfo else { return false }
+        }
         switch enrichmentState {
         case .loaded, .failed:
-            true
+            return true
         case .idle, .loading:
-            false
+            return false
         }
+    }
+
+    var showAdditionalInfoButton: Bool {
+        if isDiscoveryMode {
+            return !requestedAdditionalInfo
+        }
+        guard enrichmentState == .idle else { return false }
+        return true
     }
 
     func refreshSavedStatus(store: PlaceStore) {
@@ -124,20 +139,31 @@ final class PlaceDetailViewModel {
         existingSavedListKind = store.savedListKind(forKakaoPlaceId: place.id)
     }
 
-    func loadIfNeeded() {
-        guard isDiscoveryMode else { return }
-        guard loadTask == nil else { return }
-        switch enrichmentState {
-        case .loading, .loaded:
+    func requestAdditionalInfo(
+        enrichmentService: PlaceEnrichmentService,
+        store: PlaceStore
+    ) {
+        if isDiscoveryMode {
+            guard !requestedAdditionalInfo else { return }
+            requestedAdditionalInfo = true
+            startEnrichmentLoad()
             return
-        case .idle, .failed:
-            break
         }
-        loadTask = Task { await load() }
+
+        guard let savedPlaceId else { return }
+        guard enrichmentState == .idle else { return }
+        guard !enrichmentService.isRunning(for: savedPlaceId) else { return }
+
+        enrichmentService.schedule(
+            savedPlaceId: savedPlaceId,
+            place: place,
+            store: store
+        )
     }
 
     func retryEnrichment() {
         guard isDiscoveryMode else { return }
+        guard requestedAdditionalInfo else { return }
         guard !isLoading else { return }
         loadTask?.cancel()
         loadTask = nil
@@ -147,6 +173,18 @@ final class PlaceDetailViewModel {
         progressLog = []
         currentProgress = nil
         revealStep = 0
+        startEnrichmentLoad()
+    }
+
+    private func startEnrichmentLoad() {
+        guard isDiscoveryMode else { return }
+        guard loadTask == nil else { return }
+        switch enrichmentState {
+        case .loading, .loaded:
+            return
+        case .idle, .failed:
+            break
+        }
         loadTask = Task { await load() }
     }
 
