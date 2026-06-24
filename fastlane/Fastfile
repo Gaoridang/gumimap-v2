@@ -34,10 +34,11 @@ platform :ios do
       end
       cert(cert_options)
 
+      ENV.delete("MATCH_READONLY")
       sigh(
         api_key: api_key,
         app_identifier: "com.ijaejun.gumimap-v2",
-        readonly: true,
+        readonly: false,
         output_path: "./build/profiles"
       )
     end
