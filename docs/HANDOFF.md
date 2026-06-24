@@ -6,19 +6,11 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/optional-additional-info` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Optional Grok enrichment via "추가정보 확인" button |
+| Working tree | Optional Grok enrichment via "추가정보 확인" button (merged) |
 | Last verified | iOS 26.5 simulator launch (2026-06-24) |
-
-## Shipped on `feat/optional-additional-info` (2026-06-24)
-
-- **Discovery detail** — Grok enrichment no longer auto-starts; "추가정보 확인" button triggers SSE progress + additional info cards
-- **등록하기** — enabled immediately on Kakao baseline (no wait for Grok)
-- **Saved detail** — same "추가정보 확인" button when enrichment is missing; schedules `PlaceEnrichmentService`
-
-**Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`
 
 ## Shipped on `feat/random-restaurant-picker` (2026-06-24)
 
@@ -74,6 +66,15 @@ Pick up from backlog below.
 - Fix `run-simulator.sh` UDID fallback edge cases
 
 ## Merged / Shipped on `main`
+
+### Optional additional info (`feat/optional-additional-info` → merged 2026-06-24)
+
+- **Discovery detail** — Grok enrichment no longer auto-starts; "추가정보 확인" button triggers SSE progress + additional info cards
+- **등록하기** — enabled immediately on Kakao baseline (no wait for Grok)
+- **Saved detail** — same "추가정보 확인" button when enrichment is missing; schedules `PlaceEnrichmentService`
+- **Spacing** — 추가정보 확인 grouped with baseline action buttons (14pt)
+
+**Key paths:** `PlaceDetailView.swift`, `PlaceDetailViewModel.swift`
 
 ### Map pin unified teardrop (`fix/map-pin-top-clip` → merged 2026-06-22)
 
