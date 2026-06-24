@@ -51,16 +51,10 @@ struct ListTabView: View {
                             }
                             .buttonStyle(.plain)
 
-                            Button {
+                            ListPlaceMapButton {
                                 router.openSavedPlaceOnMap(id: savedPlace.id)
-                            } label: {
-                                Image(systemName: "map")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 44, height: 44)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("지도에서 보기")
+                            .padding(.trailing, 12)
                         }
                         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                     }

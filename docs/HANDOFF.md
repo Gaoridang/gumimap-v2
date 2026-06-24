@@ -6,11 +6,17 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/list-default-wishlist` |
+| Active branch | `feat/list-map-button-style` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | List tab opens to 가고 싶은 곳 by default |
+| Working tree | List card map action button restyled |
 | Last verified | iOS 26.5 simulator launch (2026-06-24) |
+
+## Shipped on `feat/list-map-button-style` (2026-06-24)
+
+- **`ListPlaceMapButton`** — toolbar-pin icon on soft blue tile; matches category icon sizing on list cards
+
+**Key paths:** `ListPlaceMapButton.swift`, `ListTabView.swift`
 
 ## Shipped on `feat/list-default-wishlist` (2026-06-24)
 
