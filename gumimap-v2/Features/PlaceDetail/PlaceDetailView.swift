@@ -26,11 +26,6 @@ struct PlaceDetailView: View {
             VStack(alignment: .leading, spacing: 20) {
                 kakaoBaselineSection
 
-                if showsAdditionalInfoButton {
-                    additionalInfoButton
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-
                 if showsEnrichmentProgress {
                     progressSection
                         .transition(.opacity.combined(with: .move(edge: .top)))
@@ -240,6 +235,11 @@ struct PlaceDetailView: View {
                     .padding(16)
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                 }
+            }
+
+            if showsAdditionalInfoButton {
+                additionalInfoButton
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
