@@ -6,9 +6,10 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/testflight-ci` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
-| Working tree | Fastlane + GitHub Actions TestFlight automation |
+| GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
+| Working tree | Fastlane + GitHub Actions TestFlight automation pushed to `main` |
 | Last verified | iOS 26.5 simulator launch (2026-06-24) |
 
 ## Shipped on `feat/testflight-ci` (2026-06-24)
@@ -49,7 +50,7 @@ Last updated: 2026-06-24
 
 Pick up from backlog below.
 
-- Merge `feat/testflight-ci` → `main`, configure GitHub Secrets, push to trigger first CI TestFlight build
+- Configure GitHub Secrets at https://github.com/Gaoridang/gumimap-v2/settings/secrets/actions — then push to `main` or run TestFlight workflow manually
 
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
