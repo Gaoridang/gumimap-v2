@@ -25,7 +25,8 @@ platform :ios do
     unless ENV["PROVISIONING_PROFILE_NAME"]
       cert_options = {
         api_key: api_key,
-        output_path: "./build/certs"
+        output_path: "./build/certs",
+        readonly: true
       }
       if ENV["CI"]
         keychain_name = ENV.fetch("MATCH_KEYCHAIN_NAME")
