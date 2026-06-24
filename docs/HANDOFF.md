@@ -9,8 +9,8 @@ Last updated: 2026-06-24
 | Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Fastlane + GitHub Actions TestFlight automation pushed to `main` |
-| Last verified | iOS 26.5 simulator launch (2026-06-24) |
+| Working tree | CI TestFlight deploy verified on GitHub Actions |
+| Last verified | GitHub Actions TestFlight upload success run 28105292718 (2026-06-24) |
 
 ## Shipped on `feat/testflight-ci` (2026-06-24)
 
@@ -20,19 +20,18 @@ Last updated: 2026-06-24
 - **`scripts/export-signing-for-ci.sh`** — optional helper to export p12/profile for manual signing path
 - **`ITSAppUsesNonExemptEncryption = NO`** — skips export-compliance prompt on upload
 
-### GitHub Secrets to configure
+### GitHub Secrets (configured)
 
 | Secret | Required | Source |
 |--------|----------|--------|
 | `ASC_KEY_ID` | Yes | App Store Connect API key |
 | `ASC_ISSUER_ID` | Yes | App Store Connect → Users and Access |
-| `ASC_KEY_CONTENT` | Yes | `.p8` file full text |
+| `ASC_KEY_CONTENT_BASE64` | Yes | `base64 -i AuthKey_XXX.p8 \| tr -d '\n'` (use `scripts/encode-asc-key-for-ci.sh`) |
 | `KAKAO_NATIVE_APP_KEY` | Yes | `Config/secrets.local.env` |
 | `KAKAO_REST_API_KEY` | Yes | `Config/secrets.local.env` |
 | `XAI_API_KEY` | Yes | `Config/secrets.local.env` |
-| `BUILD_CERTIFICATE_BASE64` | No | Only for manual signing override |
-| `P12_PASSWORD` | No | With manual signing |
-| `PROVISIONING_PROFILE_BASE64` | No | With manual signing |
+
+CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allowProvisioningUpdates`), not manual p12.
 
 **Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `Gemfile`, `scripts/ci-install-signing.sh`
 
@@ -50,7 +49,7 @@ Last updated: 2026-06-24
 
 Pick up from backlog below.
 
-- Configure GitHub Secrets at https://github.com/Gaoridang/gumimap-v2/settings/secrets/actions — then push to `main` or run TestFlight workflow manually
+- Check App Store Connect → TestFlight for CI build from run 28105292718; future `main` pushes auto-deploy
 
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
