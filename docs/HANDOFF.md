@@ -6,11 +6,17 @@ Last updated: 2026-06-24
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `feat/list-default-wishlist` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Optional Grok enrichment via "추가정보 확인" button (merged) |
+| Working tree | List tab opens to 가고 싶은 곳 by default |
 | Last verified | iOS 26.5 simulator launch (2026-06-24) |
+
+## Shipped on `feat/list-default-wishlist` (2026-06-24)
+
+- **`TabRouter`** — default `listSubTab` is `.wishlist`; `openList()` resets to 가고 싶은 곳 when entering from map
+
+**Key paths:** `TabRouter.swift`
 
 ## Shipped on `feat/random-restaurant-picker` (2026-06-24)
 
@@ -218,7 +224,7 @@ Pick up from backlog below.
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail (Kakao baseline + optional "추가정보 확인") → 등록하기 anytime → list tab saved detail
-- **List tabs:** 가본 곳 / 가고 싶은 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
+- **List tabs:** 가고 싶은 곳 (default) / 가본 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
 - **Discovery detail:** large title + Kakao baseline cards → optional "추가정보 확인" → SSE progress + additional info; 등록하기 available immediately; already-saved banner when applicable
 - **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; "추가정보 확인" when no enrichment; background enrichment progress when applicable; "지도에서 보기" → map focus + sheet
 - **Map tab:** full-screen Kakao Map centered on 구미 (level 12); unified teardrop pins (warm yellow fill, soft blue border); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)

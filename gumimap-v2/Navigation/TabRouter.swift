@@ -4,7 +4,7 @@ import SwiftUI
 @Observable
 final class TabRouter {
     var selectedTab: AppTab = .map
-    var listSubTab: ListSubTab = .visited
+    var listSubTab: ListSubTab = .wishlist
     var path: [AppRoute] = []
     var pendingMapFocusPlaceId: String?
 
@@ -22,6 +22,7 @@ final class TabRouter {
 
     func openList() {
         withAnimation(toolbarAnimation) {
+            listSubTab = .wishlist
             selectedTab = .list
         }
     }
