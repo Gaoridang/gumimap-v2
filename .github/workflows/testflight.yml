@@ -28,12 +28,18 @@ jobs:
 
       - name: Write App Store Connect API key
         env:
-          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          ASC_KEY_CONTENT_BASE64: ${{ secrets.ASC_KEY_CONTENT_BASE64 }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          printf '%s\n' "$ASC_KEY_CONTENT" > "$KEY_PATH"
+          if [[ -z "$ASC_KEY_CONTENT_BASE64" ]]; then
+            echo "ASC_KEY_CONTENT_BASE64 secret is missing."
+            echo "Run: base64 -i AuthKey_${ASC_KEY_ID}.p8 | tr -d '\\n' | pbcopy"
+            echo "Then add it as repository secret ASC_KEY_CONTENT_BASE64."
+            exit 1
+          fi
+          echo "$ASC_KEY_CONTENT_BASE64" | base64 --decode > "$KEY_PATH"
           openssl pkey -in "$KEY_PATH" -noout -text > /dev/null
           echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
