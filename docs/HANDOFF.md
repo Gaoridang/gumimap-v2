@@ -8,7 +8,7 @@ Last updated: 2026-06-25
 |-------|-------|
 | Active branch | `main` |
 | Next branch | (create before first code change on next task) |
-| GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
+| GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
 | Working tree | Merged #35 — pin colors + list filter/sort on `main`; TestFlight deploy in progress |
 | Last verified | PR #35 merged (squash); device verification pending |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
