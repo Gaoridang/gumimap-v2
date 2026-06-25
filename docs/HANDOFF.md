@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/saved-enrichment-on-demand` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Saved detail enrichment — manual button only |
-| Last verified | Pending PR Build + merge + TestFlight |
+| Working tree | Saved enrichment on-demand merged (#15) |
+| Last verified | PR #15 merged 2026-06-25; verify on TestFlight |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -79,7 +79,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `PlaceDetailMapPreview.swift`, `PlaceDetailView.swift`
 
-## Shipped on `fix/saved-enrichment-on-demand` (2026-06-25)
+## Merged on `main` — saved enrichment on-demand (`fix/saved-enrichment-on-demand` → #15, 2026-06-25)
 
 - **Saved detail enrichment** — no longer auto-starts on register or detail entry; runs only when user taps "추가정보 확인"
 - **Registration** — saving without prior Grok fetch no longer schedules background enrichment; user opts in from saved detail
