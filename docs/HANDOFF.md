@@ -9,8 +9,8 @@ Last updated: 2026-06-25
 | Active branch | `feat/pin-colors-list-filter` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Pin colors by list kind + list filter/sort — PR Build pending |
-| Last verified | Local changes only (Windows); PR Build → merge → TestFlight |
+| Working tree | PR #35 pin colors + list filter — merge conflict resolved, PR Build pending |
+| Last verified | TestFlight CI signing stable (#44); feature PR Build pending |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -86,23 +86,30 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
 
-## Shipped on `main` — TestFlight CI signing (`fix/testflight-ci-signing` → #26, `fix/revoke-cert-filter` → #27, 2026-06-25)
+## Shipped on `main` — TestFlight CI signing (#26–#33, 2026-06-25)
 
 **Problem:** TestFlight #33 failed with `ALLOW_CREATE_DISTRIBUTION_CERT=true` on cache miss. Apple portal held orphaned Distribution certs whose private keys were lost on ephemeral runners; `cert` hit the quota. GitHub Actions cache (`signing-v1`) was never seeded.
 
 **Fix (merged):**
 - `revoke_orphaned_distribution_certs` revokes portal `IOS_DISTRIBUTION` + `DISTRIBUTION` certs via ASC API before bootstrap `cert`
-- `actions/cache/restore@v4` + `actions/cache/save@v4` (`if: always()`) with key `signing-v2-*` persists `fastlane/signing/`
-- `cert()` only when `ALLOW_CREATE_DISTRIBUTION_CERT=="true"` exactly; otherwise `missing_distribution_cert_instructions`
+- `actions/cache/restore@v4` + `actions/cache/save@v4` with key `signing-v3-*` (content-hash) persists `fastlane/signing/`
+- `SigningDecision.resolve` gates `cert()` behind `ALLOW_CREATE_DISTRIBUTION_CERT=="true"` exactly; otherwise `UI.user_error!` with bootstrap instructions (never calls Apple create API)
+- `signing_controlled_error_check` lane + `signing-contract` workflow job verify controlled path on `workflow_dispatch` (bootstrap=false)
+- `sigh(...)` passes only `api_key`, `app_identifier`, `force` (no keychain options)
+- #29: cached p12 import uses keychain password for `set-key-partition-list`
+- #33: `grep -qF` for `--- Step: cert ---` check (macOS grep treated dashes as flags)
 
-**Verified:** Bootstrap #35–#37 seeded `signing-v3` cache (#28). Run #38 failed on reuse (`set-key-partition-list` used p12 password) — fixed in #29. Run #39 green: `Reusing cached distribution certificate`, cache save skipped, no quota error.
+**Verified:**
+- Bootstrap #35–#37 seeded `signing-v3` cache (#28)
+- Reuse: #39/#44 deploy — `Reusing cached distribution certificate`, no `--- Step: cert ---`, no quota phrase
+- Controlled: #44 `signing-contract` job — `No reusable Distribution certificate is available for CI`, fastlane summary has no `cert` step
 
 **Post-bootstrap:** Delete repo variable `ALLOW_CREATE_DISTRIBUTION_CERT` (or use workflow_dispatch with bootstrap=false) so later runs reuse cached signing:
 ```powershell
 .\scripts\bootstrap-testflight-signing.ps1 -Phase disable
 ```
 
-**Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/ci-install-signing.sh`
+**Key paths:** `fastlane/Fastfile`, `fastlane/lib/signing_decision.rb`, `fastlane/spec/signing_decision_spec.rb`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/verify-testflight-signing-contract.sh`
 
 ## In Progress — `feat/pin-colors-list-filter` (2026-06-25)
 
