@@ -22,6 +22,12 @@ grep -q 'ENV\["ALLOW_CREATE_DISTRIBUTION_CERT"\] == "true"' fastlane/Fastfile \
   || fail "Fastfile must gate cert creation on ALLOW_CREATE_DISTRIBUTION_CERT==true"
 grep -q 'UI.user_error!(missing_distribution_cert_instructions)' fastlane/Fastfile \
   || fail "Fastfile must emit missing_distribution_cert_instructions on cache miss"
+grep -q 'No reusable Distribution certificate is available for CI' fastlane/Fastfile \
+  || fail "controlled error must mention missing reusable Distribution certificate"
+if grep -A20 'missing_distribution_cert_instructions do' fastlane/Fastfile | \
+   grep -q 'Could not create another Distribution certificate'; then
+  fail "controlled error must not contain Apple quota phrase"
+fi
 
 cert_count=$(grep -c 'cert(' fastlane/Fastfile || true)
 if [[ "$cert_count" -lt 1 ]]; then
@@ -40,4 +46,6 @@ if grep -A8 'sigh(' fastlane/Fastfile | grep -q 'keychain_path'; then
   fail "sigh must not pass keychain_path"
 fi
 
+echo "CONTROLLED_PATH_OK: cache-miss without ALLOW calls UI.user_error!(missing_distribution_cert_instructions)"
+echo "CONTROLLED_PATH_MESSAGE: No reusable Distribution certificate is available for CI"
 echo "OK: TestFlight signing contract checks passed"
