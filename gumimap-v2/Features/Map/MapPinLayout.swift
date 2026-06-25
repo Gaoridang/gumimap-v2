@@ -10,14 +10,32 @@ enum MapPinStyle {
     static let fillColor = Color(red: 0.98, green: 0.89, blue: 0.48)
     static let borderColor = Color(red: 0.29, green: 0.52, blue: 0.78)
 
+    private static let visitedFillUIColor = UIColor(red: 0.82, green: 0.94, blue: 0.84, alpha: 1)
+    private static let visitedBorderUIColor = UIColor(red: 0.18, green: 0.62, blue: 0.34, alpha: 1)
+    private static let visitedFillColor = Color(red: 0.82, green: 0.94, blue: 0.84)
+    private static let visitedBorderColor = Color(red: 0.18, green: 0.62, blue: 0.34)
+
+    private static let wishlistFillUIColor = UIColor(red: 0.86, green: 0.92, blue: 0.99, alpha: 1)
+    private static let wishlistBorderUIColor = UIColor(red: 0.22, green: 0.48, blue: 0.82, alpha: 1)
+    private static let wishlistFillColor = Color(red: 0.86, green: 0.92, blue: 0.99)
+    private static let wishlistBorderColor = Color(red: 0.22, green: 0.48, blue: 0.82)
+
     static func colors(for listKind: ListSubTab) -> (fill: UIColor, border: UIColor) {
-        _ = listKind
-        return (fillUIColor, borderUIColor)
+        switch listKind {
+        case .visited:
+            (visitedFillUIColor, visitedBorderUIColor)
+        case .wishlist:
+            (wishlistFillUIColor, wishlistBorderUIColor)
+        }
     }
 
     static func swiftUIColors(for listKind: ListSubTab) -> (fill: Color, border: Color) {
-        _ = listKind
-        return (fillColor, borderColor)
+        switch listKind {
+        case .visited:
+            (visitedFillColor, visitedBorderColor)
+        case .wishlist:
+            (wishlistFillColor, wishlistBorderColor)
+        }
     }
 }
 

@@ -52,6 +52,18 @@ final class SavedPlace {
         ListSubTab(rawValue: listKind)
     }
 
+    var shortCategory: String {
+        let parts = category
+            .split(separator: ">")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return parts.last.map(String.init) ?? category
+    }
+
+    var isOpenNow: Bool {
+        grokDetail?.isCurrentlyOpen == true
+    }
+
     var asPlace: Place {
         Place(
             id: kakaoPlaceId,

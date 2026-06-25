@@ -6,16 +6,31 @@ struct ListTabView: View {
 
     @Query(sort: \SavedPlace.registeredAt, order: .reverse) private var savedPlaces: [SavedPlace]
     @Environment(ListHeaderStore.self) private var listHeaderStore
+    @Environment(ListFilterStore.self) private var listFilterStore
     @Environment(TabRouter.self) private var router
 
-    private var places: [SavedPlace] {
+    private var allPlaces: [SavedPlace] {
         savedPlaces.filter { $0.listKind == subTab.rawValue }
+    }
+
+    private var filterSettings: ListPlaceFilterSettings {
+        listFilterStore.settings(for: subTab)
+    }
+
+    private var availableCategories: [String] {
+        ListPlaceFilter.availableCategories(in: allPlaces)
+    }
+
+    private var places: [SavedPlace] {
+        ListPlaceFilter.apply(filterSettings, to: allPlaces)
     }
 
     var body: some View {
         Group {
-            if places.isEmpty {
+            if allPlaces.isEmpty {
                 emptyState
+            } else if places.isEmpty {
+                filteredListContent
             } else {
                 listContent
             }
@@ -24,6 +39,7 @@ struct ListTabView: View {
         .background(Color(.systemGroupedBackground))
         .animation(.easeInOut(duration: 0.2), value: subTab)
         .animation(.easeInOut(duration: 0.2), value: places.count)
+        .animation(.easeInOut(duration: 0.2), value: filterSettings)
     }
 
     private var emptyState: some View {
@@ -38,10 +54,44 @@ struct ListTabView: View {
         }
     }
 
+    private var filteredListContent: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                listHeader
+                filterBar
+                filteredEmptyState
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 120)
+        }
+    }
+
+    private var filteredEmptyState: some View {
+        VStack(spacing: 12) {
+            Text("조건에 맞는 곳이 없어요")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Text("필터를 바꾸거나 초기화해 보세요")
+                .font(.subheadline)
+                .foregroundStyle(.tertiary)
+
+            Button("필터 초기화") {
+                listFilterStore.reset(for: subTab)
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+    }
+
     private var listContent: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 listHeader
+                filterBar
 
                 LazyVStack(spacing: 10) {
                     ForEach(places, id: \.id) { savedPlace in
@@ -51,7 +101,7 @@ struct ListTabView: View {
                             }
                             .buttonStyle(.plain)
 
-                            ListPlaceMapButton {
+                            ListPlaceMapButton(listKind: subTab) {
                                 router.openSavedPlaceOnMap(id: savedPlace.id)
                             }
                             .padding(.trailing, 12)
@@ -78,10 +128,28 @@ struct ListTabView: View {
                 .accessibilityLabel(prompt.fullText)
         }
     }
+
+    private var filterBar: some View {
+        ListFilterBar(
+            subTab: subTab,
+            categories: availableCategories,
+            settings: filterSettings,
+            onSortOrderChange: { order in
+                listFilterStore.setSortOrder(order, for: subTab)
+            },
+            onCategoryChange: { category in
+                listFilterStore.setSelectedCategory(category, for: subTab)
+            },
+            onOpenNowChange: { isEnabled in
+                listFilterStore.setOpenNowOnly(isEnabled, for: subTab)
+            }
+        )
+    }
 }
 
 #Preview {
     ListTabView(subTab: .visited)
         .environment(ListHeaderStore())
+        .environment(ListFilterStore())
         .environment(TabRouter())
 }
