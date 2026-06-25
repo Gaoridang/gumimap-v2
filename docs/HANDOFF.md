@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
-| Next branch | `feat/map-sheet-edit-parity` (or next backlog item) |
+| Active branch | `fix/saved-enrichment-on-demand` |
+| Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Place detail map preview merged (#14); TestFlight deploy pending |
-| Last verified | PR #14 merged 2026-06-25; verify map preview on TestFlight |
+| Working tree | Saved detail enrichment — manual button only |
+| Last verified | Pending PR Build + merge + TestFlight |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -79,14 +79,22 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `PlaceDetailMapPreview.swift`, `PlaceDetailView.swift`
 
+## Shipped on `fix/saved-enrichment-on-demand` (2026-06-25)
+
+- **Saved detail enrichment** — no longer auto-starts on register or detail entry; runs only when user taps "추가정보 확인"
+- **Registration** — saving without prior Grok fetch no longer schedules background enrichment; user opts in from saved detail
+
+**Key paths:** `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
+
 ## Next Task — Backlog
 
 Pick up from backlog below (use safe dev flow: branch → PR → PR Build → merge → TestFlight).
 
-- Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
-- Saved detail Grok re-enrichment
-- Kakao REST API search gaps (e.g. 와일드차일드)
-- Fix `run-simulator.sh` UDID fallback edge cases
+- Fix `run-simulator.sh` UDID fallback edge cases (Mac local dev only; low priority on Windows/TestFlight workflow)
+
+### Backlog notes (2026-06-25)
+
+- **Removed:** Map sheet edit parity, Kakao REST search gaps, saved detail auto-enrichment.
 
 ## Merged / Shipped on `main`
 
