@@ -9,8 +9,8 @@ Last updated: 2026-06-25
 | Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Saved enrichment on-demand merged (#15) |
-| Last verified | PR #15 merged 2026-06-25; verify on TestFlight |
+| Working tree | TestFlight CI keychain password fix merged (#20) |
+| Last verified | PR #20 merged 2026-06-25; TestFlight Run pending |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
