@@ -57,7 +57,7 @@ final class SavedPlace {
             .split(separator: ">")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        return parts.last.map(String.init) ?? category
+        return parts.last.map { String($0) } ?? category
     }
 
     var isOpenNow: Bool {
