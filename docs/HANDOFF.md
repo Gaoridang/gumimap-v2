@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/testflight-ci-signing` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | TestFlight signing — auto-revoke orphaned certs + cache save fix |
-| Last verified | TestFlight #33 failed: ALLOW=true + cert quota; cache signing-v1 never seeded |
+| Working tree | TestFlight CI signing fixed — #35 green |
+| Last verified | TestFlight #35 succeeded: revoked orphaned certs, cached p12, uploaded build 0.0.1 (1) |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -86,25 +86,21 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
 
-## In progress — TestFlight CI signing (`fix/testflight-ci-signing`)
+## Shipped on `main` — TestFlight CI signing (`fix/testflight-ci-signing` → #26, `fix/revoke-cert-filter` → #27, 2026-06-25)
 
-**Problem:** TestFlight #33 failed with `ALLOW_CREATE_DISTRIBUTION_CERT=true` on cache miss. Apple portal already had 2 orphaned Distribution certs (`UVT2V5W4VZ`, `V4F3263ZDD`) whose private keys were lost on ephemeral runners; `cert` hit the quota. GitHub Actions cache (`signing-v1`) was never seeded because `save-always` did not persist before the lane failed.
+**Problem:** TestFlight #33 failed with `ALLOW_CREATE_DISTRIBUTION_CERT=true` on cache miss. Apple portal held orphaned Distribution certs whose private keys were lost on ephemeral runners; `cert` hit the quota. GitHub Actions cache (`signing-v1`) was never seeded.
 
-**Fix:**
-- `revoke_orphaned_distribution_certs` lane revokes portal Distribution certs via ASC API before bootstrap `cert`
-- CI no longer auto-creates Distribution certs unless repo variable `ALLOW_CREATE_DISTRIBUTION_CERT=true`
+**Fix (merged):**
+- `revoke_orphaned_distribution_certs` revokes portal `IOS_DISTRIBUTION` + `DISTRIBUTION` certs via ASC API before bootstrap `cert`
 - `actions/cache/restore@v4` + `actions/cache/save@v4` (`if: always()`) with key `signing-v2-*` persists `fastlane/signing/`
-- `scripts/ci-install-signing.sh` seeds `fastlane/signing/` from GitHub secrets (alternative one-time setup)
+- `cert()` only when `ALLOW_CREATE_DISTRIBUTION_CERT=="true"` exactly; otherwise `missing_distribution_cert_instructions`
 
-**One-time unblock (Windows / no Mac):**
+**Verified:** TestFlight #35 green — revoked orphans, created cert `6C69ZT4689`, cached p12, uploaded 0.0.1 (1).
+
+**Post-bootstrap:** Delete repo variable `ALLOW_CREATE_DISTRIBUTION_CERT` so later runs reuse cached signing:
 ```powershell
-.\scripts\bootstrap-testflight-signing.ps1 -Phase enable
-# 1) revoke orphaned Distribution certs in browser
-# 2) merge this branch → TestFlight succeeds once
 .\scripts\bootstrap-testflight-signing.ps1 -Phase disable
 ```
-
-**Mac alternative:** `./scripts/export-signing-for-ci.sh` or `.\scripts\encode-signing-secrets.ps1` with p12/profile files → GitHub secrets
 
 **Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/ci-install-signing.sh`
 
