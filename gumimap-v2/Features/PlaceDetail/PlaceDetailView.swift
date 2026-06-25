@@ -7,11 +7,13 @@ struct PlaceDetailView: View {
     @Environment(\.placeStore) private var placeStore
     @Environment(PlaceEnrichmentService.self) private var enrichmentService
     @Environment(TabRouter.self) private var router
+    @Environment(\.openURL) private var openURL
     @State private var showRegistrationSheet = false
     @State private var showMoveSheet = false
     @State private var showInfoEditSheet = false
     @State private var showDeleteConfirmation = false
     @State private var isManagingSavedPlace = false
+    @State private var isMapPreviewActive = false
 
     init(place: Place) {
         _viewModel = State(initialValue: PlaceDetailViewModel(place: place))
@@ -180,10 +182,47 @@ struct PlaceDetailView: View {
         viewModel.refreshFromStore(store: placeStore)
     }
 
+    // MARK: - Map Preview
+
+    private var showsMapPreview: Bool {
+        PlaceDetailMapPreview.isValidCoordinate(viewModel.place.coordinate)
+    }
+
+    private var mapPreviewListKind: ListSubTab {
+        viewModel.savedListKind ?? .wishlist
+    }
+
+    private var mapPreviewTapAction: (() -> Void)? {
+        if let savedPlaceId = viewModel.savedPlaceId {
+            return { router.openSavedPlaceOnMap(id: savedPlaceId) }
+        }
+        if viewModel.place.kakaoMapURL != nil {
+            return { openMapPreviewExternally() }
+        }
+        return nil
+    }
+
+    private func openMapPreviewExternally() {
+        guard let url = viewModel.place.kakaoMapURL else { return }
+        openURL(url)
+    }
+
     // MARK: - Kakao Baseline
 
     private var kakaoBaselineSection: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if showsMapPreview {
+                PlaceDetailMapPreview(
+                    coordinate: viewModel.place.coordinate,
+                    listKind: mapPreviewListKind,
+                    category: viewModel.place.category,
+                    isActive: isMapPreviewActive,
+                    onTap: mapPreviewTapAction
+                )
+                .onAppear { isMapPreviewActive = true }
+                .onDisappear { isMapPreviewActive = false }
+            }
+
             if viewModel.isDiscoveryMode, let listKind = viewModel.existingSavedListKind {
                 savedListBadge(listKind)
             }
@@ -198,26 +237,6 @@ struct PlaceDetailView: View {
                 if let phone = viewModel.place.phone, !phone.isEmpty {
                     detailChip(title: "전화", value: phone)
                 }
-            }
-
-            if !viewModel.isDiscoveryMode, let savedPlaceId = viewModel.savedPlaceId {
-                Button {
-                    router.openSavedPlaceOnMap(id: savedPlaceId)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "map")
-                            .font(.subheadline.weight(.medium))
-                        Text("지도에서 보기")
-                            .font(.subheadline.weight(.medium))
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                    }
-                    .foregroundStyle(.tint)
-                    .padding(16)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-                }
-                .buttonStyle(.plain)
             }
 
             if let mapURL = viewModel.place.kakaoMapURL {

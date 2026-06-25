@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
-| Next branch | `feat/place-detail-map-preview` (or next backlog item) |
+| Active branch | `feat/place-detail-map-preview` |
+| Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Safe dev flow merged (#13); PR Build + TestFlight CI active on `main` |
-| Last verified | PR #13 merged 2026-06-25; TestFlight deploy triggered on `main` push |
+| Working tree | Place detail map preview — Kakao embed + tap to open map |
+| Last verified | Pending PR Build + merge + TestFlight |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -71,11 +71,18 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `.github/workflows/pr-build.yml`, `scripts/ci-build.sh`, `.github/pull_request_template.md`, `docs/agent-workflow.md`
 
+## Shipped on `feat/place-detail-map-preview` (2026-06-25)
+
+- **`PlaceDetailMapPreview`** — 180pt Kakao map embed at top of place detail; unified teardrop pin; pauses when scrolled off-screen
+- **Saved detail** — tap preview → `TabRouter.openSavedPlaceOnMap` (replaces separate "지도에서 보기" row)
+- **Discovery detail** — tap preview → opens 카카오맵 URL when available
+
+**Key paths:** `PlaceDetailMapPreview.swift`, `PlaceDetailView.swift`
+
 ## Next Task — Backlog
 
 Pick up from backlog below (use safe dev flow: branch → PR → PR Build → merge → TestFlight).
 
-- Place detail map preview
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
 - Kakao REST API search gaps (e.g. 와일드차일드)
