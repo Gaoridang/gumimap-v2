@@ -6,7 +6,7 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `chore/testflight-build-only-versioning` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
 | Working tree | #37 merged — PR Build cache+flags; TestFlight skips docs-only pushes |
@@ -110,6 +110,16 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 ```
 
 **Key paths:** `fastlane/Fastfile`, `fastlane/lib/signing_decision.rb`, `fastlane/spec/signing_decision_spec.rb`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/verify-testflight-signing-contract.sh`
+
+## In progress — TestFlight build-only versioning (`chore/testflight-build-only-versioning`)
+
+- **`fastlane beta`** — keeps `MARKETING_VERSION` from `project.pbxproj`; only increments global build number from App Store Connect
+- **`fastlane release`** — bumps marketing version (patch by default, or `MARKETING_VERSION` env) then uploads; use for App Store releases
+- **TestFlight workflow** — `main` push → `beta`; manual dispatch with `release: true` → `release` lane (+ optional `marketing_version` input, e.g. `1.0.0`)
+
+After a release deploy, commit the new `MARKETING_VERSION` in `project.pbxproj` so the repo stays in sync.
+
+**Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`
 
 ## Merged on `main` — PR Build optimization (`chore/pr-build-opt-ab-hybrid` → #37, 2026-06-25)
 

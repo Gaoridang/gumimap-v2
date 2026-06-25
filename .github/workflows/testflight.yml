@@ -13,6 +13,14 @@ on:
         description: "Bootstrap only — create a new Distribution cert (default false)"
         type: boolean
         default: false
+      release:
+        description: "App Store release — bump marketing version (TestFlight keeps version, build +1 only)"
+        type: boolean
+        default: false
+      marketing_version:
+        description: "Target version for release (optional; default patch bump from project, e.g. 0.0.1 → 0.0.2)"
+        type: string
+        required: false
 
 concurrency:
   group: testflight-${{ github.ref }}
@@ -153,12 +161,13 @@ jobs:
           fi
 
       - name: Deploy to TestFlight
-        run: bundle exec fastlane beta
+        run: bundle exec fastlane ${{ github.event_name == 'workflow_dispatch' && inputs.release == true && 'release' || 'beta' }}
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ${{ env.ASC_KEY_PATH }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          MARKETING_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.release == true && inputs.marketing_version || '' }}
           # Manual dispatch defaults to false; push uses repo variable for one-time bootstrap.
           ALLOW_CREATE_DISTRIBUTION_CERT: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.allow_create_distribution_cert) || vars.ALLOW_CREATE_DISTRIBUTION_CERT }}
 
