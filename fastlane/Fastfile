@@ -226,9 +226,7 @@ platform :ios do
       sigh(
         api_key: api_key,
         app_identifier: BUNDLE_IDENTIFIER,
-        force: false,
-        keychain_path: keychain_path,
-        keychain_password: keychain_password
+        force: false
       )
 
       downloaded_profile = lane_context[SharedValues::SIGH_PROFILE_PATH]
