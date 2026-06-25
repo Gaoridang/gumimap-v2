@@ -15,8 +15,53 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  signing-contract:
+    name: Verify controlled signing error path
+    runs-on: macos-26
+    if: github.event_name == 'workflow_dispatch' && inputs.allow_create_distribution_cert == false
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: .
+
+      - name: Run signing decision unit tests
+        run: ruby fastlane/spec/signing_decision_spec.rb
+
+      - name: Run controlled error lane (expect instructions, never cert)
+        env:
+          ALLOW_CREATE_DISTRIBUTION_CERT: "false"
+        run: |
+          set +e
+          bundle exec fastlane signing_controlled_error_check 2>&1 | tee controlled-signing-error.log
+          status=$?
+          if grep -q "No reusable Distribution certificate is available for CI" controlled-signing-error.log; then
+            if grep -q "Could not create another Distribution certificate" controlled-signing-error.log; then
+              echo "FAIL: quota phrase must not appear on controlled path"
+              exit 1
+            fi
+            if grep -q "--- Step: cert ---" controlled-signing-error.log; then
+              echo "FAIL: cert() must not run on controlled path"
+              exit 1
+            fi
+            echo "OK: controlled signing error path verified"
+            exit 0
+          fi
+          echo "FAIL: expected controlled instructions in fastlane output (exit $status)"
+          exit 1
+
   deploy:
     name: Build and upload to TestFlight
+    needs: signing-contract
+    if: always() && (needs.signing-contract.result == 'success' || needs.signing-contract.result == 'skipped')
     runs-on: macos-26
     timeout-minutes: 60
     permissions:

@@ -1,5 +1,6 @@
 require "fileutils"
 require "securerandom"
+require_relative "lib/signing_decision"
 
 default_platform(:ios)
 
@@ -201,27 +202,6 @@ platform :ios do
     UI.success("Cached new distribution certificate for future CI runs")
   end
 
-  private_lane :missing_distribution_cert_instructions do
-    <<~MSG
-      No reusable Distribution certificate is available for CI.
-
-      Apple already has orphaned Distribution certificates from earlier CI runs,
-      but their private keys were lost on ephemeral runners. CI will not create
-      new certificates automatically.
-
-      Windows / no-Mac one-time setup:
-        .\\scripts\\bootstrap-testflight-signing.ps1 -Phase enable
-      Then merge this fix, run TestFlight once, and:
-        .\\scripts\\bootstrap-testflight-signing.ps1 -Phase disable
-
-      Mac alternative:
-        ./scripts/export-signing-for-ci.sh
-        Add BUILD_CERTIFICATE_BASE64, P12_PASSWORD, PROVISIONING_PROFILE_BASE64
-
-      After the first successful run, fastlane/signing is cached and reused.
-    MSG
-  end
-
   private_lane :install_api_signing do |options|
     api_key = options[:api_key]
     keychain_path, keychain_password = ci_keychain_credentials
@@ -254,17 +234,26 @@ platform :ios do
           keychain_path: keychain_path,
           keychain_password: keychain_password
         )
-      elsif ENV["ALLOW_CREATE_DISTRIBUTION_CERT"] == "true"
-        UI.important("ALLOW_CREATE_DISTRIBUTION_CERT=true — creating a new Distribution certificate")
-        create_and_cache_distribution_cert(
-          api_key: api_key,
-          keychain_path: keychain_path,
-          keychain_password: keychain_password,
-          p12_path: p12_path,
-          p12_password: p12_password
-        )
       else
-        UI.user_error!(missing_distribution_cert_instructions)
+        decision = SigningDecision.resolve(
+          p12_exists: false,
+          allow_create: ENV["ALLOW_CREATE_DISTRIBUTION_CERT"]
+        )
+        case decision
+        when :create
+          UI.important("ALLOW_CREATE_DISTRIBUTION_CERT=true — creating a new Distribution certificate")
+          create_and_cache_distribution_cert(
+            api_key: api_key,
+            keychain_path: keychain_path,
+            keychain_password: keychain_password,
+            p12_path: p12_path,
+            p12_password: p12_password
+          )
+        when :controlled_error
+          UI.user_error!(SigningDecision.controlled_error_message)
+        else
+          UI.user_error!("Unexpected signing decision: #{decision}")
+        end
       end
     end
 
@@ -358,6 +347,18 @@ platform :ios do
       initial_build_number: 0
     )
     latest + 1
+  end
+
+  desc "Emit controlled signing error when cache miss and bootstrap is disabled (contract check)"
+  lane :signing_controlled_error_check do
+    decision = SigningDecision.resolve(
+      p12_exists: false,
+      allow_create: ENV.fetch("ALLOW_CREATE_DISTRIBUTION_CERT", "false")
+    )
+    unless decision == :controlled_error
+      UI.user_error!("Expected controlled_error decision, got #{decision}")
+    end
+    UI.user_error!(SigningDecision.controlled_error_message)
   end
 
   desc "Build and upload a beta build to TestFlight"

@@ -9,6 +9,9 @@ fail() {
   exit 1
 }
 
+ruby fastlane/spec/signing_decision_spec.rb \
+  || fail "SigningDecision unit tests failed"
+
 grep -q 'actions/cache/restore@v4' .github/workflows/testflight.yml \
   || fail "testflight.yml must use actions/cache/restore@v4"
 grep -q 'actions/cache/save@v4' .github/workflows/testflight.yml \
@@ -17,14 +20,18 @@ grep -q "if: always() && steps.signing-cache-valid.outputs.valid != 'true'" .git
   || fail "testflight.yml save step must skip when signing cache is already valid"
 grep -q 'signing-v3-' .github/workflows/testflight.yml \
   || fail "testflight.yml must use signing-v3 cache key"
+grep -q 'signing_controlled_error_check' .github/workflows/testflight.yml \
+  || fail "testflight.yml must run signing_controlled_error_check on workflow_dispatch"
 
-grep -q 'ENV\["ALLOW_CREATE_DISTRIBUTION_CERT"\] == "true"' fastlane/Fastfile \
-  || fail "Fastfile must gate cert creation on ALLOW_CREATE_DISTRIBUTION_CERT==true"
-grep -q 'UI.user_error!(missing_distribution_cert_instructions)' fastlane/Fastfile \
-  || fail "Fastfile must emit missing_distribution_cert_instructions on cache miss"
-grep -q 'No reusable Distribution certificate is available for CI' fastlane/Fastfile \
+grep -q 'SigningDecision.resolve' fastlane/Fastfile \
+  || fail "Fastfile must use SigningDecision.resolve"
+grep -q 'allow_create == "true"' fastlane/lib/signing_decision.rb \
+  || fail "SigningDecision must gate create on allow_create == true exactly"
+grep -q 'UI.user_error!(SigningDecision.controlled_error_message)' fastlane/Fastfile \
+  || fail "Fastfile must emit SigningDecision.controlled_error_message on cache miss"
+grep -q 'No reusable Distribution certificate is available for CI' fastlane/lib/signing_decision.rb \
   || fail "controlled error must mention missing reusable Distribution certificate"
-if grep -A20 'missing_distribution_cert_instructions do' fastlane/Fastfile | \
+if grep -A25 'CONTROLLED_ERROR_MESSAGE' fastlane/lib/signing_decision.rb | \
    grep -q 'Could not create another Distribution certificate'; then
   fail "controlled error must not contain Apple quota phrase"
 fi
@@ -38,6 +45,9 @@ if grep -n 'cert(' fastlane/Fastfile | grep -qv 'create_and_cache_distribution_c
     fail "cert() must not be called directly from install_api_signing"
   fi
 fi
+if grep -n 'cert(' fastlane/Fastfile | grep -q 'signing_controlled_error_check'; then
+  fail "cert() must not be called from signing_controlled_error_check"
+fi
 
 grep -A5 'sigh(' fastlane/Fastfile | grep -q 'api_key: api_key' || fail "sigh must pass api_key"
 grep -A5 'sigh(' fastlane/Fastfile | grep -q 'app_identifier: BUNDLE_IDENTIFIER' || fail "sigh must pass app_identifier"
@@ -46,6 +56,6 @@ if grep -A8 'sigh(' fastlane/Fastfile | grep -q 'keychain_path'; then
   fail "sigh must not pass keychain_path"
 fi
 
-echo "CONTROLLED_PATH_OK: cache-miss without ALLOW calls UI.user_error!(missing_distribution_cert_instructions)"
+echo "CONTROLLED_PATH_OK: SigningDecision unit tests + Fastfile dispatch verified"
 echo "CONTROLLED_PATH_MESSAGE: No reusable Distribution certificate is available for CI"
 echo "OK: TestFlight signing contract checks passed"
