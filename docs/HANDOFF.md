@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `chore/safe-dev-flow` |
-| Next branch | (create before first code change on next task) |
+| Active branch | `main` |
+| Next branch | `feat/place-detail-map-preview` (or next backlog item) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Safe dev flow — PR build CI + workflow docs |
-| Last verified | Pending PR Build + merge + TestFlight |
+| Working tree | Safe dev flow merged (#13); PR Build + TestFlight CI active on `main` |
+| Last verified | PR #13 merged 2026-06-25; TestFlight deploy triggered on `main` push |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -62,7 +62,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `AppIcon.appiconset/`, `scripts/generate-app-icon.py`, `project.pbxproj`
 
-## Shipped on `chore/safe-dev-flow` (2026-06-25)
+## Merged on `main` — safe dev flow (`chore/safe-dev-flow` → #13, 2026-06-25)
 
 - **`.github/workflows/pr-build.yml`** — simulator compile check on PRs to `main` and pushes to `feat/**` `fix/**` `chore/**` `refactor/**`
 - **`scripts/ci-build.sh`** — shared CI build script (secrets + xcodebuild, no launch)
