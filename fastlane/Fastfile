@@ -1,7 +1,13 @@
+require "fileutils"
+require "securerandom"
+
 default_platform(:ios)
 
 PRE_RELEASE_VERSION_PREFIX = "0.0."
 INITIAL_PRE_RELEASE_VERSION = "0.0.1"
+SIGNING_CACHE_DIR = File.expand_path("signing", __dir__)
+BUNDLE_IDENTIFIER = "com.ijaejun.gumimap-v2"
+TEAM_ID = "T5CBR768BM"
 
 platform :ios do
   before_all do
@@ -22,27 +28,118 @@ platform :ios do
     sh("cd .. && ./scripts/generate-secrets.sh")
   end
 
-  private_lane :configure_signing do
-    if ENV["PROVISIONING_PROFILE_NAME"]
-      update_code_signing_settings(
-        use_automatic_signing: false,
-        path: "gumimap-v2.xcodeproj",
-        targets: ["gumimap-v2"],
-        team_id: "T5CBR768BM",
-        bundle_identifier: "com.ijaejun.gumimap-v2",
-        profile_name: ENV.fetch("PROVISIONING_PROFILE_NAME"),
-        code_sign_identity: "Apple Distribution"
-      )
-      return
-    end
-
+  private_lane :apply_manual_signing do |options|
+    profile_name = options.fetch(:profile_name)
     update_code_signing_settings(
-      use_automatic_signing: true,
+      use_automatic_signing: false,
       path: "gumimap-v2.xcodeproj",
       targets: ["gumimap-v2"],
-      team_id: "T5CBR768BM",
-      bundle_identifier: "com.ijaejun.gumimap-v2"
+      team_id: TEAM_ID,
+      bundle_identifier: BUNDLE_IDENTIFIER,
+      profile_name: profile_name,
+      code_sign_identity: "Apple Distribution"
     )
+  end
+
+  private_lane :signing_cache_password do
+    pass_file = File.join(SIGNING_CACHE_DIR, ".p12-pass")
+    return File.read(pass_file).strip if File.exist?(pass_file)
+
+    FileUtils.mkdir_p(SIGNING_CACHE_DIR)
+    password = SecureRandom.hex(16)
+    File.write(pass_file, password)
+    password
+  end
+
+  private_lane :import_cached_distribution_p12 do |options|
+    p12_path = options.fetch(:p12_path)
+    password = options.fetch(:password)
+    keychain_path = options.fetch(:keychain_path)
+
+    sh(
+      "security", "import", p12_path,
+      "-P", password,
+      "-A", "-t", "cert", "-f", "pkcs12",
+      "-k", keychain_path
+    )
+    sh(
+      "security", "set-key-partition-list",
+      "-S", "apple-tool:,apple:,codesign:",
+      "-s", "-k", password, keychain_path
+    )
+  end
+
+  private_lane :export_distribution_p12 do |options|
+    output_path = options.fetch(:output_path)
+    password = options.fetch(:password)
+    keychain_path = options.fetch(:keychain_path)
+
+    identity_line = sh(
+      "security", "find-identity", "-v", "-p", "codesigning", keychain_path
+    ).lines.find { |line| line.include?("Apple Distribution") }
+
+    UI.user_error!("No Apple Distribution identity found in CI keychain") if identity_line.nil?
+
+    cert_hash = identity_line.match(/^\s*\d+\)\s+(\h+)\s+/)[1]
+    sh(
+      "security", "export",
+      "-k", keychain_path,
+      "-c", cert_hash,
+      "-t", "identities",
+      "-f", "pkcs12",
+      "-o", output_path,
+      "-P", password
+    )
+  end
+
+  private_lane :install_api_signing do |options|
+    api_key = options[:api_key]
+    keychain_path = ENV.fetch("KEYCHAIN_PATH")
+    keychain_password = ENV.fetch("KEYCHAIN_PASSWORD")
+    p12_path = File.join(SIGNING_CACHE_DIR, "distribution.p12")
+    profile_cache_path = File.join(SIGNING_CACHE_DIR, "profile.mobileprovision")
+    p12_password = signing_cache_password
+
+    FileUtils.mkdir_p(SIGNING_CACHE_DIR)
+
+    if File.exist?(p12_path)
+      UI.message("Reusing cached distribution certificate from #{p12_path}")
+      import_cached_distribution_p12(
+        p12_path: p12_path,
+        password: p12_password,
+        keychain_path: keychain_path
+      )
+    else
+      UI.message("No cached distribution certificate; creating one via App Store Connect API")
+      cert(
+        api_key: api_key,
+        development: false,
+        force: false,
+        keychain_path: keychain_path,
+        keychain_password: keychain_password
+      )
+      export_distribution_p12(
+        output_path: p12_path,
+        password: p12_password,
+        keychain_path: keychain_path
+      )
+      UI.success("Cached new distribution certificate for future CI runs")
+    end
+
+    sigh(
+      api_key: api_key,
+      app_identifier: BUNDLE_IDENTIFIER,
+      force: false,
+      keychain_path: keychain_path,
+      keychain_password: keychain_password
+    )
+
+    downloaded_profile = lane_context[SharedValues::SIGH_PROFILE_PATH]
+    profile_name = lane_context[SharedValues::SIGH_NAME]
+    FileUtils.cp(downloaded_profile, profile_cache_path)
+
+    apply_manual_signing(profile_name: profile_name)
+    profile_name
   end
 
   private_lane :next_marketing_version do |options|
@@ -86,23 +183,18 @@ platform :ios do
     latest + 1
   end
 
-  private_lane :install_distribution_cert do |options|
-    api_key = options[:api_key]
-    cert(
-      api_key: api_key,
-      development: false,
-      force: false,
-      keychain_path: ENV["KEYCHAIN_PATH"],
-      keychain_password: ENV["KEYCHAIN_PASSWORD"]
-    )
-  end
-
   desc "Build and upload a beta build to TestFlight"
   lane :beta do
     api_key = asc_api_key
     prepare_app_secrets
-    configure_signing
-    install_distribution_cert(api_key: api_key)
+
+    profile_name =
+      if ENV["PROVISIONING_PROFILE_NAME"]
+        apply_manual_signing(profile_name: ENV.fetch("PROVISIONING_PROFILE_NAME"))
+        ENV.fetch("PROVISIONING_PROFILE_NAME")
+      else
+        install_api_signing(api_key: api_key)
+      end
 
     marketing_version = next_marketing_version(api_key: api_key)
     build_number = next_build_number(
@@ -123,10 +215,6 @@ platform :ios do
     )
 
     xcode_auth_args = [
-      "-allowProvisioningUpdates",
-      "-authenticationKeyPath", ENV.fetch("ASC_KEY_PATH"),
-      "-authenticationKeyID", ENV.fetch("ASC_KEY_ID"),
-      "-authenticationKeyIssuerID", ENV.fetch("ASC_ISSUER_ID"),
       "MARKETING_VERSION=#{marketing_version}",
       "CURRENT_PROJECT_VERSION=#{build_number}"
     ].join(" ")
@@ -142,18 +230,14 @@ platform :ios do
       xcargs: xcode_auth_args
     }
 
-    if ENV["PROVISIONING_PROFILE_NAME"]
-      build_options[:export_options] = {
-        provisioningProfiles: {
-          "com.ijaejun.gumimap-v2" => ENV.fetch("PROVISIONING_PROFILE_NAME")
-        }
+    build_options[:export_options] = {
+      method: "app-store",
+      signingStyle: "manual",
+      teamID: TEAM_ID,
+      provisioningProfiles: {
+        BUNDLE_IDENTIFIER => profile_name
       }
-    else
-      build_options[:export_options] = {
-        signingStyle: "automatic",
-        teamID: "T5CBR768BM"
-      }
-    end
+    }
 
     build_app(build_options)
 
