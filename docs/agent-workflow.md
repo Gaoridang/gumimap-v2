@@ -75,9 +75,11 @@ When a task is complex (new architecture, unfamiliar APIs, multi-screen flows, o
 3. Present the demo to the user for review
 4. Only proceed to full implementation after user approval
 
-## 7. Simulator Verification
+## 7. Verification (Simulator or CI + TestFlight)
 
 After completing work that touches app code, UI, assets, or build settings:
+
+### When Xcode is available (Mac)
 
 ```bash
 chmod +x scripts/run-simulator.sh
@@ -86,11 +88,62 @@ chmod +x scripts/run-simulator.sh
 
 **Done when:** script exits 0 and `com.ijaejun.gumimap-v2` launches in the simulator.
 
+### When Xcode is not available (Windows / remote)
+
+Use the PR → merge → TestFlight flow (see §9). **Done when:**
+
+1. PR Build workflow passes on the feature branch
+2. PR is merged to `main`
+3. TestFlight workflow completes
+4. User confirms behavior on a physical device via TestFlight
+
 ## 8. No Unit Tests
 
 - Do **not** write or modify files in `gumimap-v2Tests/`
 - Do **not** run `xcodebuild test` or unit test targets
 - Verification is via build + simulator launch only
+
+## 9. Safe Dev Flow (No Local Xcode)
+
+Default workflow when developing without a Mac:
+
+```
+main
+ └── <type>/<task>          # branch before first code change
+       ├── commit
+       ├── push
+       ├── open PR → main
+       ├── PR Build passes   # .github/workflows/pr-build.yml
+       ├── merge to main
+       ├── TestFlight deploy # .github/workflows/testflight.yml
+       └── verify on device
+```
+
+### Rules
+
+| Step | Rule |
+|------|------|
+| Branch | One task per branch; never commit feature work directly on `main` |
+| PR | Always open a PR; wait for **PR Build** to pass before merge |
+| Scope | Keep PRs small (1–3 files, one screen/behavior) |
+| pbxproj | Avoid editing `project.pbxproj` unless adding files is unavoidable |
+| Reuse | Prefer existing components over new abstractions |
+| Handoff | Update `docs/HANDOFF.md` after merge |
+| TestFlight | User verifies on device; agent records checklist in PR description |
+
+### CI workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `pr-build.yml` | PR to `main`, push to `feat/**` `fix/**` `chore/**` `refactor/**` | Simulator compile check |
+| `testflight.yml` | Push to `main`, manual dispatch | Build + upload to TestFlight |
+
+### Scripts
+
+| Script | Use |
+|--------|-----|
+| `scripts/ci-build.sh` | CI compile check (no simulator launch) |
+| `scripts/run-simulator.sh` | Local Mac build + simulator launch |
 
 ## References
 

@@ -1,16 +1,25 @@
 # Session Handoff — gumimap-v2
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
 
 ## Resume Here
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `chore/safe-dev-flow` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | List default tab + map button styling (merged) |
-| Last verified | iOS 26.5 simulator launch (2026-06-24) |
+| Working tree | Safe dev flow — PR build CI + workflow docs |
+| Last verified | Pending PR Build + merge + TestFlight |
+| Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
+
+### Safe dev flow (no local Xcode)
+
+```
+feat|fix|chore/<task>  →  push  →  PR  →  PR Build ✅  →  merge main  →  TestFlight  →  폰 확인
+```
+
+See `docs/agent-workflow.md` §9 for full rules.
 
 ## Shipped on `feat/random-restaurant-picker` (2026-06-24)
 
@@ -53,15 +62,22 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `AppIcon.appiconset/`, `scripts/generate-app-icon.py`, `project.pbxproj`
 
+## Shipped on `chore/safe-dev-flow` (2026-06-25)
+
+- **`.github/workflows/pr-build.yml`** — simulator compile check on PRs to `main` and pushes to `feat/**` `fix/**` `chore/**` `refactor/**`
+- **`scripts/ci-build.sh`** — shared CI build script (secrets + xcodebuild, no launch)
+- **`.github/pull_request_template.md`** — PR summary + TestFlight verification checklist
+- **`docs/agent-workflow.md` §9** — safe dev flow for Windows / no-Xcode workflow
+
+**Key paths:** `.github/workflows/pr-build.yml`, `scripts/ci-build.sh`, `.github/pull_request_template.md`, `docs/agent-workflow.md`
+
 ## Next Task — Backlog
 
-Pick up from backlog below.
+Pick up from backlog below (use safe dev flow: branch → PR → PR Build → merge → TestFlight).
 
-- Merge `feat/random-restaurant-picker` → `main` to trigger TestFlight build for reinstall verification
-
+- Place detail map preview
 - Map sheet edit parity — add "정보 수정" to `MapPlaceSheet` `...` menu (detail view already has it)
 - Saved detail Grok re-enrichment
-- Place detail map preview
 - Kakao REST API search gaps (e.g. 와일드차일드)
 - Fix `run-simulator.sh` UDID fallback edge cases
 

@@ -29,10 +29,11 @@ This is the single source of truth for all AI coding agents (Grok, Claude, Curso
 
 ## Session End Checklist (After a Completed Task)
 
-1. Verify build and simulator launch (`scripts/run-simulator.sh`)
+1. Verify build — simulator (`scripts/run-simulator.sh`) on Mac, or PR Build → merge → TestFlight on Windows (see `docs/agent-workflow.md` §9)
 2. Update `docs/HANDOFF.md`
 3. Commit on the task branch
-4. Leave the branch as-is unless the user asks to merge
+4. Open PR to `main` (do not push feature work directly to `main`)
+5. Leave the branch as-is unless the user asks to merge
 
 ---
 

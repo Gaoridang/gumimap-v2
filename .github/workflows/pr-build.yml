@@ -1,0 +1,45 @@
+name: PR Build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
+      - "refactor/**"
+  workflow_dispatch:
+
+concurrency:
+  group: pr-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compile for iOS Simulator
+    runs-on: macos-26
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26.5
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.5"
+
+      - name: Generate app secrets
+        run: |
+          cat > Config/secrets.local.env <<EOF
+          KAKAO_NATIVE_APP_KEY=${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
+          XAI_API_KEY=${{ secrets.XAI_API_KEY }}
+          EOF
+          chmod +x scripts/ci-build.sh scripts/generate-secrets.sh
+
+      - name: Build for simulator
+        run: ./scripts/ci-build.sh
