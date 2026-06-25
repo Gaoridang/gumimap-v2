@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      allow_create_distribution_cert:
+        description: "Bootstrap only — create a new Distribution cert (default false)"
+        type: boolean
+        default: false
 
 concurrency:
   group: testflight-${{ github.ref }}
@@ -69,9 +74,24 @@ jobs:
         id: signing-cache
         with:
           path: fastlane/signing
-          key: signing-v2-${{ runner.os }}
+          key: signing-v3-${{ runner.os }}-${{ hashFiles('fastlane/signing/distribution.p12', 'fastlane/signing/.p12-pass', 'fastlane/signing/profile.mobileprovision') }}
           restore-keys: |
-            signing-v2-${{ runner.os }}
+            signing-v3-${{ runner.os }}-
+
+      - name: Validate signing cache
+        id: signing-cache-valid
+        run: |
+          set -euo pipefail
+          p12="fastlane/signing/distribution.p12"
+          if [[ -f "$p12" ]] && [[ $(wc -c < "$p12" | tr -d ' ') -ge 1000 ]]; then
+            echo "valid=true" >> "$GITHUB_OUTPUT"
+            echo "Signing cache contains a usable distribution.p12"
+          else
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            rm -rf fastlane/signing
+            mkdir -p fastlane/signing
+            echo "Signing cache miss or invalid; cleared for bootstrap"
+          fi
 
       - name: Install signing from repository secrets
         env:
@@ -90,13 +110,12 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ${{ env.ASC_KEY_PATH }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
-          # Set repository variable ALLOW_CREATE_DISTRIBUTION_CERT=true only for
-          # the one-time bootstrap run; Fastfile revokes orphaned portal certs first.
-          ALLOW_CREATE_DISTRIBUTION_CERT: ${{ vars.ALLOW_CREATE_DISTRIBUTION_CERT }}
+          # Manual dispatch defaults to false; push uses repo variable for one-time bootstrap.
+          ALLOW_CREATE_DISTRIBUTION_CERT: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.allow_create_distribution_cert) || vars.ALLOW_CREATE_DISTRIBUTION_CERT }}
 
       - name: Save signing cache
         uses: actions/cache/save@v4
-        if: always()
+        if: always() && steps.signing-cache-valid.outputs.valid != 'true' && hashFiles('fastlane/signing/distribution.p12') != ''
         with:
           path: fastlane/signing
-          key: signing-v2-${{ runner.os }}
+          key: signing-v3-${{ runner.os }}-${{ hashFiles('fastlane/signing/distribution.p12', 'fastlane/signing/.p12-pass', 'fastlane/signing/profile.mobileprovision') }}

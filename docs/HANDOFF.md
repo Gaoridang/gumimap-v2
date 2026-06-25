@@ -95,9 +95,9 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 - `actions/cache/restore@v4` + `actions/cache/save@v4` (`if: always()`) with key `signing-v2-*` persists `fastlane/signing/`
 - `cert()` only when `ALLOW_CREATE_DISTRIBUTION_CERT=="true"` exactly; otherwise `missing_distribution_cert_instructions`
 
-**Verified:** TestFlight #35 green — revoked orphans, created cert `6C69ZT4689`, cached p12, uploaded 0.0.1 (1).
+**Verified:** TestFlight #35/#36 green — bootstrap path works. Run #35/#36 `actions/cache/save` failed (`Unable to reserve cache with key signing-v2-macOS`); fix in `fix/signing-cache-save` uses `signing-v3` + validate step + save only when cache invalid.
 
-**Post-bootstrap:** Delete repo variable `ALLOW_CREATE_DISTRIBUTION_CERT` so later runs reuse cached signing:
+**Post-bootstrap:** Delete repo variable `ALLOW_CREATE_DISTRIBUTION_CERT` (or use workflow_dispatch with bootstrap=false) so later runs reuse cached signing:
 ```powershell
 .\scripts\bootstrap-testflight-signing.ps1 -Phase disable
 ```
