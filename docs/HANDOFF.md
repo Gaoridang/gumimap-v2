@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/place-detail-map-preview` |
-| Next branch | (create before first code change on next task) |
+| Active branch | `main` |
+| Next branch | `feat/map-sheet-edit-parity` (or next backlog item) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | Place detail map preview — Kakao embed + tap to open map |
-| Last verified | Pending PR Build + merge + TestFlight |
+| Working tree | Place detail map preview merged (#14); TestFlight deploy pending |
+| Last verified | PR #14 merged 2026-06-25; verify map preview on TestFlight |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -71,7 +71,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `.github/workflows/pr-build.yml`, `scripts/ci-build.sh`, `.github/pull_request_template.md`, `docs/agent-workflow.md`
 
-## Shipped on `feat/place-detail-map-preview` (2026-06-25)
+## Merged on `main` — place detail map preview (`feat/place-detail-map-preview` → #14, 2026-06-25)
 
 - **`PlaceDetailMapPreview`** — 180pt Kakao map embed at top of place detail; unified teardrop pin; pauses when scrolled off-screen
 - **Saved detail** — tap preview → `TabRouter.openSavedPlaceOnMap` (replaces separate "지도에서 보기" row)
