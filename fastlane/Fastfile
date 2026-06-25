@@ -1,5 +1,8 @@
 default_platform(:ios)
 
+PRE_RELEASE_VERSION_PREFIX = "0.0."
+INITIAL_PRE_RELEASE_VERSION = "0.0.1"
+
 platform :ios do
   before_all do
     setup_ci if ENV["CI"]
@@ -42,15 +45,45 @@ platform :ios do
     )
   end
 
+  private_lane :next_marketing_version do |options|
+    _api_key = options[:api_key]
+    override = ENV["MARKETING_VERSION"]&.strip
+    return override unless override.nil? || override.empty?
+
+    ensure_connect_api_token
+
+    begin
+      app = Spaceship::ConnectAPI::App.find("com.ijaejun.gumimap-v2")
+      versions = Spaceship::ConnectAPI::PreReleaseVersion.all(
+        filter: { app: app.id },
+        limit: 50
+      )
+      matching = versions
+        .map(&:version)
+        .select { |version| version.start_with?(PRE_RELEASE_VERSION_PREFIX) }
+
+      if matching.empty?
+        INITIAL_PRE_RELEASE_VERSION
+      else
+        latest = matching.max_by { |version| Gem::Version.new(version) }
+        bump_patch_version(latest)
+      end
+    rescue => error
+      UI.important("ASC pre-release version lookup failed (#{error.message}); using #{INITIAL_PRE_RELEASE_VERSION}")
+      INITIAL_PRE_RELEASE_VERSION
+    end
+  end
+
   private_lane :next_build_number do |options|
     api_key = options[:api_key]
-    run_number = ENV.fetch("GITHUB_RUN_NUMBER", "0").to_i
+    marketing_version = options[:marketing_version]
     latest = latest_testflight_build_number(
       api_key: api_key,
       app_identifier: "com.ijaejun.gumimap-v2",
+      version: marketing_version,
       initial_build_number: 0
     )
-    [run_number, latest + 1].max
+    latest + 1
   end
 
   desc "Build and upload a beta build to TestFlight"
@@ -59,8 +92,19 @@ platform :ios do
     prepare_app_secrets
     configure_signing
 
-    build_number = next_build_number(api_key: api_key).to_s
-    UI.message("Using build number #{build_number} (marketing version stays at Xcode MARKETING_VERSION)")
+    marketing_version = next_marketing_version(api_key: api_key)
+    build_number = next_build_number(
+      api_key: api_key,
+      marketing_version: marketing_version
+    ).to_s
+
+    UI.message("Using marketing version #{marketing_version} (build #{build_number})")
+
+    increment_version_number(
+      version_number: marketing_version,
+      xcodeproj: "gumimap-v2.xcodeproj",
+      target: "gumimap-v2"
+    )
 
     increment_build_number(
       build_number: build_number,
@@ -72,6 +116,7 @@ platform :ios do
       "-authenticationKeyPath", ENV.fetch("ASC_KEY_PATH"),
       "-authenticationKeyID", ENV.fetch("ASC_KEY_ID"),
       "-authenticationKeyIssuerID", ENV.fetch("ASC_ISSUER_ID"),
+      "MARKETING_VERSION=#{marketing_version}",
       "CURRENT_PROJECT_VERSION=#{build_number}"
     ].join(" ")
 
@@ -107,4 +152,23 @@ platform :ios do
       distribute_external: false
     )
   end
+end
+
+def bump_patch_version(version)
+  segments = version.to_s.split(".").map(&:to_i)
+  segments << 0 while segments.length < 3
+  segments[2] += 1
+  segments.join(".")
+end
+
+def ensure_connect_api_token
+  return if Spaceship::ConnectAPI.token
+
+  Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+    key_id: ENV.fetch("ASC_KEY_ID"),
+    issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+    filepath: ENV.fetch("ASC_KEY_PATH"),
+    duration: 1200,
+    in_house: false
+  )
 end
