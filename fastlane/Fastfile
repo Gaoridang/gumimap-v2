@@ -71,19 +71,20 @@ platform :ios do
 
   private_lane :import_cached_distribution_p12 do |options|
     p12_path = options.fetch(:p12_path)
-    password = options.fetch(:password)
+    p12_password = options.fetch(:p12_password)
     keychain_path = options.fetch(:keychain_path)
+    keychain_password = options.fetch(:keychain_password)
 
     sh(
       "security", "import", p12_path,
-      "-P", password,
+      "-P", p12_password,
       "-A", "-t", "cert", "-f", "pkcs12",
       "-k", keychain_path
     )
     sh(
       "security", "set-key-partition-list",
       "-S", "apple-tool:,apple:,codesign:",
-      "-s", "-k", password, keychain_path
+      "-s", "-k", keychain_password, keychain_path
     )
   end
 
@@ -234,8 +235,9 @@ platform :ios do
       UI.message("Reusing cached distribution certificate from #{p12_path}")
       import_cached_distribution_p12(
         p12_path: p12_path,
-        password: p12_password,
-        keychain_path: keychain_path
+        p12_password: p12_password,
+        keychain_path: keychain_path,
+        keychain_password: keychain_password
       )
     else
       ensure_distribution_p12_cache(
@@ -248,8 +250,9 @@ platform :ios do
         UI.message("Reusing distribution certificate exported into signing cache")
         import_cached_distribution_p12(
           p12_path: p12_path,
-          password: p12_password,
-          keychain_path: keychain_path
+          p12_password: p12_password,
+          keychain_path: keychain_path,
+          keychain_password: keychain_password
         )
       elsif ENV["ALLOW_CREATE_DISTRIBUTION_CERT"] == "true"
         UI.important("ALLOW_CREATE_DISTRIBUTION_CERT=true — creating a new Distribution certificate")
