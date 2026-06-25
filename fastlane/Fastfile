@@ -142,6 +142,23 @@ platform :ios do
     profile_name
   end
 
+  private_lane :ensure_asc_version do |options|
+    marketing_version = options.fetch(:marketing_version)
+    ensure_connect_api_token
+
+    app = Spaceship::ConnectAPI::App.find(BUNDLE_IDENTIFIER)
+    changed = app.ensure_version!(
+      marketing_version,
+      platform: Spaceship::ConnectAPI::Platform::IOS
+    )
+
+    if changed
+      UI.success("Created App Store Connect version train #{marketing_version}")
+    else
+      UI.message("App Store Connect version train #{marketing_version} is ready")
+    end
+  end
+
   private_lane :next_marketing_version do |options|
     _api_key = options[:api_key]
     override = ENV["MARKETING_VERSION"]&.strip
@@ -203,6 +220,7 @@ platform :ios do
     ).to_s
 
     UI.message("Using marketing version #{marketing_version} (build #{build_number})")
+    ensure_asc_version(marketing_version: marketing_version)
 
     increment_version_number(
       version_number: marketing_version,
