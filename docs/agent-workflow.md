@@ -135,8 +135,8 @@ main
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `pr-build.yml` | PR to `main`, push to `feat/**` `fix/**` `chore/**` `refactor/**` | Simulator compile check |
-| `testflight.yml` | Push to `main`, manual dispatch | Build + upload to TestFlight |
+| `pr-build.yml` | PR to `main`, push to `feat/**` `fix/**` `chore/**` `refactor/**` | Simulator compile check (DerivedData + SPM cache, optimized `ci-build.sh`) |
+| `testflight.yml` | Push to `main` (app/CI paths only; `docs/**` ignored), manual dispatch | Build + upload to TestFlight |
 
 ### Scripts
 

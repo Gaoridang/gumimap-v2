@@ -41,5 +41,47 @@ jobs:
           EOF
           chmod +x scripts/ci-build.sh scripts/generate-secrets.sh
 
+      - name: Restore PR build cache
+        uses: actions/cache/restore@v4
+        id: pr-build-cache
+        with:
+          path: |
+            /tmp/gumimap-v2-ci-build
+            /tmp/gumimap-v2-spm-packages
+          key: pr-build-v1-${{ runner.os }}-${{ hashFiles('gumimap-v2.xcodeproj/project.pbxproj', 'gumimap-v2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'gumimap-v2/**/*.swift', 'gumimap-v2Tests/**/*.swift', 'gumimap-v2UITests/**/*.swift') }}
+          restore-keys: |
+            pr-build-v1-${{ runner.os }}-${{ hashFiles('gumimap-v2.xcodeproj/project.pbxproj', 'gumimap-v2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+            pr-build-v1-${{ runner.os }}-
+
+      - name: Log cache status
+        run: |
+          if [[ "${{ steps.pr-build-cache.outputs.cache-hit }}" == "true" ]]; then
+            echo "PR build cache: exact hit"
+          else
+            echo "PR build cache: partial or cold restore"
+          fi
+          if [[ -d /tmp/gumimap-v2-ci-build ]]; then
+            du -sh /tmp/gumimap-v2-ci-build || true
+          else
+            echo "(no DerivedData yet)"
+          fi
+          if [[ -d /tmp/gumimap-v2-spm-packages ]]; then
+            du -sh /tmp/gumimap-v2-spm-packages || true
+          else
+            echo "(no SPM packages yet)"
+          fi
+
       - name: Build for simulator
         run: ./scripts/ci-build.sh
+        env:
+          DERIVED_DATA: /tmp/gumimap-v2-ci-build
+          SPM_PACKAGES_DIR: /tmp/gumimap-v2-spm-packages
+
+      - name: Save PR build cache
+        uses: actions/cache/save@v4
+        if: success() && steps.pr-build-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            /tmp/gumimap-v2-ci-build
+            /tmp/gumimap-v2-spm-packages
+          key: pr-build-v1-${{ runner.os }}-${{ hashFiles('gumimap-v2.xcodeproj/project.pbxproj', 'gumimap-v2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'gumimap-v2/**/*.swift', 'gumimap-v2Tests/**/*.swift', 'gumimap-v2UITests/**/*.swift') }}
