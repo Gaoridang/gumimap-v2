@@ -60,9 +60,10 @@ switch ($Phase) {
         Write-Host "TestFlight signing bootstrap (Windows)" -ForegroundColor Green
         Write-Host "Repo: $Repo"
 
-        Write-Step "1" "Revoke orphaned Distribution certificates in the browser"
+        Write-Step "1" "Orphaned Distribution certificates (optional manual revoke)"
+        Write-Host "  Fastfile revokes portal Distribution certs automatically when ALLOW=true."
+        Write-Host "  Manual revoke only if bootstrap still fails:"
         Write-Host "  https://developer.apple.com/account/resources/certificates/list"
-        Write-Host "  Filter: Distribution -> revoke unused CI-created certs (keep 0 if unsure)."
 
         Write-Step "2" "Merge the cert-reuse fix to main and wait for PR Build"
         Write-Host "  Branch: fix/testflight-cert-reuse"
