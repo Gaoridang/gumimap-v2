@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `chore/pr-build-opt-ab-hybrid` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | PR Build A+B cache + flags; TestFlight skips docs-only `main` pushes |
-| Last verified | PR pending — compare warm PR Build duration after merge |
+| Working tree | #37 merged — PR Build cache+flags; TestFlight skips docs-only pushes |
+| Last verified | PR #37 merged; warm PR Build timing TBD |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -111,7 +111,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `fastlane/Fastfile`, `fastlane/lib/signing_decision.rb`, `fastlane/spec/signing_decision_spec.rb`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/verify-testflight-signing-contract.sh`
 
-## In Progress — `chore/pr-build-opt-ab-hybrid` (2026-06-25)
+## Merged on `main` — PR Build optimization (`chore/pr-build-opt-ab-hybrid` → #37, 2026-06-25)
 
 - **PR Build A+B** — DerivedData + SPM cache (`pr-build-v1-*` keys) + `ci-build.sh` compile flags (generic destination, parallel jobs, index store off)
 - **TestFlight `paths-ignore`** — `docs/**`, `AGENTS.md`, PR template; docs-only HANDOFF updates no longer deploy
