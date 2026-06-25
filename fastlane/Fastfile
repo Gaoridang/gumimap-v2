@@ -291,6 +291,13 @@ platform :ios do
 
   private_lane :ensure_asc_version do |options|
     marketing_version = options.fetch(:marketing_version)
+    if marketing_version.to_s.strip.empty?
+      UI.user_error!(
+        "Cannot ensure App Store Connect version: marketing_version is empty. " \
+        "Check MARKETING_VERSION in #{XCODEPROJ} (target: #{APP_TARGET})."
+      )
+    end
+
     ensure_connect_api_token
 
     app = Spaceship::ConnectAPI::App.find(BUNDLE_IDENTIFIER)
@@ -303,6 +310,26 @@ platform :ios do
       UI.success("Created App Store Connect version train #{marketing_version}")
     else
       UI.message("App Store Connect version train #{marketing_version} is ready")
+    end
+  end
+
+  private_lane :current_marketing_version do
+    get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
+    version = Actions.lane_context[SharedValues::VERSION_NUMBER]
+    UI.message("Project marketing version: #{version}")
+    version
+  end
+
+  private_lane :release_marketing_version do
+    override = ENV["MARKETING_VERSION"]&.strip
+    if override.nil? || override.empty?
+      get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
+      bumped = bump_patch_version(Actions.lane_context[SharedValues::VERSION_NUMBER])
+      UI.message("Release marketing version (bumped): #{bumped}")
+      bumped
+    else
+      UI.message("Release marketing version (override): #{override}")
+      override
     end
   end
 
@@ -320,10 +347,10 @@ platform :ios do
     api_key = options.fetch(:api_key)
     bump_version = options.fetch(:bump_version, false)
 
-    marketing_version = resolve_marketing_version(bump_version: bump_version)
+    marketing_version = bump_version ? release_marketing_version : current_marketing_version
     if marketing_version.to_s.strip.empty?
       UI.user_error!(
-        "Marketing version is empty. Set MARKETING_VERSION in #{XCODEPROJ} (target: #{APP_TARGET})."
+        "Marketing version is empty after reading #{XCODEPROJ} (target: #{APP_TARGET})."
       )
     end
 
@@ -432,22 +459,6 @@ platform :ios do
       marketing_version: versions[:marketing_version],
       build_number: versions[:build_number]
     )
-  end
-end
-
-def resolve_marketing_version(bump_version:)
-  project_version = get_version_number(
-    xcodeproj: XCODEPROJ,
-    target: APP_TARGET
-  )
-
-  return project_version unless bump_version
-
-  override = ENV["MARKETING_VERSION"]&.strip
-  if override.nil? || override.empty?
-    bump_patch_version(project_version)
-  else
-    override
   end
 end
 

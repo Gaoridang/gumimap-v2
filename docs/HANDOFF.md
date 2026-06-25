@@ -117,7 +117,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Cause:** `prepare_version_numbers` assigned `marketing_version` from the `current_marketing_version` sub-lane. Fastlane sub-lane return values do not propagate when the lane’s last step is an action (`get_version_number`).
 
-**Fix:** `resolve_marketing_version` helper calls `get_version_number(xcodeproj:, target: gumimap-v2)` directly from `prepare_version_numbers`; guard empty version; pass `target` to increment actions.
+**Fix:** `current_marketing_version` / `release_marketing_version` lanes call `get_version_number(xcodeproj:, target: gumimap-v2)` and return `Actions.lane_context[SharedValues::VERSION_NUMBER]` (sub-lane action-only returns are empty in fastlane). Guards in `prepare_version_numbers` and `ensure_asc_version`. `fastlane/spec/marketing_version_spec.rb` verifies structure + pbxproj `0.0.1`.
 
 **Key paths:** `fastlane/Fastfile`
 
