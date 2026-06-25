@@ -139,7 +139,6 @@ platform :ios do
     ensure_connect_api_token
 
     distribution_types = %w[
-      APPLE_DISTRIBUTION
       IOS_DISTRIBUTION
       DISTRIBUTION
     ]
