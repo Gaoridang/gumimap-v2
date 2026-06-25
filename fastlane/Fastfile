@@ -135,6 +135,72 @@ platform :ios do
     end
   end
 
+  private_lane :revoke_orphaned_distribution_certs do
+    ensure_connect_api_token
+
+    distribution_types = %w[
+      APPLE_DISTRIBUTION
+      IOS_DISTRIBUTION
+      DISTRIBUTION
+    ]
+
+    revoked = 0
+    distribution_types.each do |certificate_type|
+      Spaceship::ConnectAPI::Certificate.all(
+        filter: { certificateType: certificate_type }
+      ).each do |certificate|
+        UI.important(
+          "Revoking orphaned Distribution certificate #{certificate.id} " \
+          "(#{certificate.display_name || certificate.name})"
+        )
+        certificate.delete!
+        revoked += 1
+      end
+    end
+
+    UI.message("Revoked #{revoked} Distribution certificate(s) from App Store Connect") if revoked.positive?
+  end
+
+  private_lane :create_and_cache_distribution_cert do |options|
+    api_key = options.fetch(:api_key)
+    keychain_path = options.fetch(:keychain_path)
+    keychain_password = options.fetch(:keychain_password)
+    p12_path = options.fetch(:p12_path)
+    p12_password = options.fetch(:p12_password)
+
+    revoke_orphaned_distribution_certs
+
+    begin
+      cert(
+        api_key: api_key,
+        development: false,
+        force: false,
+        keychain_path: keychain_path,
+        keychain_password: keychain_password
+      )
+    rescue StandardError => error
+      quota_error = error.message.include?("maximum number of available Distribution certificates")
+      raise error unless quota_error
+
+      UI.important("Distribution cert quota still full — revoking portal certs and retrying once")
+      revoke_orphaned_distribution_certs
+      cert(
+        api_key: api_key,
+        development: false,
+        force: false,
+        keychain_path: keychain_path,
+        keychain_password: keychain_password
+      )
+    end
+
+    export_distribution_p12(
+      output_path: p12_path,
+      password: p12_password,
+      keychain_path: keychain_path
+    )
+    UI.success("Cached new distribution certificate for future CI runs")
+  end
+
   private_lane :missing_distribution_cert_instructions do
     <<~MSG
       No reusable Distribution certificate is available for CI.
@@ -188,19 +254,13 @@ platform :ios do
         )
       elsif ENV["ALLOW_CREATE_DISTRIBUTION_CERT"] == "true"
         UI.important("ALLOW_CREATE_DISTRIBUTION_CERT=true — creating a new Distribution certificate")
-        cert(
+        create_and_cache_distribution_cert(
           api_key: api_key,
-          development: false,
-          force: false,
           keychain_path: keychain_path,
-          keychain_password: keychain_password
+          keychain_password: keychain_password,
+          p12_path: p12_path,
+          p12_password: p12_password
         )
-        export_distribution_p12(
-          output_path: p12_path,
-          password: p12_password,
-          keychain_path: keychain_path
-        )
-        UI.success("Cached new distribution certificate for future CI runs")
       else
         UI.user_error!(missing_distribution_cert_instructions)
       end

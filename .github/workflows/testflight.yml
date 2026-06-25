@@ -65,13 +65,13 @@ jobs:
           working-directory: .
 
       - name: Restore signing cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
+        id: signing-cache
         with:
           path: fastlane/signing
-          key: signing-v1-${{ runner.os }}
+          key: signing-v2-${{ runner.os }}
           restore-keys: |
-            signing-v1-${{ runner.os }}
-          save-always: true
+            signing-v2-${{ runner.os }}
 
       - name: Install signing from repository secrets
         env:
@@ -91,5 +91,12 @@ jobs:
           ASC_KEY_PATH: ${{ env.ASC_KEY_PATH }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
           # Set repository variable ALLOW_CREATE_DISTRIBUTION_CERT=true only for
-          # the one-time bootstrap run after revoking orphaned Apple certs.
+          # the one-time bootstrap run; Fastfile revokes orphaned portal certs first.
           ALLOW_CREATE_DISTRIBUTION_CERT: ${{ vars.ALLOW_CREATE_DISTRIBUTION_CERT }}
+
+      - name: Save signing cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: fastlane/signing
+          key: signing-v2-${{ runner.os }}

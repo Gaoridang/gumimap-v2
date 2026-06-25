@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/testflight-cert-reuse` |
+| Active branch | `fix/testflight-ci-signing` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | TestFlight cert reuse fix — stop auto-creating Distribution certs |
-| Last verified | TestFlight #28 failed: Apple Distribution cert max; cache never seeded |
+| Working tree | TestFlight signing — auto-revoke orphaned certs + cache save fix |
+| Last verified | TestFlight #33 failed: ALLOW=true + cert quota; cache signing-v1 never seeded |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -86,14 +86,15 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
 
-## In progress — TestFlight cert reuse (`fix/testflight-cert-reuse`)
+## In progress — TestFlight CI signing (`fix/testflight-ci-signing`)
 
-**Problem:** TestFlight #28 failed because CI kept calling `cert` on every cache miss. Apple already has 2 orphaned Distribution certs (`9XD3W2MQXF`, `C8RRZNR3J5`) whose private keys were lost on ephemeral runners; GitHub Actions cache for `fastlane/signing` was never seeded.
+**Problem:** TestFlight #33 failed with `ALLOW_CREATE_DISTRIBUTION_CERT=true` on cache miss. Apple portal already had 2 orphaned Distribution certs (`UVT2V5W4VZ`, `V4F3263ZDD`) whose private keys were lost on ephemeral runners; `cert` hit the quota. GitHub Actions cache (`signing-v1`) was never seeded because `save-always` did not persist before the lane failed.
 
 **Fix:**
+- `revoke_orphaned_distribution_certs` lane revokes portal Distribution certs via ASC API before bootstrap `cert`
 - CI no longer auto-creates Distribution certs unless repo variable `ALLOW_CREATE_DISTRIBUTION_CERT=true`
-- `scripts/ci-install-signing.sh` seeds `fastlane/signing/` from GitHub secrets (recommended one-time setup)
-- `actions/cache` uses `save-always: true` so signing cache persists even on failed runs
+- `actions/cache/restore@v4` + `actions/cache/save@v4` (`if: always()`) with key `signing-v2-*` persists `fastlane/signing/`
+- `scripts/ci-install-signing.sh` seeds `fastlane/signing/` from GitHub secrets (alternative one-time setup)
 
 **One-time unblock (Windows / no Mac):**
 ```powershell
