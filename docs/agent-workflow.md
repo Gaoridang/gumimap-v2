@@ -144,6 +144,19 @@ main
 |--------|-----|
 | `scripts/ci-build.sh` | CI compile check (no simulator launch) |
 | `scripts/run-simulator.sh` | Local Mac build + simulator launch |
+| `scripts/bootstrap-testflight-signing.ps1` | Windows one-time TestFlight signing bootstrap |
+| `scripts/encode-signing-secrets.ps1` | Windows: base64-encode p12/profile for GitHub secrets |
+
+### TestFlight signing bootstrap (Windows)
+
+When TestFlight fails with "maximum number of Distribution certificates":
+
+1. Revoke orphaned certs at [developer.apple.com](https://developer.apple.com/account/resources/certificates/list)
+2. `.\scripts\bootstrap-testflight-signing.ps1 -Phase enable`
+3. Merge the cert-reuse fix to `main` and wait for TestFlight to succeed once
+4. `.\scripts\bootstrap-testflight-signing.ps1 -Phase disable`
+
+Later runs reuse the cached `fastlane/signing` directory; CI does not create new certs.
 
 ## References
 

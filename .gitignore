@@ -34,6 +34,8 @@ gumimap-v2/Generated/Secrets.generated.swift
 
 # Signing export helper output
 .ci-signing-export/
+*.p12
+*.mobileprovision
 
 # Ruby / fastlane
 .bundle/

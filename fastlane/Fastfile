@@ -108,6 +108,52 @@ platform :ios do
     )
   end
 
+  private_lane :distribution_identity_in_keychain do |options|
+    keychain_path = options.fetch(:keychain_path)
+    sh(
+      "security", "find-identity", "-v", "-p", "codesigning", keychain_path
+    ).lines.find { |line| line.include?("Apple Distribution") }
+  end
+
+  private_lane :ensure_distribution_p12_cache do |options|
+    p12_path = options.fetch(:p12_path)
+    p12_password = options.fetch(:p12_password)
+    keychain_path = options.fetch(:keychain_path)
+
+    return if File.exist?(p12_path)
+
+    identity_line = distribution_identity_in_keychain(keychain_path: keychain_path)
+    return if identity_line.nil?
+
+    UI.message("Exporting Apple Distribution identity from CI keychain into signing cache")
+    export_distribution_p12(
+      output_path: p12_path,
+      password: p12_password,
+      keychain_path: keychain_path
+    )
+  end
+
+  private_lane :missing_distribution_cert_instructions do
+    <<~MSG
+      No reusable Distribution certificate is available for CI.
+
+      Apple already has orphaned Distribution certificates from earlier CI runs,
+      but their private keys were lost on ephemeral runners. CI will not create
+      new certificates automatically.
+
+      Windows / no-Mac one-time setup:
+        .\\scripts\\bootstrap-testflight-signing.ps1 -Phase enable
+      Then merge this fix, run TestFlight once, and:
+        .\\scripts\\bootstrap-testflight-signing.ps1 -Phase disable
+
+      Mac alternative:
+        ./scripts/export-signing-for-ci.sh
+        Add BUILD_CERTIFICATE_BASE64, P12_PASSWORD, PROVISIONING_PROFILE_BASE64
+
+      After the first successful run, fastlane/signing is cached and reused.
+    MSG
+  end
+
   private_lane :install_api_signing do |options|
     api_key = options[:api_key]
     keychain_path, keychain_password = ci_keychain_credentials
@@ -125,33 +171,68 @@ platform :ios do
         keychain_path: keychain_path
       )
     else
-      UI.message("No cached distribution certificate; creating one via App Store Connect API")
-      cert(
+      ensure_distribution_p12_cache(
+        p12_path: p12_path,
+        p12_password: p12_password,
+        keychain_path: keychain_path
+      )
+
+      if File.exist?(p12_path)
+        UI.message("Reusing distribution certificate exported into signing cache")
+        import_cached_distribution_p12(
+          p12_path: p12_path,
+          password: p12_password,
+          keychain_path: keychain_path
+        )
+      elsif ENV["ALLOW_CREATE_DISTRIBUTION_CERT"] == "true"
+        UI.important("ALLOW_CREATE_DISTRIBUTION_CERT=true — creating a new Distribution certificate")
+        cert(
+          api_key: api_key,
+          development: false,
+          force: false,
+          keychain_path: keychain_path,
+          keychain_password: keychain_password
+        )
+        export_distribution_p12(
+          output_path: p12_path,
+          password: p12_password,
+          keychain_path: keychain_path
+        )
+        UI.success("Cached new distribution certificate for future CI runs")
+      else
+        UI.user_error!(missing_distribution_cert_instructions)
+      end
+    end
+
+    profile_name = nil
+    if File.exist?(profile_cache_path)
+      profile_plist_path = File.join(SIGNING_CACHE_DIR, "profile.plist")
+      sh("security", "cms", "-D", "-i", profile_cache_path, "-o", profile_plist_path)
+      profile_name = sh("/usr/libexec/PlistBuddy", "-c", "Print :Name", profile_plist_path).strip
+      profile_uuid = sh("/usr/libexec/PlistBuddy", "-c", "Print :UUID", profile_plist_path).strip
+      profiles_dir = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+      FileUtils.mkdir_p(profiles_dir)
+      FileUtils.cp(
+        profile_cache_path,
+        File.join(profiles_dir, "#{profile_uuid}.mobileprovision")
+      )
+      FileUtils.rm_f(profile_plist_path)
+      UI.message("Reusing cached provisioning profile: #{profile_name}")
+    end
+
+    if profile_name.nil? || profile_name.empty?
+      sigh(
         api_key: api_key,
-        development: false,
+        app_identifier: BUNDLE_IDENTIFIER,
         force: false,
         keychain_path: keychain_path,
         keychain_password: keychain_password
       )
-      export_distribution_p12(
-        output_path: p12_path,
-        password: p12_password,
-        keychain_path: keychain_path
-      )
-      UI.success("Cached new distribution certificate for future CI runs")
+
+      downloaded_profile = lane_context[SharedValues::SIGH_PROFILE_PATH]
+      profile_name = lane_context[SharedValues::SIGH_NAME]
+      FileUtils.cp(downloaded_profile, profile_cache_path)
     end
-
-    sigh(
-      api_key: api_key,
-      app_identifier: BUNDLE_IDENTIFIER,
-      force: false,
-      keychain_path: keychain_path,
-      keychain_password: keychain_password
-    )
-
-    downloaded_profile = lane_context[SharedValues::SIGH_PROFILE_PATH]
-    profile_name = lane_context[SharedValues::SIGH_NAME]
-    FileUtils.cp(downloaded_profile, profile_cache_path)
 
     apply_manual_signing(profile_name: profile_name)
     profile_name
@@ -220,13 +301,7 @@ platform :ios do
     api_key = asc_api_key
     prepare_app_secrets
 
-    profile_name =
-      if ENV["PROVISIONING_PROFILE_NAME"]
-        apply_manual_signing(profile_name: ENV.fetch("PROVISIONING_PROFILE_NAME"))
-        ENV.fetch("PROVISIONING_PROFILE_NAME")
-      else
-        install_api_signing(api_key: api_key)
-      end
+    profile_name = install_api_signing(api_key: api_key)
 
     marketing_version = next_marketing_version(api_key: api_key)
     build_number = next_build_number(
