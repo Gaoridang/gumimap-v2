@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `fix/fastlane-empty-marketing-version` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | TestFlight build-only versioning merged; next deploy keeps `0.0.1`, build +1 |
-| Last verified | PR #37 merged; warm PR Build timing TBD |
+| Working tree | Fastlane beta fix: read `MARKETING_VERSION` in-lane (not sub-lane return) |
+| Last verified | PR pending for `fix/fastlane-empty-marketing-version` |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -110,6 +110,16 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 ```
 
 **Key paths:** `fastlane/Fastfile`, `fastlane/lib/signing_decision.rb`, `fastlane/spec/signing_decision_spec.rb`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/verify-testflight-signing-contract.sh`
+
+## In progress — Fastlane empty marketing version (`fix/fastlane-empty-marketing-version`, 2026-06-25)
+
+**Problem:** TestFlight `beta` failed at `ensure_asc_version` with `versionString` missing. Lane context showed empty `VERSION_NUMBER`; log had `Using marketing version  (build 3)`.
+
+**Cause:** `prepare_version_numbers` assigned `marketing_version` from the `current_marketing_version` sub-lane. Fastlane sub-lane return values do not propagate when the lane’s last step is an action (`get_version_number`).
+
+**Fix:** `resolve_marketing_version` helper calls `get_version_number(xcodeproj:, target: gumimap-v2)` directly from `prepare_version_numbers`; guard empty version; pass `target` to increment actions.
+
+**Key paths:** `fastlane/Fastfile`
 
 ## Merged on `main` — TestFlight build-only versioning (`chore/testflight-build-only-versioning`, 2026-06-25)
 
