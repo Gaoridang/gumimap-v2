@@ -54,11 +54,11 @@ platform :ios do
 
     begin
       app = Spaceship::ConnectAPI::App.find("com.ijaejun.gumimap-v2")
-      versions = Spaceship::ConnectAPI::PreReleaseVersion.all(
+      resp = Spaceship::ConnectAPI.get_pre_release_versions(
         filter: { app: app.id },
         limit: 50
       )
-      matching = versions
+      matching = resp.to_models
         .map(&:version)
         .select { |version| version.start_with?(PRE_RELEASE_VERSION_PREFIX) }
 
@@ -86,11 +86,23 @@ platform :ios do
     latest + 1
   end
 
+  private_lane :install_distribution_cert do |options|
+    api_key = options[:api_key]
+    cert(
+      api_key: api_key,
+      development: false,
+      force: false,
+      keychain_path: ENV["KEYCHAIN_PATH"],
+      keychain_password: ENV["KEYCHAIN_PASSWORD"]
+    )
+  end
+
   desc "Build and upload a beta build to TestFlight"
   lane :beta do
     api_key = asc_api_key
     prepare_app_secrets
     configure_signing
+    install_distribution_cert(api_key: api_key)
 
     marketing_version = next_marketing_version(api_key: api_key)
     build_number = next_build_number(
@@ -102,8 +114,7 @@ platform :ios do
 
     increment_version_number(
       version_number: marketing_version,
-      xcodeproj: "gumimap-v2.xcodeproj",
-      target: "gumimap-v2"
+      xcodeproj: "gumimap-v2.xcodeproj"
     )
 
     increment_build_number(
