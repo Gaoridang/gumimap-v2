@@ -42,11 +42,15 @@ platform :ios do
   end
 
   private_lane :ci_keychain_credentials do
-    path = ENV["KEYCHAIN_PATH"]
-    path = Actions.lane_context[SharedValues::KEYCHAIN_PATH] if path.nil? || path.empty?
-    password = ENV["KEYCHAIN_PASSWORD"]
-    password = Actions.lane_context[SharedValues::KEYCHAIN_PASSWORD] if password.nil? || password.empty?
-    UI.user_error!("CI keychain is not configured. setup_ci must run before signing.") if path.to_s.empty? || password.to_s.empty?
+    path = Actions.lane_context[SharedValues::KEYCHAIN_PATH]
+    if path.to_s.empty?
+      keychain_name = ENV["MATCH_KEYCHAIN_NAME"] || "fastlane_tmp_keychain"
+      path = File.expand_path("~/Library/Keychains/#{keychain_name}")
+    end
+    password = ENV["MATCH_KEYCHAIN_PASSWORD"]
+    password = ENV["KEYCHAIN_PASSWORD"] if password.nil?
+    password = "" if password.nil?
+    UI.user_error!("CI keychain is not configured. setup_ci must run before signing.") if path.to_s.empty?
 
     expanded = File.expand_path(path)
     expanded = "#{expanded}-db" unless expanded.end_with?("-db") || File.exist?(expanded)
