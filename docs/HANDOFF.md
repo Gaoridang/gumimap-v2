@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `fix/testflight-cert-reuse` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | TestFlight CI keychain password fix merged (#20) |
-| Last verified | PR #20 merged 2026-06-25; TestFlight Run pending |
+| Working tree | TestFlight cert reuse fix — stop auto-creating Distribution certs |
+| Last verified | TestFlight #28 failed: Apple Distribution cert max; cache never seeded |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -85,6 +85,21 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 - **Registration** — saving without prior Grok fetch no longer schedules background enrichment; user opts in from saved detail
 
 **Key paths:** `PlaceDetailViewModel.swift`, `PlaceDetailView.swift`
+
+## In progress — TestFlight cert reuse (`fix/testflight-cert-reuse`)
+
+**Problem:** TestFlight #28 failed because CI kept calling `cert` on every cache miss. Apple already has 2 orphaned Distribution certs (`9XD3W2MQXF`, `C8RRZNR3J5`) whose private keys were lost on ephemeral runners; GitHub Actions cache for `fastlane/signing` was never seeded.
+
+**Fix:**
+- CI no longer auto-creates Distribution certs unless repo variable `ALLOW_CREATE_DISTRIBUTION_CERT=true`
+- `scripts/ci-install-signing.sh` seeds `fastlane/signing/` from GitHub secrets (recommended one-time setup)
+- `actions/cache` uses `save-always: true` so signing cache persists even on failed runs
+
+**One-time unblock (pick one):**
+1. **Recommended** — on Mac: `./scripts/export-signing-for-ci.sh` → add `BUILD_CERTIFICATE_BASE64`, `P12_PASSWORD`, `PROVISIONING_PROFILE_BASE64` GitHub secrets → merge this fix → rerun TestFlight
+2. **Bootstrap** — revoke orphaned Distribution certs at [developer.apple.com](https://developer.apple.com/account/resources/certificates/list) → set repo variable `ALLOW_CREATE_DISTRIBUTION_CERT=true` → rerun TestFlight once → remove variable
+
+**Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `scripts/ci-install-signing.sh`
 
 ## Next Task — Backlog
 

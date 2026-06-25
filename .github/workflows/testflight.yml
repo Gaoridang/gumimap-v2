@@ -71,6 +71,7 @@ jobs:
           key: signing-v1-${{ runner.os }}
           restore-keys: |
             signing-v1-${{ runner.os }}
+          save-always: true
 
       - name: Install signing from repository secrets
         env:
@@ -89,3 +90,6 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ${{ env.ASC_KEY_PATH }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          # Set repository variable ALLOW_CREATE_DISTRIBUTION_CERT=true only for
+          # the one-time bootstrap run after revoking orphaned Apple certs.
+          ALLOW_CREATE_DISTRIBUTION_CERT: ${{ vars.ALLOW_CREATE_DISTRIBUTION_CERT }}

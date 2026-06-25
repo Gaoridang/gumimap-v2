@@ -5,33 +5,28 @@ set -euo pipefail
 : "${P12_PASSWORD:?P12_PASSWORD is required}"
 : "${PROVISIONING_PROFILE_BASE64:?PROVISIONING_PROFILE_BASE64 is required}"
 
-KEYCHAIN_NAME="${KEYCHAIN_NAME:-build.keychain-db}"
-KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-ci}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SIGNING_DIR="$ROOT/fastlane/signing"
 
-security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-security default-keychain -s "$KEYCHAIN_NAME"
-security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
+mkdir -p "$SIGNING_DIR"
 
-echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > /tmp/distribution.p12
-security import /tmp/distribution.p12 -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_NAME"
-security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-rm -f /tmp/distribution.p12
+echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > "$SIGNING_DIR/distribution.p12"
+printf '%s' "$P12_PASSWORD" > "$SIGNING_DIR/.p12-pass"
+echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$SIGNING_DIR/profile.mobileprovision"
 
-echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > /tmp/profile.mobileprovision
 PROFILE_PLIST="$(mktemp)"
-security cms -D -i /tmp/profile.mobileprovision > "$PROFILE_PLIST"
-
-PROFILE_UUID="$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PROFILE_PLIST")"
+security cms -D -i "$SIGNING_DIR/profile.mobileprovision" > "$PROFILE_PLIST"
 PROFILE_NAME="$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PROFILE_PLIST")"
+PROFILE_UUID="$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PROFILE_PLIST")"
+rm -f "$PROFILE_PLIST"
 
 mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-cp /tmp/profile.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision"
-
-rm -f /tmp/profile.mobileprovision "$PROFILE_PLIST"
+cp "$SIGNING_DIR/profile.mobileprovision" \
+  "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision"
 
 if [[ -n "${GITHUB_ENV:-}" ]]; then
   echo "PROVISIONING_PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
 fi
 
-echo "Installed provisioning profile: $PROFILE_NAME ($PROFILE_UUID)"
+echo "Seeded signing cache for fastlane: $SIGNING_DIR"
+echo "Provisioning profile: $PROFILE_NAME ($PROFILE_UUID)"
