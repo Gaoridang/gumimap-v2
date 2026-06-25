@@ -59,12 +59,14 @@ platform :ios do
 
   private_lane :signing_cache_password do
     pass_file = File.join(SIGNING_CACHE_DIR, ".p12-pass")
-    return File.read(pass_file).strip if File.exist?(pass_file)
-
-    FileUtils.mkdir_p(SIGNING_CACHE_DIR)
-    password = SecureRandom.hex(16)
-    File.write(pass_file, password)
-    password
+    if File.exist?(pass_file)
+      File.read(pass_file).strip
+    else
+      FileUtils.mkdir_p(SIGNING_CACHE_DIR)
+      password = SecureRandom.hex(16)
+      File.write(pass_file, password)
+      password
+    end
   end
 
   private_lane :import_cached_distribution_p12 do |options|
@@ -120,17 +122,17 @@ platform :ios do
     p12_password = options.fetch(:p12_password)
     keychain_path = options.fetch(:keychain_path)
 
-    return if File.exist?(p12_path)
-
-    identity_line = distribution_identity_in_keychain(keychain_path: keychain_path)
-    return if identity_line.nil?
-
-    UI.message("Exporting Apple Distribution identity from CI keychain into signing cache")
-    export_distribution_p12(
-      output_path: p12_path,
-      password: p12_password,
-      keychain_path: keychain_path
-    )
+    unless File.exist?(p12_path)
+      identity_line = distribution_identity_in_keychain(keychain_path: keychain_path)
+      unless identity_line.nil?
+        UI.message("Exporting Apple Distribution identity from CI keychain into signing cache")
+        export_distribution_p12(
+          output_path: p12_path,
+          password: p12_password,
+          keychain_path: keychain_path
+        )
+      end
+    end
   end
 
   private_lane :missing_distribution_cert_instructions do
@@ -258,8 +260,9 @@ platform :ios do
   private_lane :next_marketing_version do |options|
     _api_key = options[:api_key]
     override = ENV["MARKETING_VERSION"]&.strip
-    return override unless override.nil? || override.empty?
-
+    unless override.nil? || override.empty?
+      override
+    else
     ensure_connect_api_token
 
     begin
@@ -281,6 +284,7 @@ platform :ios do
     rescue => error
       UI.important("ASC pre-release version lookup failed (#{error.message}); using #{INITIAL_PRE_RELEASE_VERSION}")
       INITIAL_PRE_RELEASE_VERSION
+    end
     end
   end
 
