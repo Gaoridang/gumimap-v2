@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `chore/pr-build-opt-ab-hybrid` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | Repo public; #36 compile fix merged; TestFlight deploy pending |
-| Last verified | PR #36 merged; repo visibility → public (Actions free tier) |
+| Working tree | PR Build A+B cache + flags; TestFlight skips docs-only `main` pushes |
+| Last verified | PR pending — compare warm PR Build duration after merge |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -110,6 +110,13 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 ```
 
 **Key paths:** `fastlane/Fastfile`, `fastlane/lib/signing_decision.rb`, `fastlane/spec/signing_decision_spec.rb`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/verify-testflight-signing-contract.sh`
+
+## In Progress — `chore/pr-build-opt-ab-hybrid` (2026-06-25)
+
+- **PR Build A+B** — DerivedData + SPM cache (`pr-build-v1-*` keys) + `ci-build.sh` compile flags (generic destination, parallel jobs, index store off)
+- **TestFlight `paths-ignore`** — `docs/**`, `AGENTS.md`, PR template; docs-only HANDOFF updates no longer deploy
+
+**Key paths:** `.github/workflows/pr-build.yml`, `.github/workflows/testflight.yml`, `scripts/ci-build.sh`, `docs/pr-build-optimization.md`
 
 ## Merged on `main` — pin colors + list filter (`feat/pin-colors-list-filter` → #35, 2026-06-25)
 

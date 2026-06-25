@@ -3,6 +3,10 @@ name: TestFlight
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "AGENTS.md"
+      - ".github/pull_request_template.md"
   workflow_dispatch:
     inputs:
       allow_create_distribution_cert:
