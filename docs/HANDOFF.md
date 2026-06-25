@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/pin-colors-list-filter` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | PR #35 pin colors + list filter — merge conflict resolved, PR Build pending |
-| Last verified | TestFlight CI signing stable (#44); feature PR Build pending |
+| Working tree | Merged #35 — pin colors + list filter/sort on `main`; TestFlight deploy in progress |
+| Last verified | PR #35 merged (squash); device verification pending |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -111,7 +111,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 
 **Key paths:** `fastlane/Fastfile`, `fastlane/lib/signing_decision.rb`, `fastlane/spec/signing_decision_spec.rb`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/verify-testflight-signing-contract.sh`
 
-## In Progress — `feat/pin-colors-list-filter` (2026-06-25)
+## Merged on `main` — pin colors + list filter (`feat/pin-colors-list-filter` → #35, 2026-06-25)
 
 - **`MapPinStyle`** — 가본 곳 초록 / 가고 싶은 곳 파랑 teardrop 핀 (지도·상세 미리보기·SwiftUI 프리뷰)
 - **`ListPlaceFilter` + `ListFilterStore` + `ListFilterBar`** — 리스트 탭 정렬(최신순·이름순), 카테고리 칩, 영업중 필터; 서브탭별 설정 유지
