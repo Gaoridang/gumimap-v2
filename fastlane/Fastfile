@@ -41,6 +41,18 @@ platform :ios do
     )
   end
 
+  private_lane :ci_keychain_credentials do
+    path = ENV["KEYCHAIN_PATH"]
+    path = Actions.lane_context[SharedValues::KEYCHAIN_PATH] if path.nil? || path.empty?
+    password = ENV["KEYCHAIN_PASSWORD"]
+    password = Actions.lane_context[SharedValues::KEYCHAIN_PASSWORD] if password.nil? || password.empty?
+    UI.user_error!("CI keychain is not configured. setup_ci must run before signing.") if path.to_s.empty? || password.to_s.empty?
+
+    expanded = File.expand_path(path)
+    expanded = "#{expanded}-db" unless expanded.end_with?("-db") || File.exist?(expanded)
+    [expanded, password]
+  end
+
   private_lane :signing_cache_password do
     pass_file = File.join(SIGNING_CACHE_DIR, ".p12-pass")
     return File.read(pass_file).strip if File.exist?(pass_file)
@@ -94,8 +106,7 @@ platform :ios do
 
   private_lane :install_api_signing do |options|
     api_key = options[:api_key]
-    keychain_path = ENV.fetch("KEYCHAIN_PATH")
-    keychain_password = ENV.fetch("KEYCHAIN_PASSWORD")
+    keychain_path, keychain_password = ci_keychain_credentials
     p12_path = File.join(SIGNING_CACHE_DIR, "distribution.p12")
     profile_cache_path = File.join(SIGNING_CACHE_DIR, "profile.mobileprovision")
     p12_password = signing_cache_password
