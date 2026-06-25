@@ -98,11 +98,11 @@ platform :ios do
 
     UI.user_error!("No Apple Distribution identity found in CI keychain") if identity_line.nil?
 
-    cert_hash = identity_line.match(/^\s*\d+\)\s+(\h+)\s+/)[1]
+    # macOS security export on GitHub runners does not support -c (cert hash).
+    # The CI keychain only contains the one Distribution identity we just installed.
     sh(
       "security", "export",
       "-k", keychain_path,
-      "-c", cert_hash,
       "-t", "identities",
       "-f", "pkcs12",
       "-o", output_path,
