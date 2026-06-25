@@ -95,11 +95,17 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 - `scripts/ci-install-signing.sh` seeds `fastlane/signing/` from GitHub secrets (recommended one-time setup)
 - `actions/cache` uses `save-always: true` so signing cache persists even on failed runs
 
-**One-time unblock (pick one):**
-1. **Recommended** — on Mac: `./scripts/export-signing-for-ci.sh` → add `BUILD_CERTIFICATE_BASE64`, `P12_PASSWORD`, `PROVISIONING_PROFILE_BASE64` GitHub secrets → merge this fix → rerun TestFlight
-2. **Bootstrap** — revoke orphaned Distribution certs at [developer.apple.com](https://developer.apple.com/account/resources/certificates/list) → set repo variable `ALLOW_CREATE_DISTRIBUTION_CERT=true` → rerun TestFlight once → remove variable
+**One-time unblock (Windows / no Mac):**
+```powershell
+.\scripts\bootstrap-testflight-signing.ps1 -Phase enable
+# 1) revoke orphaned Distribution certs in browser
+# 2) merge this branch → TestFlight succeeds once
+.\scripts\bootstrap-testflight-signing.ps1 -Phase disable
+```
 
-**Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `scripts/ci-install-signing.sh`
+**Mac alternative:** `./scripts/export-signing-for-ci.sh` or `.\scripts\encode-signing-secrets.ps1` with p12/profile files → GitHub secrets
+
+**Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/ci-install-signing.sh`
 
 ## Next Task — Backlog
 

@@ -141,12 +141,14 @@ platform :ios do
       but their private keys were lost on ephemeral runners. CI will not create
       new certificates automatically.
 
-      One-time setup (choose one):
-      1. Recommended — seed GitHub secrets from a Mac:
-         ./scripts/export-signing-for-ci.sh
-         Add BUILD_CERTIFICATE_BASE64, P12_PASSWORD, PROVISIONING_PROFILE_BASE64
-      2. Or revoke unused Distribution certs at developer.apple.com, then rerun
-         this workflow once with repository variable ALLOW_CREATE_DISTRIBUTION_CERT=true
+      Windows / no-Mac one-time setup:
+        .\\scripts\\bootstrap-testflight-signing.ps1 -Phase enable
+      Then merge this fix, run TestFlight once, and:
+        .\\scripts\\bootstrap-testflight-signing.ps1 -Phase disable
+
+      Mac alternative:
+        ./scripts/export-signing-for-ci.sh
+        Add BUILD_CERTIFICATE_BASE64, P12_PASSWORD, PROVISIONING_PROFILE_BASE64
 
       After the first successful run, fastlane/signing is cached and reused.
     MSG
