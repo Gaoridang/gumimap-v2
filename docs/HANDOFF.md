@@ -9,8 +9,8 @@ Last updated: 2026-06-25
 | Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | TestFlight CI signing fixed — #35 green |
-| Last verified | TestFlight #35 succeeded: revoked orphaned certs, cached p12, uploaded build 0.0.1 (1) |
+| Working tree | TestFlight CI signing reuse path green — #39/#40 |
+| Last verified | TestFlight #39 succeeded: reused cached distribution.p12, uploaded build; no cert quota error |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -95,7 +95,7 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 - `actions/cache/restore@v4` + `actions/cache/save@v4` (`if: always()`) with key `signing-v2-*` persists `fastlane/signing/`
 - `cert()` only when `ALLOW_CREATE_DISTRIBUTION_CERT=="true"` exactly; otherwise `missing_distribution_cert_instructions`
 
-**Verified:** TestFlight #35/#36 green — bootstrap path works. Run #35/#36 `actions/cache/save` failed (`Unable to reserve cache with key signing-v2-macOS`); fix in `fix/signing-cache-save` uses `signing-v3` + validate step + save only when cache invalid.
+**Verified:** Bootstrap #35–#37 seeded `signing-v3` cache (#28). Run #38 failed on reuse (`set-key-partition-list` used p12 password) — fixed in #29. Run #39 green: `Reusing cached distribution certificate`, cache save skipped, no quota error.
 
 **Post-bootstrap:** Delete repo variable `ALLOW_CREATE_DISTRIBUTION_CERT` (or use workflow_dispatch with bootstrap=false) so later runs reuse cached signing:
 ```powershell
