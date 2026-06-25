@@ -1,6 +1,7 @@
 require "fileutils"
 require "securerandom"
 require_relative "lib/signing_decision"
+require_relative "lib/project_marketing_version"
 
 default_platform(:ios)
 
@@ -314,8 +315,7 @@ platform :ios do
   end
 
   private_lane :current_marketing_version do
-    get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
-    version = Actions.lane_context[SharedValues::VERSION_NUMBER]
+    version = read_project_marketing_version
     UI.message("Project marketing version: #{version}")
     version
   end
@@ -323,8 +323,7 @@ platform :ios do
   private_lane :release_marketing_version do
     override = ENV["MARKETING_VERSION"]&.strip
     if override.nil? || override.empty?
-      get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
-      bumped = bump_patch_version(Actions.lane_context[SharedValues::VERSION_NUMBER])
+      bumped = bump_patch_version(read_project_marketing_version)
       UI.message("Release marketing version (bumped): #{bumped}")
       bumped
     else
@@ -460,6 +459,19 @@ platform :ios do
       build_number: versions[:build_number]
     )
   end
+end
+
+def read_project_marketing_version
+  get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
+  version = Actions.lane_context[SharedValues::VERSION_NUMBER]
+  if version.to_s.strip.empty?
+    version = ProjectMarketingVersion.read(
+      File.expand_path("../#{XCODEPROJ}", __dir__),
+      APP_TARGET
+    )
+    Actions.lane_context[SharedValues::VERSION_NUMBER] = version
+  end
+  version
 end
 
 def bump_patch_version(version)

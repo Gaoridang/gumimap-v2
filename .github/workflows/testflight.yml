@@ -160,6 +160,9 @@ jobs:
             ./scripts/ci-install-signing.sh
           fi
 
+      - name: Verify marketing version resolution
+        run: ./scripts/verify-marketing-version.sh
+
       - name: Deploy to TestFlight
         run: bundle exec fastlane ${{ github.event_name == 'workflow_dispatch' && inputs.release == true && 'release' || 'beta' }}
         env:

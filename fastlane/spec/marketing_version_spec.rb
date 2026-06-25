@@ -1,27 +1,16 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "../lib/project_marketing_version"
 
 ROOT = File.expand_path("../..", __dir__)
 FASTFILE = File.join(ROOT, "fastlane", "Fastfile")
-PBXPROJ = File.join(ROOT, "gumimap-v2.xcodeproj", "project.pbxproj")
+XCODEPROJ = File.join(ROOT, "gumimap-v2.xcodeproj")
 APP_TARGET = "gumimap-v2"
 
-def marketing_version_from_pbxproj(bundle_identifier)
-  content = File.read(PBXPROJ)
-  versions = content.scan(
-    /MARKETING_VERSION = ([^;]+);[\s\S]*?PRODUCT_BUNDLE_IDENTIFIER = "#{Regexp.escape(bundle_identifier)}"/
-  ).flatten.map(&:strip).uniq
-
-  raise "MARKETING_VERSION missing for #{bundle_identifier}" if versions.empty?
-  raise "MARKETING_VERSION differs across configs: #{versions.inspect}" if versions.length > 1
-
-  versions.first
-end
-
 class MarketingVersionSpec < Minitest::Test
-  def test_pbxproj_marketing_version_is_non_empty
-    version = marketing_version_from_pbxproj("com.ijaejun.gumimap-v2")
+  def test_project_marketing_version_read_returns_pbxproj_value
+    version = ProjectMarketingVersion.read(XCODEPROJ, APP_TARGET)
     refute_empty version
     assert_equal "0.0.1", version
     assert_match(/\A\d+\.\d+\.\d+\z/, version)
@@ -31,10 +20,11 @@ class MarketingVersionSpec < Minitest::Test
     fastfile = File.read(FASTFILE)
     assert_includes fastfile, "private_lane :current_marketing_version"
     assert_includes fastfile, "private_lane :release_marketing_version"
+    assert_includes fastfile, "def read_project_marketing_version"
     assert_includes fastfile, "get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)"
 
     get_calls = fastfile.scan(/get_version_number\([^)]+\)/)
-    assert_operator get_calls.length, :>=, 2
+    refute_empty get_calls
     get_calls.each do |call|
       assert_includes call, "target: APP_TARGET", "Expected target on: #{call}"
     end
@@ -57,11 +47,20 @@ class MarketingVersionSpec < Minitest::Test
     refute_includes prepare_section, "resolve_marketing_version"
   end
 
-  def test_current_marketing_version_lane_returns_lane_context_value
+  def test_read_project_marketing_version_helper_uses_action_and_fallback
+    fastfile = File.read(FASTFILE)
+    helper_section = fastfile[/def read_project_marketing_version.*?^end/m]
+    refute_nil helper_section
+    assert_includes helper_section, "get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)"
+    assert_includes helper_section, "ProjectMarketingVersion.read"
+    assert_includes helper_section, "Actions.lane_context[SharedValues::VERSION_NUMBER]"
+  end
+
+  def test_current_marketing_version_lane_delegates_to_helper
     fastfile = File.read(FASTFILE)
     lane_section = fastfile[/private_lane :current_marketing_version.*?^  end/m]
     refute_nil lane_section
-    assert_includes lane_section, "Actions.lane_context[SharedValues::VERSION_NUMBER]"
+    assert_includes lane_section, "read_project_marketing_version"
     assert_includes lane_section, "UI.message(\"Project marketing version:"
   end
 end
