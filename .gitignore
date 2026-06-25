@@ -37,6 +37,9 @@ gumimap-v2/Generated/Secrets.generated.swift
 *.p12
 *.mobileprovision
 
+# Local MCP harness metadata (agent tooling; not part of repo deliverable)
+mcps/
+
 # Ruby / fastlane
 .bundle/
 vendor/bundle/
