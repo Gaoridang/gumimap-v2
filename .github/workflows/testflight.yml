@@ -64,6 +64,24 @@ jobs:
           bundler-cache: true
           working-directory: .
 
+      - name: Restore signing cache
+        uses: actions/cache@v4
+        with:
+          path: fastlane/signing
+          key: signing-v1-${{ runner.os }}
+          restore-keys: |
+            signing-v1-${{ runner.os }}
+
+      - name: Install signing from repository secrets
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          if [[ -n "$BUILD_CERTIFICATE_BASE64" ]]; then
+            ./scripts/ci-install-signing.sh
+          fi
+
       - name: Deploy to TestFlight
         run: bundle exec fastlane beta
         env:

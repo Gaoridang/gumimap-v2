@@ -44,6 +44,10 @@ fastlane/screenshots/**/*.png
 fastlane/test_output/
 build/
 
+# CI signing cache (restored via GitHub Actions cache; never commit real keys)
+fastlane/signing/*
+!fastlane/signing/.gitkeep
+
 # App Store / signing (never commit real keys)
 *.p12
 *.p8
