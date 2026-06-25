@@ -196,8 +196,7 @@ final class PlaceDetailViewModel {
 
     func register(
         listKind: ListSubTab,
-        store: PlaceStore,
-        enrichmentService: PlaceEnrichmentService
+        store: PlaceStore
     ) async -> String? {
         guard isDiscoveryMode else { return nil }
         guard canRegister else { return nil }
@@ -210,14 +209,6 @@ final class PlaceDetailViewModel {
                 detail: detail,
                 listKind: listKind
             )
-
-            if detail == nil {
-                enrichmentService.schedule(
-                    savedPlaceId: savedPlaceId,
-                    place: place,
-                    store: store
-                )
-            }
 
             registrationState = .idle
             return savedPlaceId

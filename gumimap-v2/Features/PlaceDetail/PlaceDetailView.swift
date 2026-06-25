@@ -559,8 +559,7 @@ struct PlaceDetailView: View {
         guard let placeStore else { return }
         guard let savedPlaceId = await viewModel.register(
             listKind: listKind,
-            store: placeStore,
-            enrichmentService: enrichmentService
+            store: placeStore
         ) else {
             return
         }
