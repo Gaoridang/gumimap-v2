@@ -1,9 +1,12 @@
 import SwiftUI
 
 struct ListPlaceMapButton: View {
+    let listKind: ListSubTab
     let action: () -> Void
 
-    private let tint = MapPinStyle.borderColor
+    private var tint: Color {
+        MapPinStyle.swiftUIColors(for: listKind).border
+    }
 
     var body: some View {
         Button(action: action) {
@@ -25,7 +28,7 @@ struct ListPlaceMapButton: View {
 }
 
 #Preview {
-    ListPlaceMapButton {}
+    ListPlaceMapButton(listKind: .wishlist) {}
         .padding()
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         .padding()

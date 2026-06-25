@@ -6,11 +6,11 @@ Last updated: 2026-06-25
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `feat/pin-colors-list-filter` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (private) |
-| Working tree | TestFlight CI signing reuse path green — #39/#40 |
-| Last verified | TestFlight #39 succeeded: reused cached distribution.p12, uploaded build; no cert quota error |
+| Working tree | Pin colors by list kind + list filter/sort — PR Build pending |
+| Last verified | Local changes only (Windows); PR Build → merge → TestFlight |
 | Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
 
 ### Safe dev flow (no local Xcode)
@@ -103,6 +103,15 @@ CI signing uses **Xcode automatic signing** + App Store Connect API key (`-allow
 ```
 
 **Key paths:** `fastlane/Fastfile`, `.github/workflows/testflight.yml`, `scripts/bootstrap-testflight-signing.ps1`, `scripts/ci-install-signing.sh`
+
+## In Progress — `feat/pin-colors-list-filter` (2026-06-25)
+
+- **`MapPinStyle`** — 가본 곳 초록 / 가고 싶은 곳 파랑 teardrop 핀 (지도·상세 미리보기·SwiftUI 프리뷰)
+- **`ListPlaceFilter` + `ListFilterStore` + `ListFilterBar`** — 리스트 탭 정렬(최신순·이름순), 카테고리 칩, 영업중 필터; 서브탭별 설정 유지
+- **`ListPlaceMapButton`** — 리스트 종류에 맞는 핀 색상 타일
+- **`SavedPlace.shortCategory` / `isOpenNow`** — 필터·카드 공용 헬퍼
+
+**Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `ListPlaceFilter.swift`, `ListFilterStore.swift`, `ListFilterBar.swift`, `ListTabView.swift`, `ListPlaceMapButton.swift`, `SavedPlace.swift`, `RootView.swift`
 
 ## Next Task — Backlog
 
@@ -274,10 +283,10 @@ Pick up from backlog below (use safe dev flow: branch → PR → PR Build → me
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail (Kakao baseline + optional "추가정보 확인") → 등록하기 anytime → list tab saved detail
-- **List tabs:** 가고 싶은 곳 (default) / 가본 곳 — two-tone header prompt + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
+- **List tabs:** 가고 싶은 곳 (default) / 가본 곳 — two-tone header prompt + filter bar (정렬·카테고리·영업중) + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
 - **Discovery detail:** large title + Kakao baseline cards → optional "추가정보 확인" → SSE progress + additional info; 등록하기 available immediately; already-saved banner when applicable
 - **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; "추가정보 확인" when no enrichment; background enrichment progress when applicable; "지도에서 보기" → map focus + sheet
-- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); unified teardrop pins (warm yellow fill, soft blue border); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
+- **Map tab:** full-screen Kakao Map centered on 구미 (level 12); teardrop pins by list kind (green 가본 곳 / blue 가고 싶은 곳); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
 ## Key Paths
