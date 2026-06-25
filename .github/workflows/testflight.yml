@@ -44,11 +44,11 @@ jobs:
           bundle exec fastlane signing_controlled_error_check 2>&1 | tee controlled-signing-error.log
           status=$?
           if grep -q "No reusable Distribution certificate is available for CI" controlled-signing-error.log; then
-            if grep -q "Could not create another Distribution certificate" controlled-signing-error.log; then
+            if grep -qF "Could not create another Distribution certificate" controlled-signing-error.log; then
               echo "FAIL: quota phrase must not appear on controlled path"
               exit 1
             fi
-            if grep -q "--- Step: cert ---" controlled-signing-error.log; then
+            if grep -qF "--- Step: cert ---" controlled-signing-error.log; then
               echo "FAIL: cert() must not run on controlled path"
               exit 1
             fi
