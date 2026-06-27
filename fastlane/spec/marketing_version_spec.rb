@@ -26,7 +26,7 @@ class MarketingVersionSpec < Minitest::Test
     prepare_section = fastfile[/private_lane :prepare_version_numbers.*?^  end/m]
     refute_nil prepare_section
     assert_includes prepare_section, "increment_version_number"
-    assert_includes prepare_section, "target: APP_TARGET"
+    assert_includes prepare_section, "xcodeproj: XCODEPROJ"
     assert_includes prepare_section, "increment_build_number"
   end
 
