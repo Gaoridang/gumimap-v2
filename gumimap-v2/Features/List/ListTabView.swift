@@ -95,18 +95,7 @@ struct ListTabView: View {
 
                 LazyVStack(spacing: 10) {
                     ForEach(places, id: \.id) { savedPlace in
-                        HStack(spacing: 0) {
-                            NavigationLink(value: AppRoute.savedPlaceDetail(id: savedPlace.id)) {
-                                SavedPlaceCard(content: savedPlace.cardContent)
-                            }
-                            .buttonStyle(.plain)
-
-                            ListPlaceMapButton(listKind: subTab) {
-                                router.openSavedPlaceOnMap(id: savedPlace.id)
-                            }
-                            .padding(.trailing, 12)
-                        }
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                        listPlaceRow(savedPlace)
                     }
                 }
             }
@@ -114,6 +103,24 @@ struct ListTabView: View {
             .padding(.top, 8)
             .padding(.bottom, 120)
         }
+    }
+
+    private func listPlaceRow(_ savedPlace: SavedPlace) -> some View {
+        Button {
+            router.openSavedPlaceDetail(id: savedPlace.id)
+        } label: {
+            SavedPlaceCard(content: savedPlace.cardContent)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .trailing) {
+            ListPlaceMapButton(listKind: subTab) {
+                router.openSavedPlaceOnMap(id: savedPlace.id)
+            }
+            .padding(.trailing, 12)
+        }
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
     @ViewBuilder

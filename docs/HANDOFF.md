@@ -6,10 +6,10 @@ Last updated: 2026-06-27
 
 | Field | Value |
 |-------|-------|
-| Active branch | `feat/visited-place-photos-demo` |
-| Next branch | (continue Phase 2 on `feat/visited-place-photos` after demo review) |
+| Active branch | `main` |
+| Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | Phase 1 demo — visited-place photos (album picker, max 5) on `feat/visited-place-photos-demo` |
+| Working tree | Visited-place photos Phase 1 + list card full tap merged on `main` |
 | Last verified | Local `ci-build.sh` + `run-simulator.sh` ✅ (2026-06-27) |
 | Dev environment | Mac or Windows → PR Build → merge → TestFlight |
 
@@ -156,19 +156,19 @@ After a release deploy, commit the new `MARKETING_VERSION` in `project.pbxproj` 
 
 **Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `ListPlaceFilter.swift`, `ListFilterStore.swift`, `ListFilterBar.swift`, `ListTabView.swift`, `ListPlaceMapButton.swift`, `SavedPlace.swift`, `RootView.swift`
 
-## In progress — Visited place photos Phase 1 demo (`feat/visited-place-photos-demo`, 2026-06-27)
+## Merged on `main` — visited place photos Phase 1 (`feat/visited-place-photos-demo`, 2026-06-27)
 
-**Scope:** 가본 곳 saved detail only — 앨범 `PhotosPicker`, max 5, disk JPEG + SwiftData metadata.
-
-- **`PlacePhoto`** — SwiftData model (`savedPlaceId`, `fileName`, `sortOrder`)
-- **`PlacePhotoFileIO`** — Application Support storage, CGImageSource resize (1024px, JPEG 0.78)
-- **`PlacePhotoStore`** — import, delete, cap enforcement
-- **`PlaceVisitedPhotosSection`** — horizontal 80×80 strip + inline PhotosPicker
-- **`PlaceStore`** — `photoStore`; cascade delete on place delete; purge photos when leaving visited on move
-
-**Awaiting:** user demo review → Phase 2 (camera, gallery, move confirmation dialog)
+- **`PlacePhoto`** — SwiftData model; disk JPEG in Application Support (1024px, quality 0.78)
+- **`PlaceVisitedPhotosSection`** — 가본 곳 saved detail only; horizontal strip + `PhotosPicker` (max 5)
+- **`PlaceStore.photoStore`** — cascade delete on place delete; purge photos when leaving visited on move
 
 **Key paths:** `PlacePhoto.swift`, `PlacePhotoFileIO.swift`, `PlacePhotoStore.swift`, `PlaceVisitedPhotosSection.swift`, `PlaceDetailView.swift`, `PlaceStore.swift`
+
+## Merged on `main` — list card full tap (`fix/list-card-full-tap-area`, 2026-06-27)
+
+- **`ListTabView.listPlaceRow`** — full-width card button → saved detail; map pin stays as trailing overlay
+
+**Key paths:** `ListTabView.swift`, `TabRouter.swift`
 
 ## Next Task — Backlog
 
@@ -341,9 +341,9 @@ Pick up from backlog below (use safe dev flow: branch → PR → PR Build → me
 - **Map mode toolbar:** `[pin][list] | [search]`
 - **List mode toolbar:** `[back●][map-pin-check][bookmark] | [search]`
 - **Search:** Kakao live search → tap result → discovery detail (Kakao baseline + optional "추가정보 확인") → 등록하기 anytime → list tab saved detail
-- **List tabs:** 가고 싶은 곳 (default) / 가본 곳 — two-tone header prompt + filter bar (정렬·카테고리·영업중) + icon place cards; tap card → saved detail; map icon → map tab + zoom + sheet
+- **List tabs:** 가고 싶은 곳 (default) / 가본 곳 — two-tone header prompt + filter bar (정렬·카테고리·영업중) + icon place cards; tap anywhere on card (except map pin) → saved detail; map pin → map tab + zoom + sheet
 - **Discovery detail:** large title + Kakao baseline cards → optional "추가정보 확인" → SSE progress + additional info; 등록하기 available immediately; already-saved banner when applicable
-- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; "추가정보 확인" when no enrichment; background enrichment progress when applicable; "지도에서 보기" → map focus + sheet
+- **Saved detail:** `...` menu → 정보 수정, 리스트 변경, or 삭제; "추가정보 확인" when no enrichment; background enrichment progress when applicable; **가본 곳 only:** "내 사진" strip (album picker, max 5); map preview tap → map focus + sheet
 - **Map tab:** full-screen Kakao Map centered on 구미 (level 12); teardrop pins by list kind (green 가본 곳 / blue 가고 싶은 곳); tap pin → bottom sheet (주소·추가정보·상세 보기·리스트 변경/삭제)
 - API keys in `Config/secrets.local.env` (gitignored); template at `Config/secrets.example.env`
 
