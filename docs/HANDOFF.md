@@ -6,14 +6,21 @@ Last updated: 2026-06-27
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/fastlane-empty-marketing-version` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | TestFlight marketing-version fix verified on CI (`0.0.1` build 3); PR → merge `main` |
+| Working tree | TestFlight marketing-version fix + app-only path filter merged on `main` |
 | Last verified | TestFlight workflow_dispatch ✅ [run #28280345028](https://github.com/Gaoridang/gumimap-v2/actions/runs/28280345028) |
 | Dev environment | Mac or Windows → PR Build → merge → TestFlight |
 
 **Issue & resolution doc:** [`docs/testflight-empty-marketing-version.md`](testflight-empty-marketing-version.md)
+
+### Merged on `main` — TestFlight marketing version fix + app-only trigger (2026-06-27)
+
+- **`fix/fastlane-empty-marketing-version`** — `ProjectMarketingVersion` reader; reliable `0.0.1` on CI; local `run-testflight-local.sh`
+- **`chore/testflight-app-only-trigger`** — TestFlight `paths` allowlist (app/deploy changes only; docs/scripts/specs skip deploy)
+
+**Key paths:** `fastlane/lib/project_marketing_version.rb`, `scripts/run-testflight-local.sh`, `.github/workflows/testflight.yml`, `docs/testflight-empty-marketing-version.md`
 
 ### Safe dev flow (no local Xcode)
 
@@ -136,7 +143,7 @@ After a release deploy, commit the new `MARKETING_VERSION` in `project.pbxproj` 
 ## Merged on `main` — PR Build optimization (`chore/pr-build-opt-ab-hybrid` → #37, 2026-06-25)
 
 - **PR Build A+B** — DerivedData + SPM cache (`pr-build-v1-*` keys) + `ci-build.sh` compile flags (generic destination, parallel jobs, index store off)
-- **TestFlight `paths-ignore`** — `docs/**`, `AGENTS.md`, PR template; docs-only HANDOFF updates no longer deploy
+- **TestFlight `paths` allowlist** — deploy only on `gumimap-v2/**`, xcodeproj, fastlane deploy files, signing scripts; docs/specs/local scripts skip
 
 **Key paths:** `.github/workflows/pr-build.yml`, `.github/workflows/testflight.yml`, `scripts/ci-build.sh`, `docs/pr-build-optimization.md`
 
