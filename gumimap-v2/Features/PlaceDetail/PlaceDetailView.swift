@@ -28,6 +28,15 @@ struct PlaceDetailView: View {
             VStack(alignment: .leading, spacing: 20) {
                 kakaoBaselineSection
 
+                if showsVisitedPhotosSection,
+                   let savedPlaceId = viewModel.savedPlaceId,
+                   let placeStore {
+                    PlaceVisitedPhotosSection(
+                        savedPlaceId: savedPlaceId,
+                        photoStore: placeStore.photoStore
+                    )
+                }
+
                 if showsEnrichmentProgress {
                     progressSection
                         .transition(.opacity.combined(with: .move(edge: .top)))
@@ -205,6 +214,14 @@ struct PlaceDetailView: View {
     private func openMapPreviewExternally() {
         guard let url = viewModel.place.kakaoMapURL else { return }
         openURL(url)
+    }
+
+    // MARK: - Visited Photos
+
+    private var showsVisitedPhotosSection: Bool {
+        !viewModel.isDiscoveryMode
+            && viewModel.savedListKind == .visited
+            && viewModel.savedPlaceId != nil
     }
 
     // MARK: - Kakao Baseline

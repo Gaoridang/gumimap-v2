@@ -67,5 +67,5 @@ struct RootView: View {
 
 #Preview {
     RootView()
-        .modelContainer(for: SavedPlace.self, inMemory: true)
+        .modelContainer(for: [SavedPlace.self, PlacePhoto.self], inMemory: true)
 }

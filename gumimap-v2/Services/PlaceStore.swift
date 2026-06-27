@@ -5,10 +5,12 @@ import SwiftUI
 
 @MainActor
 final class PlaceStore {
+    let photoStore: PlacePhotoStore
     private let modelContext: ModelContext
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.photoStore = PlacePhotoStore(modelContext: modelContext)
     }
 
     @discardableResult
@@ -123,6 +125,7 @@ final class PlaceStore {
 
     func delete(savedPlaceId: String) throws {
         guard let saved = savedPlace(id: savedPlaceId) else { return }
+        try photoStore.deleteAllPhotos(savedPlaceId: savedPlaceId)
         modelContext.delete(saved)
         try modelContext.save()
     }
@@ -131,6 +134,10 @@ final class PlaceStore {
     func moveListKind(savedPlaceId: String, to listKind: ListSubTab) throws -> String {
         guard let saved = savedPlace(id: savedPlaceId) else {
             throw PlaceStoreError.savedPlaceNotFound
+        }
+
+        if saved.listSubTab == .visited, listKind != .visited {
+            try photoStore.deleteAllPhotos(savedPlaceId: savedPlaceId)
         }
 
         let targetId = SavedPlace.makeID(kakaoPlaceId: saved.kakaoPlaceId, listKind: listKind)

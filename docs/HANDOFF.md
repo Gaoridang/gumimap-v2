@@ -6,11 +6,11 @@ Last updated: 2026-06-27
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
-| Next branch | (create before first code change on next task) |
+| Active branch | `feat/visited-place-photos-demo` |
+| Next branch | (continue Phase 2 on `feat/visited-place-photos` after demo review) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | TestFlight marketing-version fix + app-only path filter merged on `main` |
-| Last verified | TestFlight workflow_dispatch ✅ [run #28280345028](https://github.com/Gaoridang/gumimap-v2/actions/runs/28280345028) |
+| Working tree | Phase 1 demo — visited-place photos (album picker, max 5) on `feat/visited-place-photos-demo` |
+| Last verified | Local `ci-build.sh` + `run-simulator.sh` ✅ (2026-06-27) |
 | Dev environment | Mac or Windows → PR Build → merge → TestFlight |
 
 **Issue & resolution doc:** [`docs/testflight-empty-marketing-version.md`](testflight-empty-marketing-version.md)
@@ -156,10 +156,25 @@ After a release deploy, commit the new `MARKETING_VERSION` in `project.pbxproj` 
 
 **Key paths:** `MapPinLayout.swift`, `KakaoMapPinImageRenderer.swift`, `ListPlaceFilter.swift`, `ListFilterStore.swift`, `ListFilterBar.swift`, `ListTabView.swift`, `ListPlaceMapButton.swift`, `SavedPlace.swift`, `RootView.swift`
 
+## In progress — Visited place photos Phase 1 demo (`feat/visited-place-photos-demo`, 2026-06-27)
+
+**Scope:** 가본 곳 saved detail only — 앨범 `PhotosPicker`, max 5, disk JPEG + SwiftData metadata.
+
+- **`PlacePhoto`** — SwiftData model (`savedPlaceId`, `fileName`, `sortOrder`)
+- **`PlacePhotoFileIO`** — Application Support storage, CGImageSource resize (1024px, JPEG 0.78)
+- **`PlacePhotoStore`** — import, delete, cap enforcement
+- **`PlaceVisitedPhotosSection`** — horizontal 80×80 strip + inline PhotosPicker
+- **`PlaceStore`** — `photoStore`; cascade delete on place delete; purge photos when leaving visited on move
+
+**Awaiting:** user demo review → Phase 2 (camera, gallery, move confirmation dialog)
+
+**Key paths:** `PlacePhoto.swift`, `PlacePhotoFileIO.swift`, `PlacePhotoStore.swift`, `PlaceVisitedPhotosSection.swift`, `PlaceDetailView.swift`, `PlaceStore.swift`
+
 ## Next Task — Backlog
 
 Pick up from backlog below (use safe dev flow: branch → PR → PR Build → merge → TestFlight).
 
+- **Visited place photos Phase 2** — camera, fullscreen gallery, delete UX, move confirmation before photo purge
 - Fix `run-simulator.sh` UDID fallback edge cases (Mac local dev only; low priority on Windows/TestFlight workflow)
 
 ### Backlog notes (2026-06-25)

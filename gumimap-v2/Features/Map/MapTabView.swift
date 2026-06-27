@@ -114,5 +114,5 @@ struct MapTabView: View {
 #Preview {
     MapTabView()
         .environment(TabRouter())
-        .modelContainer(for: SavedPlace.self, inMemory: true)
+        .modelContainer(for: [SavedPlace.self, PlacePhoto.self], inMemory: true)
 }

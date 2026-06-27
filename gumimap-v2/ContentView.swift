@@ -9,5 +9,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: SavedPlace.self, inMemory: true)
+        .modelContainer(for: [SavedPlace.self, PlacePhoto.self], inMemory: true)
 }

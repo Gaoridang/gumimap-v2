@@ -17,6 +17,7 @@ struct gumimap_v2App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             SavedPlace.self,
+            PlacePhoto.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
