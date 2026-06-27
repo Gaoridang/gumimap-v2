@@ -6,16 +6,16 @@ Last updated: 2026-06-27
 
 | Field | Value |
 |-------|-------|
-| Active branch | `fix/open-now-filter` |
+| Active branch | `main` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | Remove 영업중 filter/badge UI on `fix/open-now-filter` |
+| Working tree | 영업중 feature removed; merged on `main` |
 | Last verified | Local `ci-build.sh` + `run-simulator.sh` ✅ (2026-06-27) |
 | Dev environment | Mac or Windows → PR Build → merge → TestFlight |
 
 **Issue & resolution doc:** [`docs/testflight-empty-marketing-version.md`](testflight-empty-marketing-version.md)
 
-### In progress — remove 영업중 feature (`fix/open-now-filter`, 2026-06-27)
+### Merged on `main` — remove 영업중 feature (`fix/open-now-filter`, 2026-06-27)
 
 - Removed list filter toggle, card/map/detail badges, and open-now parsing logic
 - **`BusinessHoursParser`** — display formatting only (영업시간 카드용)
