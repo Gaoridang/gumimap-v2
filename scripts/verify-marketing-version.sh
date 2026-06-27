@@ -8,10 +8,16 @@ mkdir -p "$SCRATCH"
 export FASTLANE_VERIFY_SCRATCH="$SCRATCH"
 
 echo "==> Runtime xcodeproj resolution (objectVersion 77)"
-ruby "$ROOT/fastlane/spec/get_version_number_runtime_spec.rb" -v 2>&1 | tee "$SCRATCH/get_version_number_runtime_spec.log"
+(
+  cd "$ROOT"
+  bundle exec ruby fastlane/spec/get_version_number_runtime_spec.rb -v
+) 2>&1 | tee "$SCRATCH/get_version_number_runtime_spec.log"
 
 echo "==> Fastfile structure contract"
-ruby "$ROOT/fastlane/spec/marketing_version_spec.rb" -v 2>&1 | tee "$SCRATCH/marketing_version_spec.log"
+(
+  cd "$ROOT"
+  bundle exec ruby fastlane/spec/marketing_version_spec.rb -v
+) 2>&1 | tee "$SCRATCH/marketing_version_spec.log"
 
 if command -v bundle >/dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
   echo "==> fastlane run get_version_number (macOS CI)"
