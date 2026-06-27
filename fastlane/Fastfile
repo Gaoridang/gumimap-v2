@@ -5,7 +5,7 @@ require_relative "lib/project_marketing_version"
 
 default_platform(:ios)
 
-XCODEPROJ = "gumimap-v2.xcodeproj"
+XCODEPROJ = File.expand_path("../gumimap-v2.xcodeproj", __dir__)
 APP_TARGET = "gumimap-v2"
 SIGNING_CACHE_DIR = File.expand_path("signing", __dir__)
 BUNDLE_IDENTIFIER = "com.ijaejun.gumimap-v2"
@@ -34,7 +34,7 @@ platform :ios do
     profile_name = options.fetch(:profile_name)
     update_code_signing_settings(
       use_automatic_signing: false,
-      path: "gumimap-v2.xcodeproj",
+      path: XCODEPROJ,
       targets: ["gumimap-v2"],
       team_id: TEAM_ID,
       bundle_identifier: BUNDLE_IDENTIFIER,
@@ -465,10 +465,7 @@ def read_project_marketing_version
   get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
   version = Actions.lane_context[SharedValues::VERSION_NUMBER]
   if version.to_s.strip.empty?
-    version = ProjectMarketingVersion.read(
-      File.expand_path("../#{XCODEPROJ}", __dir__),
-      APP_TARGET
-    )
+    version = ProjectMarketingVersion.read(XCODEPROJ, APP_TARGET)
     Actions.lane_context[SharedValues::VERSION_NUMBER] = version
   end
   version
