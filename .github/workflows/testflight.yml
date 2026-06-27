@@ -3,10 +3,19 @@ name: TestFlight
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "docs/**"
-      - "AGENTS.md"
-      - ".github/pull_request_template.md"
+    # Deploy only when the shipped app or its build/signing pipeline changes.
+    paths:
+      - "gumimap-v2/**"
+      - "gumimap-v2.xcodeproj/**"
+      - "fastlane/Fastfile"
+      - "fastlane/Appfile"
+      - "fastlane/lib/**"
+      - "fastlane/signing/**"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - "scripts/generate-secrets.sh"
+      - "scripts/ci-install-signing.sh"
+      - ".github/workflows/testflight.yml"
   workflow_dispatch:
     inputs:
       allow_create_distribution_cert:
