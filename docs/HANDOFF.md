@@ -6,10 +6,10 @@ Last updated: 2026-06-27
 
 | Field | Value |
 |-------|-------|
-| Active branch | `main` |
+| Active branch | `fix/list-card-full-tap-area` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | TestFlight marketing-version fix + app-only path filter merged on `main` |
+| Working tree | List card full-area tap → saved detail on `fix/list-card-full-tap-area` |
 | Last verified | TestFlight workflow_dispatch ✅ [run #28280345028](https://github.com/Gaoridang/gumimap-v2/actions/runs/28280345028) |
 | Dev environment | Mac or Windows → PR Build → merge → TestFlight |
 
