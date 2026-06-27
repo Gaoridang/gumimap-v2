@@ -16,18 +16,18 @@ class MarketingVersionSpec < Minitest::Test
     assert_match(/\A\d+\.\d+\.\d+\z/, version)
   end
 
-  def test_fastfile_get_version_number_calls_include_target
+  def test_fastfile_version_actions_use_target_and_xcodeproj_reader
     fastfile = File.read(FASTFILE)
     assert_includes fastfile, "private_lane :current_marketing_version"
     assert_includes fastfile, "private_lane :release_marketing_version"
     assert_includes fastfile, "def read_project_marketing_version"
-    assert_includes fastfile, "get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)"
+    assert_includes fastfile, "ProjectMarketingVersion.read(XCODEPROJ, APP_TARGET)"
 
-    get_calls = fastfile.scan(/get_version_number\([^)]+\)/)
-    refute_empty get_calls
-    get_calls.each do |call|
-      assert_includes call, "target: APP_TARGET", "Expected target on: #{call}"
-    end
+    prepare_section = fastfile[/private_lane :prepare_version_numbers.*?^  end/m]
+    refute_nil prepare_section
+    assert_includes prepare_section, "increment_version_number"
+    assert_includes prepare_section, "target: APP_TARGET"
+    assert_includes prepare_section, "increment_build_number"
   end
 
   def test_fastfile_ensure_asc_version_has_empty_guard
@@ -47,13 +47,13 @@ class MarketingVersionSpec < Minitest::Test
     refute_includes prepare_section, "resolve_marketing_version"
   end
 
-  def test_read_project_marketing_version_helper_uses_action_and_fallback
+  def test_read_project_marketing_version_helper_uses_xcodeproj_reader
     fastfile = File.read(FASTFILE)
     helper_section = fastfile[/def read_project_marketing_version.*?^end/m]
     refute_nil helper_section
-    assert_includes helper_section, "get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)"
-    assert_includes helper_section, "ProjectMarketingVersion.read"
+    assert_includes helper_section, "ProjectMarketingVersion.read(XCODEPROJ, APP_TARGET)"
     assert_includes helper_section, "Actions.lane_context[SharedValues::VERSION_NUMBER]"
+    refute_includes helper_section, "get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)"
   end
 
   def test_current_marketing_version_lane_delegates_to_helper
