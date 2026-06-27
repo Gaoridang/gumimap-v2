@@ -433,8 +433,8 @@ platform :ios do
     api_key = asc_api_key
     prepare_app_secrets
 
-    profile_name = install_api_signing(api_key: api_key)
     versions = prepare_version_numbers(api_key: api_key, bump_version: false)
+    profile_name = install_api_signing(api_key: api_key)
 
     build_and_upload(
       api_key: api_key,
@@ -449,8 +449,8 @@ platform :ios do
     api_key = asc_api_key
     prepare_app_secrets
 
-    profile_name = install_api_signing(api_key: api_key)
     versions = prepare_version_numbers(api_key: api_key, bump_version: true)
+    profile_name = install_api_signing(api_key: api_key)
 
     build_and_upload(
       api_key: api_key,
