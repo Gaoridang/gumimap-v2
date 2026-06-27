@@ -27,6 +27,9 @@ module ProjectMarketingVersion
     object.build_configurations.each do |config|
       next unless configuration.nil? || config.name == configuration
 
+      value = config.build_settings[variable]
+      return value if value && !value.to_s.strip.empty?
+
       value = config.resolve_build_setting(variable)
       return value if value && !value.to_s.strip.empty?
     end
