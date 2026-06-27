@@ -462,12 +462,8 @@ platform :ios do
 end
 
 def read_project_marketing_version
-  get_version_number(xcodeproj: XCODEPROJ, target: APP_TARGET)
-  version = Actions.lane_context[SharedValues::VERSION_NUMBER]
-  if version.to_s.strip.empty?
-    version = ProjectMarketingVersion.read(XCODEPROJ, APP_TARGET)
-    Actions.lane_context[SharedValues::VERSION_NUMBER] = version
-  end
+  version = ProjectMarketingVersion.read(XCODEPROJ, APP_TARGET)
+  Actions.lane_context[SharedValues::VERSION_NUMBER] = version
   version
 end
 
