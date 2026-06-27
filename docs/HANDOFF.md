@@ -1,6 +1,6 @@
 # Session Handoff — gumimap-v2
 
-Last updated: 2026-06-25
+Last updated: 2026-06-27
 
 ## Resume Here
 
@@ -9,9 +9,11 @@ Last updated: 2026-06-25
 | Active branch | `fix/fastlane-empty-marketing-version` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | Fastlane beta fix: read `MARKETING_VERSION` in-lane (not sub-lane return) |
-| Last verified | PR pending for `fix/fastlane-empty-marketing-version` |
-| Dev environment | Windows (no local Xcode) → PR Build → merge → TestFlight |
+| Working tree | TestFlight marketing-version fix verified on CI (`0.0.1` build 3); PR → merge `main` |
+| Last verified | TestFlight workflow_dispatch ✅ [run #28280345028](https://github.com/Gaoridang/gumimap-v2/actions/runs/28280345028) |
+| Dev environment | Mac or Windows → PR Build → merge → TestFlight |
+
+**Issue & resolution doc:** [`docs/testflight-empty-marketing-version.md`](testflight-empty-marketing-version.md)
 
 ### Safe dev flow (no local Xcode)
 
