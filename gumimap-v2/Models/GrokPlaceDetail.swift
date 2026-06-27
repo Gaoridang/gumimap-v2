@@ -102,7 +102,8 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
     var isCurrentlyOpen: Bool? {
         BusinessHoursParser.isOpenNow(
             businessHours: value(for: .businessHours),
-            breakTime: value(for: .breakTime)
+            breakTime: value(for: .breakTime),
+            closedDay: value(for: .closedDay)
         )
     }
 

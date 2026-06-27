@@ -2,8 +2,10 @@ import Foundation
 
 enum BusinessHoursParser {
     private static let weekdayOrder = ["월", "화", "수", "목", "금", "토", "일"]
-    private static let segmentPattern = /^(월|화|수|목|금|토|일)(?:요일)?\s+(.+)$/
-    private static let timeRangePattern = /(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/
+    private static let weekdaySet = Set(weekdayOrder)
+    private static let timeRangePattern = /(\d{1,2}):(\d{2})\s*[~–\-]\s*(\d{1,2}):(\d{2})/
+    private static let segmentDelimiterPattern =
+        /,(?=\s*(?:매일|평일|주말)\s+\d|(?:월|화|수|목|금|토|일)(?:요일)?\s*(?:[~–\-]|\d))/
 
     static var koreaCalendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
@@ -48,16 +50,22 @@ enum BusinessHoursParser {
     static func isOpenNow(
         businessHours raw: String,
         breakTime: String? = nil,
+        closedDay: String? = nil,
         at date: Date = .now,
         calendar: Calendar = koreaCalendar
     ) -> Bool? {
         let trimmedHours = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedHours.isEmpty, trimmedHours != "정보 없음" else { return nil }
 
+        let today = todayAbbreviation(for: date, calendar: calendar)
+
+        if let closedDay, isClosedToday(closedDay, today: today) {
+            return false
+        }
+
         let entries = parse(trimmedHours)
         guard !entries.isEmpty else { return nil }
 
-        let today = todayAbbreviation(for: date, calendar: calendar)
         guard let todayEntry = entries.first(where: { $0.day == today }) else { return nil }
         if isClosedDay(todayEntry.hours) { return false }
 
@@ -77,6 +85,30 @@ enum BusinessHoursParser {
     private static func isClosedDay(_ hours: String) -> Bool {
         let lowered = hours.lowercased()
         return lowered.contains("휴무") || lowered.contains("closed")
+    }
+
+    private static func isClosedToday(_ closedDay: String, today: String) -> Bool {
+        let trimmed = closedDay.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != "정보 없음", trimmed != "없음" else {
+            return false
+        }
+
+        return containsWeekday(trimmed, day: today)
+    }
+
+    private static func containsWeekday(_ text: String, day: String) -> Bool {
+        if text.contains("\(day)요일") {
+            return true
+        }
+
+        let otherDays = weekdayOrder.filter { $0 != day }
+        let mentionsOnlyToday = weekdayOrder.contains { weekday in
+            text.contains(weekday) || text.contains("\(weekday)요일")
+        }
+
+        guard mentionsOnlyToday else { return false }
+
+        return text.contains(day)
     }
 
     private static func formatDayRange(_ days: [String]) -> String {
@@ -120,18 +152,94 @@ enum BusinessHoursParser {
 
         guard !normalized.isEmpty else { return [] }
 
-        return normalized
-            .components(separatedBy: ",")
-            .compactMap { segment -> (day: String, hours: String)? in
-                let trimmed = segment.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard let match = trimmed.firstMatch(of: segmentPattern) else { return nil }
-                let day = String(match.1)
-                let hours = String(match.2).trimmingCharacters(in: .whitespacesAndNewlines)
-                return (day, hours)
+        let segments = splitSegments(normalized)
+        var entries: [(day: String, hours: String)] = []
+
+        for segment in segments {
+            entries.append(contentsOf: parseSegment(segment))
+        }
+
+        return entries.sorted { lhs, rhs in
+            (weekdayOrder.firstIndex(of: lhs.day) ?? 99) < (weekdayOrder.firstIndex(of: rhs.day) ?? 99)
+        }
+    }
+
+    private static func splitSegments(_ raw: String) -> [String] {
+        raw
+            .split(separator: segmentDelimiterPattern, omittingEmptySubsequences: true)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private static func parseSegment(_ segment: String) -> [(day: String, hours: String)] {
+        let trimmed = segment.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+
+        guard let match = trimmed.firstMatch(of: timeRangePattern) else { return [] }
+
+        let hours = String(trimmed[match.range.lowerBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let dayPart = String(trimmed[..<match.range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let days = extractDays(from: dayPart.isEmpty ? "매일" : dayPart)
+        guard !days.isEmpty else { return [] }
+        return days.map { ($0, hours) }
+    }
+
+    private static func extractDays(from dayPart: String) -> [String] {
+        let normalized = dayPart
+            .replacingOccurrences(of: "요일", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !normalized.isEmpty else { return [] }
+
+        if normalized.contains("매일") {
+            return weekdayOrder
+        }
+
+        if normalized.contains("평일") {
+            return ["월", "화", "수", "목", "금"]
+        }
+
+        if normalized.contains("주말") {
+            return ["토", "일"]
+        }
+
+        if let rangeMatch = normalized.firstMatch(of: /^(월|화|수|목|금|토|일)[~–\-](월|화|수|목|금|토|일)$/) {
+            return expandDayRange(
+                start: String(rangeMatch.1),
+                end: String(rangeMatch.2)
+            )
+        }
+
+        var days: [String] = []
+        var index = normalized.startIndex
+
+        while index < normalized.endIndex {
+            let character = String(normalized[index])
+            if weekdaySet.contains(character), !days.contains(character) {
+                days.append(character)
             }
-            .sorted { lhs, rhs in
-                (weekdayOrder.firstIndex(of: lhs.day) ?? 99) < (weekdayOrder.firstIndex(of: rhs.day) ?? 99)
-            }
+            index = normalized.index(after: index)
+        }
+
+        return days.sorted {
+            (weekdayOrder.firstIndex(of: $0) ?? 99) < (weekdayOrder.firstIndex(of: $1) ?? 99)
+        }
+    }
+
+    private static func expandDayRange(start: String, end: String) -> [String] {
+        guard
+            let startIndex = weekdayOrder.firstIndex(of: start),
+            let endIndex = weekdayOrder.firstIndex(of: end)
+        else {
+            return []
+        }
+
+        if startIndex <= endIndex {
+            return Array(weekdayOrder[startIndex...endIndex])
+        }
+
+        return Array(weekdayOrder[startIndex...]) + Array(weekdayOrder[0...endIndex])
     }
 
     private static func isInBreakTime(_ breakTime: String, at date: Date, calendar: Calendar) -> Bool {
@@ -198,7 +306,9 @@ enum BusinessHoursParser {
     ) -> Bool {
         let currentMinutes = hour * 60 + minute
         let startMinutes = startHour * 60 + startMinute
-        let endMinutes = endHour * 60 + endMinute
+        let endMinutes = endHour == 24 && endMinute == 0
+            ? 24 * 60
+            : endHour * 60 + endMinute
 
         if endMinutes > startMinutes {
             return currentMinutes >= startMinutes && currentMinutes < endMinutes
