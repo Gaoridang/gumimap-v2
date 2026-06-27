@@ -146,9 +146,6 @@ struct ListTabView: View {
             },
             onCategoryChange: { category in
                 listFilterStore.setSelectedCategory(category, for: subTab)
-            },
-            onOpenNowChange: { isEnabled in
-                listFilterStore.setOpenNowOnly(isEnabled, for: subTab)
             }
         )
     }

@@ -17,10 +17,9 @@ enum ListPlaceSortOrder: String, CaseIterable, Hashable {
 struct ListPlaceFilterSettings: Equatable {
     var sortOrder: ListPlaceSortOrder = .newest
     var selectedCategory: String?
-    var openNowOnly = false
 
     var isActive: Bool {
-        selectedCategory != nil || openNowOnly || sortOrder != .newest
+        selectedCategory != nil || sortOrder != .newest
     }
 }
 
@@ -39,10 +38,6 @@ enum ListPlaceFilter {
 
         if let category = settings.selectedCategory {
             result = result.filter { $0.shortCategory == category }
-        }
-
-        if settings.openNowOnly {
-            result = result.filter(\.isOpenNow)
         }
 
         switch settings.sortOrder {

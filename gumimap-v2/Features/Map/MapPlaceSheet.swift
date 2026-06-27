@@ -88,22 +88,16 @@ struct MapPlaceSheet: View {
             categoryIcon
 
             VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    if let listKind = savedPlace.listSubTab {
-                        Text(listKind.title)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(listKind == .visited ? .green : .blue)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                (listKind == .visited ? Color.green : Color.blue).opacity(0.12),
-                                in: Capsule()
-                            )
-                    }
-
-                    if savedPlace.grokDetail?.isCurrentlyOpen == true {
-                        openBadge
-                    }
+                if let listKind = savedPlace.listSubTab {
+                    Text(listKind.title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(listKind == .visited ? .green : .blue)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            (listKind == .visited ? Color.green : Color.blue).opacity(0.12),
+                            in: Capsule()
+                        )
                 }
 
                 if !shortCategory.isEmpty {
@@ -136,20 +130,6 @@ struct MapPlaceSheet: View {
                 .foregroundStyle(tint)
         }
         .accessibilityHidden(true)
-    }
-
-    private var openBadge: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(Color.green)
-                .frame(width: 6, height: 6)
-            Text("영업중")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.green)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.green.opacity(0.12), in: Capsule())
     }
 
     private var detailLinkButton: some View {

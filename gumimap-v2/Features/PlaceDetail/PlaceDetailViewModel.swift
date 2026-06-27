@@ -102,11 +102,6 @@ final class PlaceDetailViewModel {
         return nil
     }
 
-    var isOpenNow: Bool? {
-        guard case .loaded = enrichmentState, let detail else { return nil }
-        return detail.isCurrentlyOpen
-    }
-
     var showProgress: Bool {
         if isDiscoveryMode {
             return requestedAdditionalInfo && (isLoading || (revealStep == 0 && !progressLog.isEmpty))

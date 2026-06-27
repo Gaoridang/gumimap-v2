@@ -6,7 +6,6 @@ struct ListFilterBar: View {
     let settings: ListPlaceFilterSettings
     let onSortOrderChange: (ListPlaceSortOrder) -> Void
     let onCategoryChange: (String?) -> Void
-    let onOpenNowChange: (Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -21,8 +20,6 @@ struct ListFilterBar: View {
     private var controlsRow: some View {
         HStack(spacing: 8) {
             sortMenu
-
-            openNowToggle
 
             Spacer(minLength: 0)
         }
@@ -53,34 +50,6 @@ struct ListFilterBar: View {
             .padding(.vertical, 8)
             .background(Color(.secondarySystemGroupedBackground), in: Capsule())
         }
-    }
-
-    private var openNowToggle: some View {
-        Button {
-            onOpenNowChange(!settings.openNowOnly)
-        } label: {
-            HStack(spacing: 5) {
-                Circle()
-                    .fill(settings.openNowOnly ? Color.green : Color.secondary.opacity(0.35))
-                    .frame(width: 6, height: 6)
-                Text("영업중")
-                    .font(.subheadline.weight(.medium))
-            }
-            .foregroundStyle(settings.openNowOnly ? .green : .secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background {
-                Capsule()
-                    .fill(
-                        settings.openNowOnly
-                            ? Color.green.opacity(0.12)
-                            : Color(.secondarySystemGroupedBackground)
-                    )
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("영업중만 보기")
-        .accessibilityValue(settings.openNowOnly ? "켜짐" : "꺼짐")
     }
 
     private var categoryChips: some View {
@@ -124,10 +93,9 @@ struct ListFilterBar: View {
     ListFilterBar(
         subTab: .wishlist,
         categories: ["카페", "한식", "분식"],
-        settings: ListPlaceFilterSettings(sortOrder: .newest, selectedCategory: "카페", openNowOnly: true),
+        settings: ListPlaceFilterSettings(sortOrder: .newest, selectedCategory: "카페"),
         onSortOrderChange: { _ in },
-        onCategoryChange: { _ in },
-        onOpenNowChange: { _ in }
+        onCategoryChange: { _ in }
     )
     .padding(20)
     .background(Color(.systemGroupedBackground))

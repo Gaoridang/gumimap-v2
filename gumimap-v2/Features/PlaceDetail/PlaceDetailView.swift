@@ -487,37 +487,29 @@ struct PlaceDetailView: View {
     // MARK: - Register
 
     private var registerButton: some View {
-        HStack(spacing: 10) {
-            Button {
-                guard viewModel.canRegister else { return }
-                showRegistrationSheet = true
-            } label: {
-                HStack(spacing: 8) {
-                    if viewModel.isSavingRegistration {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(Color(.systemBackground))
-                    } else {
-                        Image(systemName: viewModel.isAlreadySaved ? "checkmark.circle.fill" : "plus")
-                            .font(.body.weight(.semibold))
-                    }
-                    Text(registerButtonTitle)
+        Button {
+            guard viewModel.canRegister else { return }
+            showRegistrationSheet = true
+        } label: {
+            HStack(spacing: 8) {
+                if viewModel.isSavingRegistration {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(Color(.systemBackground))
+                } else {
+                    Image(systemName: viewModel.isAlreadySaved ? "checkmark.circle.fill" : "plus")
                         .font(.body.weight(.semibold))
                 }
-                .foregroundStyle(Color(.systemBackground))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(viewModel.canRegister ? Color.primary : Color.primary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+                Text(registerButtonTitle)
+                    .font(.body.weight(.semibold))
             }
-            .buttonStyle(.plain)
-            .disabled(!viewModel.canRegister)
-
-            if let isOpen = viewModel.isOpenNow, isOpen {
-                openStatusBadge
-                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
-            }
+            .foregroundStyle(Color(.systemBackground))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(viewModel.canRegister ? Color.primary : Color.primary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: viewModel.isOpenNow)
+        .buttonStyle(.plain)
+        .disabled(!viewModel.canRegister)
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
@@ -556,20 +548,6 @@ struct PlaceDetailView: View {
             in: RoundedRectangle(cornerRadius: 14)
         )
         .accessibilityLabel("\(listKind.title)에 이미 저장된 장소")
-    }
-
-    private var openStatusBadge: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(Color.green)
-                .frame(width: 8, height: 8)
-            Text("영업중")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.green)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
-        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private func handleRegistration(listKind: ListSubTab) async {

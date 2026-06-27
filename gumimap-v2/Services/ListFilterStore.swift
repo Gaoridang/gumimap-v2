@@ -22,12 +22,6 @@ final class ListFilterStore {
         settingsBySubTab[subTab] = settings
     }
 
-    func setOpenNowOnly(_ isEnabled: Bool, for subTab: ListSubTab) {
-        var settings = settings(for: subTab)
-        settings.openNowOnly = isEnabled
-        settingsBySubTab[subTab] = settings
-    }
-
     func reset(for subTab: ListSubTab) {
         settingsBySubTab[subTab] = ListPlaceFilterSettings()
     }

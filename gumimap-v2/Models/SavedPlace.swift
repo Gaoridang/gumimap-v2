@@ -60,10 +60,6 @@ final class SavedPlace {
         return parts.last.map { String($0) } ?? category
     }
 
-    var isOpenNow: Bool {
-        grokDetail?.isCurrentlyOpen == true
-    }
-
     var asPlace: Place {
         Place(
             id: kakaoPlaceId,

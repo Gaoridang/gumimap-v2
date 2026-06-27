@@ -99,14 +99,6 @@ struct GrokPlaceDetail: Codable, Sendable, Equatable {
         hasVisibleFieldContent || hasReviews
     }
 
-    var isCurrentlyOpen: Bool? {
-        BusinessHoursParser.isOpenNow(
-            businessHours: value(for: .businessHours),
-            breakTime: value(for: .breakTime),
-            closedDay: value(for: .closedDay)
-        )
-    }
-
     static func from(place: Place, response: GrokPlaceSearchResponse, searchQuery: String) -> GrokPlaceDetail {
         GrokPlaceDetail(
             name: place.name,

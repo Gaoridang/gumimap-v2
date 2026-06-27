@@ -5,7 +5,6 @@ struct SavedPlaceCardContent: Equatable {
     let address: String
     let category: String
     let insightLine: String?
-    let isOpenNow: Bool
 }
 
 struct SavedPlaceCard: View {
@@ -24,7 +23,10 @@ struct SavedPlaceCard: View {
             categoryIcon
 
             VStack(alignment: .leading, spacing: 6) {
-                nameRow
+                Text(content.name)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
                 if !shortCategory.isEmpty {
                     Text(shortCategory)
@@ -49,21 +51,6 @@ struct SavedPlaceCard: View {
         .padding(16)
     }
 
-    private var nameRow: some View {
-        HStack(alignment: .center, spacing: 8) {
-            Text(content.name)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-
-            Spacer(minLength: 8)
-
-            if content.isOpenNow {
-                openBadge
-            }
-        }
-    }
-
     private var categoryIcon: some View {
         let tint = PlaceCategoryIcon.tint(for: content.category)
 
@@ -78,20 +65,6 @@ struct SavedPlaceCard: View {
         }
         .accessibilityHidden(true)
     }
-
-    private var openBadge: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(Color.green)
-                .frame(width: 6, height: 6)
-            Text("영업중")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.green)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.green.opacity(0.12), in: Capsule())
-    }
 }
 
 extension SavedPlace {
@@ -100,8 +73,7 @@ extension SavedPlace {
             name: name,
             address: address,
             category: category,
-            insightLine: cardInsightLine,
-            isOpenNow: grokDetail?.isCurrentlyOpen == true
+            insightLine: cardInsightLine
         )
     }
 
@@ -123,8 +95,7 @@ extension SavedPlace {
                     name: "와일드차일드",
                     address: "경북 구미시 인동가산로35길 14",
                     category: "음식점 > 카페",
-                    insightLine: "조용하고 넓은 공간, 디저트가 인기",
-                    isOpenNow: true
+                    insightLine: "조용하고 넓은 공간, 디저트가 인기"
                 )
             )
             SavedPlaceCard(
@@ -132,8 +103,7 @@ extension SavedPlace {
                     name: "구미중앙시장",
                     address: "경북 구미시 원평동 123-4",
                     category: "쇼핑 > 시장",
-                    insightLine: nil,
-                    isOpenNow: false
+                    insightLine: nil
                 )
             )
         }

@@ -9,18 +9,19 @@ Last updated: 2026-06-27
 | Active branch | `fix/open-now-filter` |
 | Next branch | (create before first code change on next task) |
 | GitHub repo | https://github.com/Gaoridang/gumimap-v2 (public) |
-| Working tree | Open-now list filter parsing fix on `fix/open-now-filter` |
+| Working tree | Remove 영업중 filter/badge UI on `fix/open-now-filter` |
 | Last verified | Local `ci-build.sh` + `run-simulator.sh` ✅ (2026-06-27) |
 | Dev environment | Mac or Windows → PR Build → merge → TestFlight |
 
 **Issue & resolution doc:** [`docs/testflight-empty-marketing-version.md`](testflight-empty-marketing-version.md)
 
-### In progress — open-now list filter (`fix/open-now-filter`, 2026-06-27)
+### In progress — remove 영업중 feature (`fix/open-now-filter`, 2026-06-27)
 
-- **`BusinessHoursParser`** — parses `매일`, `평일`, `주말`, `월~금`, day lists, and `~` time ranges; respects `휴무일` when judging open-now
-- **`GrokPlaceDetail.isCurrentlyOpen`** — passes `closedDay` into parser; list 영업중 filter/badge uses saved enrichment hours
+- Removed list filter toggle, card/map/detail badges, and open-now parsing logic
+- **`BusinessHoursParser`** — display formatting only (영업시간 카드용)
+- List filter bar keeps sort + category chips
 
-**Key paths:** `BusinessHoursParser.swift`, `GrokPlaceDetail.swift`, `SavedPlace.swift`, `ListPlaceFilter.swift`
+**Key paths:** `ListFilterBar.swift`, `ListPlaceFilter.swift`, `SavedPlaceCard.swift`, `MapPlaceSheet.swift`, `PlaceDetailView.swift`, `BusinessHoursParser.swift`
 
 ### Merged on `main` — TestFlight marketing version fix + app-only trigger (2026-06-27)
 
