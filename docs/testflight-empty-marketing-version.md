@@ -144,18 +144,13 @@ Success run: https://github.com/Gaoridang/gumimap-v2/actions/runs/28280345028
 
 ### Local full beta (optional)
 
-Requires App Store Connect API env vars (issuer ID is not in the repo):
+Add ASC fields to gitignored `Config/secrets.local.env` (see `Config/secrets.example.env`), then:
 
 ```bash
-export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH"
-export ASC_KEY_ID=24S2R8D54N
-export ASC_ISSUER_ID="<from App Store Connect → Integrations>"
-export ASC_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_24S2R8D54N.p8"
-export ALLOW_CREATE_DISTRIBUTION_CERT=true   # only if no local signing cache
-
-cd /path/to/gumimap-v2
-bundle exec fastlane beta
+./scripts/run-testflight-local.sh
 ```
+
+First run without `fastlane/signing` cache defaults to `ALLOW_CREATE_DISTRIBUTION_CERT=true`. Later runs reuse cache when present.
 
 ### Related
 
